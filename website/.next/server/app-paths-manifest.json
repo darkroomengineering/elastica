@@ -1,0 +1,6 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/icon/[[...__metadata_id__]]/route": "app/icon/[[...__metadata_id__]]/route.js",
+  "/manifest.webmanifest/route": "app/manifest.webmanifest/route.js",
+  "/(pages)/home/page": "app/(pages)/home/page.js"
+}

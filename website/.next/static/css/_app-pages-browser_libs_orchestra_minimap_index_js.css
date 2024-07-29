@@ -1,0 +1,48 @@
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/.pnpm/next@14.2.4_@babel+core@7.24.9_react-dom@18.3.1_react@18.3.1__react@18.3.1_sass@1.77.8/node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[13].oneOf[9].use[2]!./node_modules/.pnpm/next@14.2.4_@babel+core@7.24.9_react-dom@18.3.1_react@18.3.1__react@18.3.1_sass@1.77.8/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[13].oneOf[9].use[3]!./node_modules/.pnpm/next@14.2.4_@babel+core@7.24.9_react-dom@18.3.1_react@18.3.1__react@18.3.1_sass@1.77.8/node_modules/next/dist/build/webpack/loaders/resolve-url-loader/index.js??ruleSet[1].rules[13].oneOf[9].use[4]!./node_modules/.pnpm/next@14.2.4_@babel+core@7.24.9_react-dom@18.3.1_react@18.3.1__react@18.3.1_sass@1.77.8/node_modules/next/dist/compiled/sass-loader/cjs.js??ruleSet[1].rules[13].oneOf[9].use[5]!./libs/orchestra/minimap/minimap.module.scss ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/* Breakpoints */
+.minimap_minimap__1SMrf {
+  --width: 400px;
+  --height: calc(var(--width) / var(--viewport-ratio));
+  position: fixed;
+  z-index: 9999;
+  top: 50%;
+  right: 50px;
+  width: var(--width);
+  height: var(--height);
+  transform: translateY(-50%);
+}
+.minimap_minimap__1SMrf::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border: 2px solid rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+}
+.minimap_minimap__1SMrf::before {
+  content: "";
+  width: 100%;
+  aspect-ratio: var(--body-ratio);
+  transform: translateY(calc(var(--progress) * -100% + var(--progress) * var(--height)));
+  position: absolute;
+  top: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+  -webkit-backdrop-filter: blur(4px);
+          backdrop-filter: blur(4px);
+  border-radius: 4px;
+}
+.minimap_minimap__1SMrf .minimap_markers__eIJ12 {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  aspect-ratio: var(--body-ratio);
+  z-index: 1;
+}
+.minimap_minimap__1SMrf .minimap_markers__eIJ12 .minimap_marker__Xxce2 {
+  top: 0;
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  transform: translateY(-50%) translateY(calc(var(--top) * var(--height)));
+}

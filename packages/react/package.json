@@ -1,0 +1,12 @@
+{
+  "name": "react-elastic-collision-wrapper",
+  "scripts": {
+    "dev": "vite",
+    "build": "rollup --bundleConfigAsCjs -c",
+    "watch": "rollup --bundleConfigAsCjs -c -w"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

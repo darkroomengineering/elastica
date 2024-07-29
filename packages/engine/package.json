@@ -1,0 +1,8 @@
+{
+  "name": "elastic-collision",
+  "scripts": {
+    "build": "rollup --bundleConfigAsCjs -c",
+    "dev": "npm-run-all --parallel watch",
+    "watch": "rollup --bundleConfigAsCjs -c -w"
+  }
+}

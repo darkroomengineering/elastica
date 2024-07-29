@@ -1,0 +1,51 @@
+{
+  "components/debug/index.js -> libs/orchestra/grid": {
+    "id": "components/debug/index.js -> libs/orchestra/grid",
+    "files": [
+      "static/css/_app-pages-browser_libs_orchestra_grid_index_js.css",
+      "static/chunks/_app-pages-browser_libs_orchestra_grid_index_js.js"
+    ]
+  },
+  "components/debug/index.js -> libs/orchestra/minimap": {
+    "id": "components/debug/index.js -> libs/orchestra/minimap",
+    "files": [
+      "static/css/_app-pages-browser_libs_orchestra_minimap_index_js.css",
+      "static/chunks/_app-pages-browser_libs_orchestra_minimap_index_js.js"
+    ]
+  },
+  "components/debug/index.js -> libs/orchestra/stats": {
+    "id": "components/debug/index.js -> libs/orchestra/stats",
+    "files": [
+      "static/css/_app-pages-browser_libs_orchestra_stats_index_js.css",
+      "static/chunks/_app-pages-browser_libs_orchestra_stats_index_js.js"
+    ]
+  },
+  "components/debug/index.js -> libs/theatre/studio": {
+    "id": "components/debug/index.js -> libs/theatre/studio",
+    "files": [
+      "static/css/_app-pages-browser_libs_theatre_studio_index_js.css",
+      "static/chunks/_app-pages-browser_libs_theatre_studio_index_js.js"
+    ]
+  },
+  "libs/theatre/hooks/use-studio.js -> @theatre/studio": {
+    "id": "libs/theatre/hooks/use-studio.js -> @theatre/studio",
+    "files": [
+      "static/chunks/_app-pages-browser_node_modules_pnpm_theatre_studio_0_7_2__theatre_core_0_7_2_node_modules_th-667e20.js"
+    ]
+  },
+  "libs/webgl/components/canvas/index.js -> ./webgl": {
+    "id": "libs/webgl/components/canvas/index.js -> ./webgl",
+    "files": [
+      "static/css/_app-pages-browser_libs_webgl_components_canvas_webgl_js.css",
+      "static/chunks/_app-pages-browser_libs_webgl_components_canvas_webgl_js.js"
+    ]
+  },
+  "node_modules/.pnpm/@react-three+drei@9.109.2_@react-three+fiber@8.16.8_react-dom@18.3.1_react@18.3.1__react@18.3_wmlakopobmvmjlwgulw7tcdw7i/node_modules/@react-three/drei/core/VideoTexture.js -> hls.js": {
+    "id": "node_modules/.pnpm/@react-three+drei@9.109.2_@react-three+fiber@8.16.8_react-dom@18.3.1_react@18.3.1__react@18.3_wmlakopobmvmjlwgulw7tcdw7i/node_modules/@react-three/drei/core/VideoTexture.js -> hls.js",
+    "files": []
+  },
+  "node_modules/.pnpm/@react-three+drei@9.109.2_@react-three+fiber@8.16.8_react-dom@18.3.1_react@18.3.1__react@18.3_wmlakopobmvmjlwgulw7tcdw7i/node_modules/@react-three/drei/web/FaceLandmarker.js -> @mediapipe/tasks-vision": {
+    "id": "node_modules/.pnpm/@react-three+drei@9.109.2_@react-three+fiber@8.16.8_react-dom@18.3.1_react@18.3.1__react@18.3_wmlakopobmvmjlwgulw7tcdw7i/node_modules/@react-three/drei/web/FaceLandmarker.js -> @mediapipe/tasks-vision",
+    "files": []
+  }
+}

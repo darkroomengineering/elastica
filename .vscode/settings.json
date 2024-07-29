@@ -1,0 +1,20 @@
+{
+  "eslint.format.enable": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.fixAll.eslint": "explicit"
+  },
+  "files.associations": {
+    "*.js": "javascriptreact"
+  },
+  "prettier.enable": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "workbench.editor.customLabels.patterns": {
+    "**/app/**/page.js": "${dirname(1)}/${dirname} <page>",
+    "**/app/**/layout.js": "${dirname(1)}/${dirname} <layout>",
+    "**/app/api/**/route.js": "${dirname(1)}/${dirname} <route>"
+  },
+  "typescript.suggest.autoImports": true,
+  "javascript.suggest.autoImports": true
+}
