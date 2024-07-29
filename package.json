@@ -27,9 +27,7 @@
     "rollup": "^4.17.2",
     "shx": "^0.3.4",
     "@babel/core": "^7.24.9",
-    "@babel/preset-react": "^7.24.7",
-    "@darkroom.engineering/hamo": "0.6.45",
-    "@use-gesture/react": "^10.0.0"
+    "@babel/preset-react": "^7.24.7"
   },
   "files": [
     "dist"
