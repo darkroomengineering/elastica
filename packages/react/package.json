@@ -8,8 +8,6 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@darkroom.engineering/hamo": "0.6.45",
-    "@use-gesture/react": "^10.0.0",
     "elastic-collisions": "workspace:elastic-collisions*"
   }
 }
