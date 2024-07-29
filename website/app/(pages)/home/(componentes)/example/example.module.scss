@@ -14,10 +14,15 @@
     will-change: transform;
     user-select: none;
     cursor: grab;
+    touch-action: none;
 
     @include desktop {
       padding: desktop-vw(12px);
       border-radius: desktop-vw(8px);
+    }
+
+    > * {
+      touch-action: none;
     }
   }
 }

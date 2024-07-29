@@ -1,7 +1,7 @@
 export default class ElasticCollision {
   constructor({
     gridSize = 4,
-    containerOffsets = { top: 0, bottom: 1, left: 0, right: 1 },
+    containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 },
     collisions = true,
     borders = 'rigid',
     collisionRandomness = 0,
@@ -13,6 +13,7 @@ export default class ElasticCollision {
     this.containerOffsets = containerOffsets
     this.positions = []
     this.velocities = []
+    this.externalForces = []
     this.dimensions = []
     this.bounced = []
     this.hash = []
@@ -21,10 +22,13 @@ export default class ElasticCollision {
   }
   //todo pass elements to objects and not to array
 
-  setup(elements, rect, callback = () => {}) {
+  initialConditions(elements, rect, callback = () => {}) {
     this.container = rect
-    this.dimensions = elements.map((element) => {
+
+    this.dimensions = elements.map((element, index) => {
       if (!element) return [0, 0]
+
+      this.externalForces[index] = [0, 0]
 
       const { rect: elementRect } = element
 
@@ -70,6 +74,11 @@ export default class ElasticCollision {
   rigidBorders(elements) {
     if (this.calculateBorders !== 'rigid') return
 
+    const top = this.containerOffsets.top
+    const left = this.containerOffsets.left
+    const right = this.containerOffsets.right + 1
+    const bottom = this.containerOffsets.bottom + 1
+
     for (let index = 0; index < elements.length; index++) {
       // Particle cinematic properties
       const dimension = this.dimensions[index]
@@ -77,53 +86,42 @@ export default class ElasticCollision {
       let position = this.positions[index]
 
       // Top wall
-      if (
-        position[1] <
-        dimension[1] + this.container.height * this.containerOffsets.top
-      ) {
+      if (position[1] < dimension[1] + this.container.height * top) {
         this.hasBounced(index)
         this.velocities[index][1] = -velocity[1]
-        this.positions[index][1] =
-          dimension[1] + this.container.height * this.containerOffsets.top
+        this.positions[index][1] = dimension[1] + this.container.height * top
       }
 
       // Left wall
-      if (
-        position[0] <
-        dimension[0] + this.container.width * this.containerOffsets.left
-      ) {
+      if (position[0] < dimension[0] + this.container.width * left) {
         this.hasBounced(index)
         this.velocities[index][0] = -velocity[0]
-        this.positions[index][0] =
-          dimension[0] + this.container.width * this.containerOffsets.left
+        this.positions[index][0] = dimension[0] + this.container.width * left
       }
 
       // Bottom wall
-      if (
-        position[1] >
-        this.container.height * this.containerOffsets.bottom - dimension[1]
-      ) {
+      if (position[1] > this.container.height * bottom - dimension[1]) {
         this.hasBounced(index)
         this.velocities[index][1] = -velocity[1]
-        this.positions[index][1] =
-          this.container.height * this.containerOffsets.bottom - dimension[1]
+        this.positions[index][1] = this.container.height * bottom - dimension[1]
       }
 
       // Right wall
-      if (
-        position[0] >
-        this.container.width * this.containerOffsets.right - dimension[0]
-      ) {
+      if (position[0] > this.container.width * right - dimension[0]) {
         this.hasBounced(index)
         this.velocities[index][0] = -velocity[0]
-        this.positions[index][0] =
-          this.container.width * this.containerOffsets.right - dimension[0]
+        this.positions[index][0] = this.container.width * right - dimension[0]
       }
     }
   }
 
   periodicBorders(elements) {
     if (this.calculateBorders !== 'periodic') return
+
+    const top = this.containerOffsets.top
+    const left = this.containerOffsets.left
+    const right = this.containerOffsets.right + 1
+    const bottom = this.containerOffsets.bottom + 1
 
     for (let index = 0; index < elements.length; index++) {
       // Particle cinematic properties
@@ -134,41 +132,33 @@ export default class ElasticCollision {
       // Top wall
       if (
         dir[1] === -1 &&
-        position[1] <
-          dimension[1] + this.container.height * this.containerOffsets.top
+        position[1] < dimension[1] + this.container.height * top
       ) {
-        this.positions[index][1] =
-          dimension[1] + this.container.height * this.containerOffsets.bottom
+        this.positions[index][1] = dimension[1] + this.container.height * bottom
       }
 
       // Bottom wall
       if (
         dir[1] === 1 &&
-        position[1] >
-          this.container.height * this.containerOffsets.bottom - dimension[1]
+        position[1] > this.container.height * bottom - dimension[1]
       ) {
-        this.positions[index][1] =
-          this.container.height * this.containerOffsets.top - dimension[1]
+        this.positions[index][1] = this.container.height * top - dimension[1]
       }
 
       // Left wall
       if (
         dir[0] === -1 &&
-        position[0] <
-          dimension[0] + this.container.width * this.containerOffsets.left
+        position[0] < dimension[0] + this.container.width * left
       ) {
-        this.positions[index][0] =
-          dimension[0] + this.container.width * this.containerOffsets.right
+        this.positions[index][0] = dimension[0] + this.container.width * right
       }
 
       // Right wall
       if (
         dir[0] === 1 &&
-        position[0] >
-          this.container.width * this.containerOffsets.right - dimension[0]
+        position[0] > this.container.width * right - dimension[0]
       ) {
-        this.positions[index][0] =
-          this.container.width * this.containerOffsets.left - dimension[0]
+        this.positions[index][0] = this.container.width * left - dimension[0]
       }
     }
   }

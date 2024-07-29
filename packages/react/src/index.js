@@ -9,6 +9,11 @@ import React, {
   useState,
 } from 'react'
 import ElasticCollision from '../../engine/dist/elastic-collisions.mjs'
+import {
+  dragForcePresetsLib,
+  initalConditionsPresets,
+  updatePresets,
+} from './presets'
 import { isEmptyArray } from './utils'
 
 const ElasticCollisionContext = createContext({})
@@ -22,16 +27,16 @@ function ReactElasticCollision({
   className,
   config = {
     gridSize: 8,
-    collisions: false,
+    collisions: true,
     borders: 'rigid',
     containerOffsets: {
       top: 0,
-      bottom: 1,
+      bottom: 0,
       left: 0,
-      right: 1,
+      right: 0,
     },
   },
-  setup = () => {},
+  initialConditions = () => {},
   update = () => {},
 }) {
   const boxesRefs = useRef(new Map())
@@ -48,14 +53,12 @@ function ReactElasticCollision({
   useEffect(() => {
     const boxes = [...boxesRefs.current.values()]
 
-    if (isEmptyArray(boxes)) return
+    if (isEmptyArray(boxes) || boxes.some(({ rect }) => !rect)) return
 
-    if (boxes.some(({ rect }) => !rect)) return
-
-    elasticCollision.setup(boxes, sectionRect, (instances) =>
-      setup({ boxes, ...instances })
+    elasticCollision.initialConditions(boxes, sectionRect, (instances) =>
+      initialConditions({ boxes, ...instances })
     )
-  }, [elasticCollision, sectionRect, setup])
+  }, [elasticCollision, sectionRect])
 
   useFrame((_, deltaTime) => {
     const boxes = [...boxesRefs.current.values()]
@@ -82,7 +85,9 @@ function ReactElasticCollision({
       ref={sectionRectRef}
       style={{ position: 'relative', width: '100%', height: '100%' }}
     >
-      <ElasticCollisionContext.Provider value={{ addBox, removeBox }}>
+      <ElasticCollisionContext.Provider
+        value={{ addBox, removeBox, elasticCollision }}
+      >
         {children}
       </ElasticCollisionContext.Provider>
     </div>
@@ -92,10 +97,11 @@ function ReactElasticCollision({
 function CollisionBox({
   className,
   children,
-  onDragStop = () => {},
+  onDragStop = null,
+  index = 0,
   ...props
 }) {
-  const { addBox, removeBox } = useElasticCollision()
+  const { addBox, removeBox, elasticCollision } = useElasticCollision()
   const [setRectRef, rect] = useRect()
   const elementRef = useRef()
 
@@ -114,7 +120,7 @@ function CollisionBox({
 
   const bind = useDrag(({ down, movement: [mx, my] }) => {
     if (down) {
-      onDragStop([mx, my])
+      onDragStop([mx, my], elasticCollision.externalForces, index)
     }
   })
 
@@ -125,6 +131,7 @@ function CollisionBox({
         setRectRef(node)
       }}
       className={className}
+      style={{ touchAction: 'none' }}
       {...props}
     >
       <div {...bind()}>{children}</div>
@@ -133,4 +140,10 @@ function CollisionBox({
 }
 
 export default ReactElasticCollision
-export { CollisionBox, useElasticCollision }
+export {
+  CollisionBox,
+  dragForcePresetsLib,
+  initalConditionsPresets,
+  updatePresets,
+  useElasticCollision,
+}

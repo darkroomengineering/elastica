@@ -1,4 +1,3 @@
-import json from '@rollup/plugin-json'
 import terser from '@rollup/plugin-terser'
 
 export default [
@@ -39,6 +38,5 @@ export default [
         name: 'Elastic Collisions',
       },
     ],
-    plugins: [json()],
   },
 ]

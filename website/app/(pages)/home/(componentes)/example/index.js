@@ -3,6 +3,9 @@
 import { useRef } from 'react'
 import ReactElasticCollision, {
   CollisionBox,
+  initalConditionsPresets,
+  updatePresets,
+  useElasticCollision,
 } from '../../../../../../packages/react/dist/elastic-collisions-react.mjs'
 import s from './example.module.scss'
 
@@ -25,69 +28,43 @@ export function Example() {
         config={{
           gridSize: 8,
           collisions: true,
-          borders: 'rigid',
+          borders: 'periodic',
           containerOffsets: {
             top: 0,
-            bottom: 1,
-            left: 0,
-            right: 1,
+            bottom: 0,
+            left: -0.2,
+            right: 0,
           },
         }}
-        setup={({ boxes, positions, velocities, container }) => {
-          boxes.forEach((_, index) => {
-            const vel = [
-              0.5 * (Math.random() - 0.5),
-              0.5 * (Math.random() - 0.5),
-            ]
-
-            velocities[index] = vel
-            stVels.current[index] = vel
-
-            positions[index] = [
-              Math.random() * container.width,
-              Math.random() * container.height,
-            ]
-
-            dragVelocity.current[index] = [0, 0]
-          })
-        }}
-        update={({ boxes, velocities, positions, deltaTime }) => {
-          boxes.forEach((element, index) => {
-            let velocity = velocities[index]
-            let position = positions[index]
-            let draggin = dragVelocity.current[index]
-
-            const flow = [0, -0.5]
-
-            velocity = velocity.map(
-              (v, i) => v + deltaTime * -0.001 * (v - 4 * draggin[i] + flow[i]),
-            )
-
-            position = position.map((pos, i) => pos + velocity[i] * deltaTime)
-
-            positions[index] = position
-            velocities[index] = velocity
-
-            dragVelocity.current[index] = [0, 0]
-          })
-        }}
+        initialConditions={initalConditionsPresets.random}
+        update={updatePresets.rightFlow}
       >
-        {data.map(({ name }, index) => (
-          <CollisionBox
-            key={index}
-            className={s.item}
-            onDragStop={(newDir) => {
-              let norm = newDir.map((pos) => pos * pos).reduce((a, b) => a + b)
-              norm = Math.sqrt(norm)
-
-              if (norm === 0) return
-              dragVelocity.current[index] = newDir.map((pos) => pos / norm)
-            }}
-          >
-            <div>{name}</div>
-          </CollisionBox>
+        {[...data, ...data, ...data].map(({ name }, index) => (
+          <Item key={index} name={name} index={index} />
         ))}
       </ReactElasticCollision>
     </section>
+  )
+}
+
+function Item({ name, index }) {
+  const { elasticCollision } = useElasticCollision()
+
+  return (
+    <CollisionBox
+      key={index}
+      className={s.item}
+      onDragStop={(newDir, externalForces) => {
+        let norm = newDir.map((pos) => pos * pos).reduce((a, b) => a + b)
+        norm = Math.sqrt(norm)
+
+        if (norm === 0) return
+
+        externalForces[index] = newDir.map((pos) => pos / norm)
+      }}
+      index={index}
+    >
+      <div>{name}</div>
+    </CollisionBox>
   )
 }
