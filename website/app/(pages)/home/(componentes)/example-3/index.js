@@ -45,7 +45,7 @@ export function Example3() {
 
             velocity = velocity.map(
               (v, i) =>
-                v + deltaTime * dumping * (v - 4 * draggin[i]) + stVel[i],
+                v + deltaTime * dumping * (v - 4 * draggin[i] + stVel[i]),
             )
 
             positions[index] = position = position.map(

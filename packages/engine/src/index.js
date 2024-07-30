@@ -4,7 +4,6 @@ export default class ElasticCollision {
     containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 },
     collisions = true,
     borders = 'rigid',
-    collisionRandomness = 0,
   } = {}) {
     this.calculatecCollisions = collisions
     this.calculateBorders = borders
@@ -28,6 +27,7 @@ export default class ElasticCollision {
       if (!element) return [0, 0]
 
       this.externalForces[index] = [0, 0]
+      this.bounced[index] = 0
 
       const { rect: elementRect } = element
 

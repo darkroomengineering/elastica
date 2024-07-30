@@ -15,13 +15,7 @@ const data = [
   { name: 'Fermin' },
 ]
 
-const members = [...data, ...data, ...data]
-
-const stVels = members.map(() => [
-  0.01 * (Math.random() - 0.5),
-  0.01 * (Math.random() - 0.5),
-])
-const dumping = -0.001
+const members = [...data, ...data]
 
 export function Example1() {
   return (
@@ -30,41 +24,21 @@ export function Example1() {
         config={{
           gridSize: 8,
           collisions: true,
-          borders: 'periodic',
-          containerOffsets: {
-            top: 0,
-            bottom: 0,
-            left: -0.2,
-            right: 0,
-          },
+          borders: 'rigid',
         }}
         initialConditions={initalConditionsPresets.random}
-        update={({
-          boxes,
-          positions,
-          velocities,
-          externalForces,
-          deltaTime,
-        }) => {
-          boxes.forEach((_, index) => {
-            let velocity = velocities[index]
-            let position = positions[index]
-            let draggin = externalForces[index]
-            const stVel = stVels[index]
-
-            velocity = velocity.map(
-              (v, i) =>
-                v + deltaTime * dumping * (v - 4 * draggin[i]) + stVel[i],
+        update={({ boxes, positions, velocities, bounced, deltaTime }) => {
+          boxes.forEach(({ element }, index) => {
+            positions[index] = positions[index].map(
+              (pos, i) => pos + velocities[index][i] * deltaTime,
             )
 
-            positions[index] = position = position.map(
-              (pos, i) => pos + velocity[i] * deltaTime,
-            )
-
-            positions[index] = position
-            velocities[index] = velocity
-
-            externalForces[index] = [0, 0]
+            const bounce = bounced[index]
+            if (bounce % 2 !== 0) {
+              element.classList.add(s.bounce)
+            } else {
+              element.classList.remove(s.bounce)
+            }
           })
         }}
       >
@@ -78,19 +52,7 @@ export function Example1() {
 
 function Item({ name, index }) {
   return (
-    <CollisionBox
-      key={index}
-      className={s.item}
-      onDragStop={(newDir, externalForces) => {
-        let norm = newDir.map((pos) => pos * pos).reduce((a, b) => a + b)
-        norm = Math.sqrt(norm)
-
-        if (norm === 0) return
-
-        externalForces[index] = newDir.map((pos) => pos / norm)
-      }}
-      index={index}
-    >
+    <CollisionBox key={index} className={s.item} index={index}>
       <div>{name}</div>
     </CollisionBox>
   )

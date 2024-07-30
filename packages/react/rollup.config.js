@@ -20,12 +20,7 @@ export default [
         ],
       },
     ],
-    external: [
-      'react',
-      'react-dom',
-      '@darkroom.engineering/hamo',
-      '@use-gesture/react',
-    ],
+    external: ['react', 'react-dom'],
     plugins: [
       nodeResolve({ extensions: ['.js', '.jsx'] }),
       babel({
