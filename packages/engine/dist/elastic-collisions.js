@@ -14,7 +14,6 @@
     } = {}) {
       this.calculatecCollisions = collisions;
       this.calculateBorders = borders;
-      this.collisionRandomness = collisionRandomness;
       this.gridSize = gridSize;
       this.containerOffsets = containerOffsets;
       this.positions = [];
@@ -202,39 +201,26 @@
       const overlaping = position.map(
         (pos, idx) =>
           Math.abs(pos - neighboorPosition[idx]) <
-          dimension[idx] + neighboorDimension[idx]
+          dimension[idx] + neighboorDimension[idx],
       );
 
       return overlaping.every((overlap) => overlap)
     }
 
+    //TODO improve this function
     calculateSuperposition(index, idy) {
-      let force = [0, 0];
-
       const posA = this.positions[index];
       const dimA = this.dimensions[index];
       const posB = this.positions[idy];
       const dimB = this.dimensions[idy];
 
       const overlaping = posA.map(
-        (pos, idx) => dimA[idx] + dimB[idx] - Math.abs(pos - posB[idx])
+        (pos, idx) => dimA[idx] + dimB[idx] - Math.abs(pos - posB[idx]),
       );
 
-      if (overlaping[0] < overlaping[1]) {
-        if (posA[0] < posB[0]) {
-          force[0] = overlaping[0];
-        } else {
-          force[0] = -overlaping[0];
-        }
-      } else {
-        if (posA[1] < posB[1]) {
-          force[1] = overlaping[1];
-        } else {
-          force[1] = -overlaping[1];
-        }
-      }
+      const overlapDir = posA.map((pos, idx) => -Math.sign(pos - posB[idx]));
 
-      return force.map((f) => f + Math.random() * this.collisionRandomness)
+      return overlaping.map((v, i) => overlapDir[i] * Math.max(1 / v, 0.1))
     }
 
     collisions(elements) {
@@ -254,7 +240,7 @@
           // Collisions are pairwise so need to check if already collided
           if (
             this.collisionsList.some(
-              ({ loop, inHash }) => loop === idy && inHash === index
+              ({ loop, inHash }) => loop === idy && inHash === index,
             )
           )
             return
@@ -279,12 +265,12 @@
               neighboorVelocity.reduce((sum, v) => sum + v * v, 0));
 
           // Resolve superpositions
-          const exclusionForce = this.calculateSuperposition(index, idy);
+          let exclusionForce = this.calculateSuperposition(index, idy);
 
           // Apply superposition forces
           let collisonVelocity = velocity.map((v, idx) => v + exclusionForce[idx]);
           let neighboorCollisionVelocity = neighboorVelocity.map(
-            (v, idx) => v - exclusionForce[idx]
+            (v, idx) => v - exclusionForce[idx],
           );
 
           // Calculate new kinetic energy
@@ -298,7 +284,7 @@
             const scale = Math.sqrt(initialKE / finalKE);
             collisonVelocity = collisonVelocity.map((v) => v * scale);
             neighboorCollisionVelocity = neighboorCollisionVelocity.map(
-              (v) => v * scale
+              (v) => v * scale,
             );
           }
 

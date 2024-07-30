@@ -56,7 +56,7 @@ function ReactElasticCollision({
     if (isEmptyArray(boxes) || boxes.some(({ rect }) => !rect)) return
 
     elasticCollision.initialConditions(boxes, sectionRect, (instances) =>
-      initialConditions({ boxes, ...instances })
+      initialConditions({ boxes, ...instances }),
     )
   }, [elasticCollision, sectionRect])
 
@@ -119,7 +119,7 @@ function CollisionBox({
   }, [rect, addBox, removeBox])
 
   const bind = useDrag(({ down, movement: [mx, my] }) => {
-    if (down) {
+    if (down && onDragStop) {
       onDragStop([mx, my], elasticCollision.externalForces, index)
     }
   })
@@ -131,7 +131,6 @@ function CollisionBox({
         setRectRef(node)
       }}
       className={className}
-      style={{ touchAction: 'none' }}
       {...props}
     >
       <div {...bind()}>{children}</div>

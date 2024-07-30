@@ -18,7 +18,7 @@ export const initalConditionsPresets = {
 function dvdAnimation({ boxes, positions, velocities, deltaTime }) {
   boxes.forEach((_, index) => {
     positions[index] = positions[index].map(
-      (pos, i) => pos + velocities[index][i] * deltaTime
+      (pos, i) => pos + velocities[index][i] * deltaTime,
     )
   })
 }
@@ -37,7 +37,7 @@ function DragAndGravity({
     const flow = [0, -0.1]
 
     velocity = velocity.map(
-      (v, i) => v + deltaTime * -0.001 * (v - 4 * draggin[i] + flow[i])
+      (v, i) => v + deltaTime * -0.001 * (v - 4 * draggin[i] + flow[i]),
     )
 
     position = position.map((pos, i) => pos + velocity[i] * deltaTime)
@@ -60,14 +60,14 @@ function rightFlow({
     let velocity = velocities[index]
     let position = positions[index]
     let draggin = externalForces[index]
-    const flow = [0.05, 0]
+    const flow = [0.5 * (Math.random() - 0.5), 0.05 * (Math.random() - 0.5)]
 
     velocity = velocity.map(
-      (v, i) => v + deltaTime * -0.001 * (v - 4 * draggin[i] + flow[i])
+      (v, i) => v + deltaTime * -0.001 * (v - 4 * draggin[i] + flow[i]),
     )
 
     positions[index] = position = position.map(
-      (pos, i) => pos + velocity[i] * deltaTime
+      (pos, i) => pos + velocity[i] * deltaTime,
     )
 
     positions[index] = position
