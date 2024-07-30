@@ -1,5 +1,5 @@
 {
-  "name": "@darkroomengineering/elastic-collisions",
+  "name": "@darkroom.engineering/elastic-collisions",
   "version": "0.0.1",
   "type": "module",
   "scripts": {
@@ -58,5 +58,8 @@
     "./react": {
       "default": "./dist/elastic-collisions-react.mjs"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
