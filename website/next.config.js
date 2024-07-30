@@ -1,4 +1,3 @@
-import DuplicatePackageCheckerPlugin from '@cerner/duplicate-package-checker-webpack-plugin'
 import bundleAnalyzer from '@next/bundle-analyzer'
 import withSerwistInit from '@serwist/next'
 import { castToSass } from './libs/sass-utils/index.js'
@@ -120,16 +119,16 @@ const nextConfig = {
       },
     )
 
-    config.plugins.push(
-      new DuplicatePackageCheckerPlugin({
-        verbose: true,
-        emitError: true,
-        showHelp: true,
-        strict: false,
-        exclude: (instance) => instance.name === 'fbjs',
-        alwaysEmitErrorsFor: ['react', 'react-router'],
-      }),
-    )
+    // config.plugins.push(
+    //   new DuplicatePackageCheckerPlugin({
+    //     verbose: true,
+    //     emitError: true,
+    //     showHelp: true,
+    //     strict: false,
+    //     exclude: (instance) => instance.name === 'fbjs',
+    //     alwaysEmitErrorsFor: ['react', 'react-router'],
+    //   }),
+    // )
 
     return config
   },

@@ -2,3 +2,19 @@
   text-transform: uppercase;
   font-family: var(--font-ibm-plex-mono);
 }
+
+.list {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  row-gap: desktop-vw(8px);
+  padding: desktop-vw(16px);
+}
+
+.item {
+  &.active {
+    button {
+      text-decoration: underline;
+    }
+  }
+}
