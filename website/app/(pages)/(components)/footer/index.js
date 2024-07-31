@@ -8,7 +8,7 @@ export function Footer() {
         darkroom.engineering
       </Link>
       <Link
-        href="https://github.com/darkroomengineering/satus"
+        href="https://github.com/darkroomengineering/elastica"
         className="link"
       >
         github
