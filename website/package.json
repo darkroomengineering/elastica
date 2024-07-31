@@ -1,6 +1,6 @@
 {
-  "name": "@darkroom.engineering/satus",
-  "description": "Satūs is a next.js starter",
+  "name": "@darkroom.engineering/elastica",
+  "description": "Elastica is a JavaScript library providing a physics engine for simulating elastic collision using Aligned axis bounding boxes (AABBs) and grid hash for efficient collision detection. It has a React wrapper which provides hooks and components for managing the state and interactions of your elements. Apply your own Cinematic equation for position and velocity of particles.",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
