@@ -1,75 +1,64 @@
-[![SATUS](https://assets.darkroom.engineering/satus/header.png)](https://github.com/darkroomengineering/satus)
+# Elastica Examples Website
 
-## Introduction
+## Setup:
 
-Satūs means start, beginning, planting, to be used as a template when starting a new project.
+The usual process for Next.js based apps/websites:
 
-<br/>
+1. Install node modules:
 
-## Composition
+   `$ pnpm i`
 
-This starter kit has an opinionated setting using the following:
+2. Get the .env variables from Vercel (check `.env.template`), after [installing Vercel CLI](https://vercel.com/docs/cli):
 
-- [Next.js](https://nextjs.org) App router
-- [react-three-fiber](https://github.com/pmndrs/react-three-fiber)
+   `$ vc link`
+
+   `$ vc env pull`
+
+3. run development environment:
+
+   `$ pnpm dev`
+
+## Stack:
+
 - [Lenis](https://github.com/darkroomengineering/lenis)
-- [Theatre.js](https://www.theatrejs.com/)
-- [GSAP](https://greensock.com/gsap/) | [See Documentation](https://github.com/darkroomengineering/satus/blob/main/docs/gsap/README.md)
+- [Tempus](https://github.com/darkroomengineering/tempus)
 - [Hamo](https://github.com/darkroomengineering/hamo)
-- [Storyblok](https://www.storyblok.com/) | [See Documentation](https://github.com/darkroomengineering/satus/blob/main/docs/storyblok/README.md)
-- [Shopify](https://www.shopify.com/)
-- SVG import through [@svgr/webpack](https://www.npmjs.com/package/@svgr/webpack)
-- Sass architecture and tooling:
-  - Config file
-  - Viewport based sizes
-  - Reset
-  - Easings
-  - Themes
-- Debug tools:
-  - Theatre.js Studio [@theatre/studio](https://www.npmjs.com/package/@theatre/studio)
-  - FPS Meter
-  - Grid Debugger
-- Github workflow to display lighthouse report on slack:
-  make sure you update the `vercel_project_id` in `.github/workflows/lighthouse-on-vercel-preview-url.yml` to your Vercel project id.
+- [PNPM](https://pnpm.io/)
+- [Next.js](https://nextjs.org/)
+- [Three.js](https://threejs.org/)
+- [@react-three/drei](https://github.com/pmndrs/drei)
+- [@react-three/fiber](https://docs.pmnd.rs/react-three-fiber/getting-started/introduction)
+- [GSAP](https://greensock.com/gsap/)
+- Sass (Modules)
+- [Zustand](https://github.com/pmndrs/zustand)
+- GraphQL (CMS API)
+- [Next-Sitemap](https://github.com/iamvishnusankar/next-sitemap) (postbuild script)
+- [@svgr/webpack](https://github.com/gregberge/svgr/tree/main) (SVG Imports in `next.config.js`)
 
-<br/>
+## Code Style & Linting:
 
-## Docs
+- Eslint ([Next](https://nextjs.org/docs/basic-features/eslint#eslint-config) and [Prettier](https://github.com/prettier/eslint-config-prettier) plugins)
+- [Prettier](https://prettier.io/) with the following settings available in `.pretierrc`:
+  ```json
+  {
+    "endOfLine": "auto",
+    "semi": false,
+    "singleQuote": true
+  }
+  ```
+- [Husky + lint-staged precommit hooks](https://github.com/okonet/lint-staged)
 
-There is a `docs` folder with documentation on how to use tools such as GSAP and Storyblok at Darkroom. There is also a HOW-TO.md file serving as a catch-all file for any other tools or processes that are too straigthforward to warrant a full documentation file.
+## Third Party (optional tools):
 
-[See Storybook](https://satus-storybook.vercel.app/)
+- [Vercel (Hosting & Continuous Deployment)](https://vercel.com/home)
+- [GitHub Versioning](https://github.com/)
 
-<br/>
+## Folder Structure:
 
-## Going Live
+Alongside the usual Next.js App Router folder structure (`/public`, `/app`, etc.) We've added a few other folders to keep the code easier to read:
 
-To deploy your project you can use Vercel, Netlify, or any other service that supports Next.js.
-there is a PROD-README.md file expanding on the specifics of the deployed project, when going live don't forget to replace this README with the Production one.
-
-<br/>
-
-## Debug
-
-To toggle debug modes you need to access the page `/debug/orchestra`.
-
-example: `https://satus.darkroom.engineering/debug/orchestra`
-
-<br/>
-
-## Authors
-
-This set of hooks is curated and maintained by the darkroom.engineering team:
-
-- Clément Roche ([@clementroche\_](https://twitter.com/clementroche_)) – [darkroom.engineering](https://darkroom.engineering)
-- Guido Fier ([@uido15](https://twitter.com/uido15)) – [darkroom.engineering](https://darkroom.engineering)
-- Leandro Soengas ([@lsoengas](https://twitter.com/lsoengas)) - [darkroom.engineering](https://darkroom.engineering)
-- Fermin Fernandez ([@Fermin_FerBridd](https://twitter.com/Fermin_FerBridd)) - [darkroom.engineering](https://darkroom.engineering)
-- Felix Mayr ([@feledori](https://twitter.com/feledori)) - [darkroom.engineering](https://darkroom.engineering)
-- Franco Arza ([@arzafran](https://twitter.com/arzafran)) - [darkroom.engineering](https://darkroom.engineering)
-
-<br/>
-
-## License
-
-[The MIT License.](https://opensource.org/licenses/MIT)
+- **/components:** Reusable components with their respective Sass file
+- **/docs:** Readmes on how to use third party tools at darkroom
+- **/hooks:** Reusable Custom Hooks
+- **/libs:** Reusable Scripts and State Storing, hubspot integration, sass utils, etc.
+- **/styles:** Global styles and Sass partials

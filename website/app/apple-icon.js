@@ -25,7 +25,7 @@ export default function Icon() {
           justifyContent: 'center',
         }}
       >
-        DE
+        E
       </div>
     ),
     // ImageResponse options

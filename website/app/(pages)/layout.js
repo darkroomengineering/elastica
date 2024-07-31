@@ -1,4 +1,4 @@
-import { GoogleAnalytics, GoogleTagManager } from '@next/third-parties/google'
+import { Analytics } from '@vercel/analytics/react'
 import { Debug } from 'components/debug'
 import { GSAP } from 'components/gsap'
 import { RealViewport } from 'components/real-viewport'
@@ -15,9 +15,6 @@ const APP_TITLE_TEMPLATE = '%s - Elastica'
 const APP_DESCRIPTION = AppData.description
 const APP_BASE_URL =
   process?.env?.NEXT_PUBLIC_BASE_URL ?? 'https://elastica.darkroom.engineering'
-
-const GTM_ID = process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID || false
-const GA_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS || false
 
 export const metadata = {
   metadataBase:
@@ -71,14 +68,14 @@ export default async function Layout({ children }) {
       <head>
         <StyleVariables colors={colors} themes={themes} />
       </head>
-      {GTM_ID && <GoogleTagManager gtmId={GTM_ID} />}
+
       <body>
         <RealViewport />
         {children}
         <Debug />
         <GSAP />
+        <Analytics />
       </body>
-      {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
     </html>
   )
 }
