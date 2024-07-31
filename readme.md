@@ -98,4 +98,4 @@ Object containing preset functions for updating the simulation.
 
 ## Examples
 
-For more examples check [elastica](https://satus-storybook.vercel.app/)
+For more examples check [elastica](https://elastica.darkroom.engineering/)
