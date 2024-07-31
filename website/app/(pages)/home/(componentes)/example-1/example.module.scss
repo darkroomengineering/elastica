@@ -1,8 +1,7 @@
 .example {
   position: fixed;
-  height: 100vh;
-  width: 100vw;
-  padding-bottom: 2vh;
+  height: 100%;
+  width: 100%;
 
   .item {
     position: absolute;
@@ -13,15 +12,12 @@
     background-color: var(--theme-secondary);
     will-change: transform;
     user-select: none;
-    touch-action: none;
+    padding: mobile-vw(12px);
+    border-radius: mobile-vw(8px);
 
     @include desktop {
       padding: desktop-vw(12px);
       border-radius: desktop-vw(8px);
-    }
-
-    > * {
-      touch-action: none;
     }
 
     &.bounce {

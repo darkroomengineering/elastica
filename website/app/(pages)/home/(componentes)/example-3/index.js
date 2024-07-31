@@ -41,22 +41,17 @@ export function Example3() {
           deltaTime,
         }) => {
           boxes.forEach((_, index) => {
-            let velocity = velocities[index]
-            let position = positions[index]
             let draggin = externalForces[index]
             const stVel = stVels[index]
 
-            velocity = velocity.map(
+            velocities[index] = velocities[index].map(
               (v, i) =>
                 v + deltaTime * dumping * (v - 4 * draggin[i] + stVel[i]),
             )
 
-            positions[index] = position = position.map(
-              (pos, i) => pos + velocity[i] * deltaTime,
+            positions[index] = positions[index].map(
+              (pos, i) => pos + velocities[index][i] * deltaTime,
             )
-
-            positions[index] = position
-            velocities[index] = velocity
 
             externalForces[index] = [0, 0]
           })
@@ -98,7 +93,6 @@ function Item({ name, index }) {
       <div
         className={s.item}
         onMouseEnter={({ target }) => {
-          console.log(target)
           target.classList.toggle(s.grabbed, true)
         }}
         onMouseLeave={({ target }) => {

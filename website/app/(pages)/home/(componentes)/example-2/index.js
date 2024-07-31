@@ -34,8 +34,8 @@ export function Example2() {
           collisions: true,
           borders: 'periodic',
           containerOffsets: {
-            top: -0.25,
-            bottom: 0.25,
+            top: -0.2,
+            bottom: 0.2,
             left: -0.2,
             right: 0.2,
           },

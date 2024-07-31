@@ -1,9 +1,7 @@
 .example {
   position: fixed;
-  height: 100vh;
-  width: 100vw;
-  padding-bottom: 10vh;
-
+  height: 100%;
+  width: 100%;
   .wrapper {
     position: absolute;
     inset: 0;
@@ -12,11 +10,13 @@
     will-change: transform;
     user-select: none;
     cursor: grab;
+    touch-action: none;
 
     .item {
-      touch-action: none;
       color: var(--theme-primary);
       background-color: var(--theme-secondary);
+      padding: mobile-vw(12px);
+      border-radius: mobile-vw(8px);
 
       @include desktop {
         padding: desktop-vw(12px);

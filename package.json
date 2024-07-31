@@ -1,7 +1,6 @@
 {
   "name": "@darkroom.engineering/elastica",
   "version": "0.0.1",
-  "type": "module",
   "scripts": {
     "dev:engine": "npm run dev --prefix ./packages/engine",
     "dev:react": "npm run dev --prefix ./packages/react",
@@ -12,11 +11,26 @@
     "publish": "npm publish",
     "publish:dev": "npm publish --tag dev"
   },
-  "keywords": [],
+  "keywords": [
+    "Elastic Collision",
+    "DVD Screensaver",
+    "React"
+  ],
   "author": "darkroomengineering",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/darkroomengineering/elastica.git"
+  },
+  "bugs": {
+    "url": "https://github.com/darkroomengineering/elastica/issues"
+  },
+  "homepage": "https://elastica.darkroom.engineering/",
+  "files": [
+    "dist"
+  ],
   "dependencies": {
-    "@darkroom.engineering/hamo": "0.6.45"
+    "@darkroom.engineering/hamo": "^0.6.45"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",
@@ -32,9 +46,6 @@
     "@babel/core": "^7.24.9",
     "@babel/preset-react": "^7.24.7"
   },
-  "files": [
-    "dist"
-  ],
   "peerDependencies": {
     "react": ">=18.2.0",
     "react-dom": ">=18.2.0"
@@ -48,6 +59,7 @@
     }
   },
   "sideEffects": false,
+  "type": "module",
   "main": "./dist/elastica.mjs",
   "module": "./dist/elastica.mjs",
   "exports": {
@@ -60,8 +72,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "workspaces": [
-    "packages/*"
-  ]
+  }
 }

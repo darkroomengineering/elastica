@@ -7,8 +7,13 @@
   position: absolute;
   display: flex;
   flex-direction: column;
-  row-gap: desktop-vw(8px);
-  padding: desktop-vw(8px);
+  row-gap: mobile-vw(8px);
+  padding: mobile-vw(8px);
+
+  @include desktop {
+    row-gap: desktop-vw(8px);
+    padding: desktop-vw(8px);
+  }
 }
 
 .item {

@@ -49,8 +49,8 @@
             this.gridSize;
 
         this.setPosition(elements[index]?.element, {
-          x: pos[0],
-          y: pos[1],
+          x: pos[0] - this.dimensions[index][0],
+          y: pos[1] - this.dimensions[index][1],
         });
       });
     }
@@ -72,7 +72,7 @@
 
     setPosition(element, { x = 0, y = 0, z = 0 }) {
       if (element) {
-        element.style.cssText = `transform: translate3d(${x}px, ${y}px, ${z}px);`;
+        element.style.cssText = `transform: translate3d(${x}px, ${y}px, ${z}px); will-change: transform;`;
       }
     }
 
@@ -220,7 +220,7 @@
 
       const overlapDir = posA.map((pos, idx) => -Math.sign(pos - posB[idx]));
 
-      return overlaping.map((v, i) => overlapDir[i] * Math.max(1 / v, 0.1))
+      return overlaping.map((v, i) => overlapDir[i] * Math.max(1 / v, 0.5))
     }
 
     collisions(elements) {

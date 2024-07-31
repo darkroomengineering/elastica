@@ -35,9 +35,9 @@ export function Example1() {
 
             const bounce = bounced[index]
             if (bounce % 2 !== 0) {
-              element.classList.add(s.bounce)
+              element.classList.toggle(s.bounce, true)
             } else {
-              element.classList.remove(s.bounce)
+              element.classList.toggle(s.bounce, false)
             }
           })
         }}

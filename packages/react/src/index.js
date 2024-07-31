@@ -41,6 +41,8 @@ function ReactElastica({
   const boxesRefs = useRef(new Map())
   const [sectionRectRef, sectionRect] = useRect()
   const [elastica] = useState(() => new Elastica(config))
+  const timeRef = useRef(0)
+  const [javascriptEnable, setJavascriptEnable] = useState(true)
 
   const addBox = useCallback((element, slide) => {
     boxesRefs.current.set(element, slide)
@@ -59,8 +61,16 @@ function ReactElastica({
     )
   }, [elastica, sectionRect])
 
-  useFrame((_, deltaTime) => {
+  useFrame((time) => {
     const boxes = [...boxesRefs.current.values()]
+
+    if (!javascriptEnable) {
+      timeRef.current = time
+      setJavascriptEnable(true)
+    }
+
+    const deltaTime = Math.min(time - timeRef.current, 100)
+    timeRef.current = time
 
     elastica.update(boxes, (instance) => {
       update({ boxes, ...instance, deltaTime })
@@ -72,11 +82,23 @@ function ReactElastica({
         instance?.setPosition(element?.element, {
           // shift centers element to center of mass
           x: position[0] - dimensions[0],
-          y: position[1],
+          y: position[1] - dimensions[1],
         })
       })
     })
   })
+
+  useEffect(() => {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        setJavascriptEnable(false)
+      }
+    })
+
+    return () => {
+      document.removeEventListener('visibilitychange', () => {})
+    }
+  }, [])
 
   return (
     <div
@@ -117,7 +139,6 @@ function AxisAlignedBoundaryBox({ className, children, ...props }) {
       }}
       className={className}
       {...props}
-      style={{ willChange: 'transform' }}
     >
       {children}
     </div>
