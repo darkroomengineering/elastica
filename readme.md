@@ -1,8 +1,6 @@
 # Elastica
 
-<br/>
-
-Warning: Still in development mode and API might change
+⚠️ ### Still in development mode and API might change
 
 <br/>
 
@@ -15,16 +13,9 @@ Elastica is a JavaScript library providing a physics engine for simulating elast
 ### JavaScript
 
 using a package manager:
-npm install
 
 ```bash
 npm i @darkroom.engineering/elastica
-```
-
-```js
-import ReactElastica, {
-  AxisAlignedBoundaryBox,
-} from '@darkroom.engineering/elastica'
 ```
 
 <br/>
@@ -34,17 +25,17 @@ import ReactElastica, {
 ### React
 
 ```js
-import ReactElastica, {
+import Elastica, {
   AxisAlignedBoundaryBox,
   initalConditionsPresets,
   updatePresets,
-} from '@darkroom.engineering/elastica'
+} from '@darkroom.engineering/elastica/react'
 ```
 
 <br/>
 
 ```js
-<ReactElastica
+<Elastica
   config={{
     collisions: true,
     borders: 'rigid',
@@ -55,7 +46,7 @@ import ReactElastica, {
   {[{ name: 'DVD' }].map(({ name }, index) => (
     <AxisAlignedBoundaryBox key={index}>{name}</AxisAlignedBoundaryBox>
   ))}
-</ReactElastica>
+</Elastica>
 ```
 
 <br/>
