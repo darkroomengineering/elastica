@@ -15,7 +15,7 @@ export const initalConditionsPresets = {
   random: randominitialCondition,
 }
 
-function dvdAnimation({ boxes, positions, velocities, deltaTime }) {
+function dvdScreenSaver({ boxes, positions, velocities, deltaTime }) {
   boxes.forEach((_, index) => {
     positions[index] = positions[index].map(
       (pos, i) => pos + velocities[index][i] * deltaTime,
@@ -78,7 +78,7 @@ function rightFlow({
 }
 
 export const updatePresets = {
-  dvdAnimation,
+  dvdScreenSaver,
   DragAndGravity,
   rightFlow,
 }
