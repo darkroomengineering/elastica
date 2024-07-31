@@ -1,4 +1,10 @@
-Elastica
+# Elastica
+
+<br/>
+
+Warning: Still in development mode and API might change
+
+<br/>
 
 ## Introduction
 

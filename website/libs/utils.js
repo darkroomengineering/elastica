@@ -74,3 +74,10 @@ export const iterableObject = (obj) =>
   Object.entries(obj).map(([_, value]) => {
     return value
   })
+
+export function adjustArrayLength(arr = [], length = 12, override = 100) {
+  if (arr.length === override) return arr
+  if (isEmptyArray(arr)) return []
+
+  return Array.from({ length }, (_, i) => arr[i % arr.length])
+}

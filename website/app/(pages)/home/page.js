@@ -14,14 +14,23 @@ const examples = [
   { name: 'Example 3', component: 'Example3' },
 ]
 
+const data = [
+  { name: 'Guido' },
+  { name: 'Franco' },
+  { name: 'Lea' },
+  { name: 'Felix' },
+  { name: 'Clément' },
+  { name: 'Fermin' },
+]
+
 export default function Home() {
   const [example, setExample] = useState(examples[0])
 
   return (
     <Wrapper theme="red" className={s.page}>
-      {example.component === 'Example1' && <Example1 />}
-      {example.component === 'Example2' && <Example2 />}
-      {example.component === 'Example3' && <Example3 />}
+      {example.component === 'Example1' && <Example1 data={data} />}
+      {example.component === 'Example2' && <Example2 data={data} />}
+      {example.component === 'Example3' && <Example3 data={data} />}
 
       <ul className={s.list}>
         {examples.map(({ name, component }, index) => (

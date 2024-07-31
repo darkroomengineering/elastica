@@ -1,7 +1,9 @@
 'use client'
 
 import { useDrag } from '@use-gesture/react'
-import { useCallback } from 'react'
+import { adjustArrayLength } from 'libs/utils'
+import { useCallback, useEffect, useState } from 'react'
+import { Pane } from 'tweakpane'
 import ReactElastica, {
   AxisAlignedBoundaryBox,
   initalConditionsPresets,
@@ -18,20 +20,19 @@ const data = [
   { name: 'Fermin' },
 ]
 
-const members = [...data, ...data, ...data]
+const paneParams = {
+  collisions: true,
+  borders: 'rigid',
+  dumpingFactor: 0.001,
+}
 
-const stVels = members.map(() => [0, 0])
-const dumping = -0.001
+export function Example3({ data }) {
+  const params = useTweakpane(paneParams)
 
-export function Example3() {
   return (
     <section className={s.example}>
       <ReactElastica
-        config={{
-          gridSize: 8,
-          collisions: true,
-          borders: 'rigid',
-        }}
+        config={params}
         initialCondition={initalConditionsPresets.random}
         update={({
           boxes,
@@ -42,11 +43,10 @@ export function Example3() {
         }) => {
           boxes.forEach((_, index) => {
             let draggin = externalForces[index]
-            const stVel = stVels[index]
 
             velocities[index] = velocities[index].map(
               (v, i) =>
-                v + deltaTime * dumping * (v - 4 * draggin[i] + stVel[i]),
+                v - deltaTime * params.dumpingFactor * (v - 4 * draggin[i]),
             )
 
             positions[index] = positions[index].map(
@@ -57,7 +57,7 @@ export function Example3() {
           })
         }}
       >
-        {members.map(({ name }, index) => (
+        {adjustArrayLength(data, 24).map(({ name }, index) => (
           <Item key={index} name={name} index={index} />
         ))}
       </ReactElastica>
@@ -103,4 +103,55 @@ function Item({ name, index }) {
       </div>
     </AxisAlignedBoundaryBox>
   )
+}
+
+const useTweakpane = (paneParams) => {
+  const [params, setParams] = useState(paneParams)
+
+  useEffect(() => {
+    const pane = new Pane()
+
+    pane
+      .addBinding(paneParams, 'collisions', {
+        label: 'Collisions',
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          collisions: ev.value,
+        }))
+      })
+
+    pane
+      .addBinding(paneParams, 'borders', {
+        label: 'Borders',
+        options: { rigid: 'rigid', periodic: 'periodic' },
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          borders: ev.value,
+        }))
+      })
+
+    pane
+      .addBinding(paneParams, 'dumpingFactor', {
+        label: 'Dumping Factor',
+        min: 0.0001,
+        max: 0.01,
+        step: 0.0001,
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          dumpingFactor: ev.value,
+        }))
+      })
+
+    return () => {
+      pane.dispose()
+    }
+  }, [])
+
+  return params
 }

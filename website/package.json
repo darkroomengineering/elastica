@@ -42,6 +42,7 @@
     "stats.js": "^0.17.0",
     "three": "^0.165.0",
     "tunnel-rat": "^0.1.2",
+    "tweakpane": "^4.0.4",
     "zustand": "4.5.2"
   },
   "devDependencies": {

@@ -40,9 +40,13 @@ function ReactElastica({
 }) {
   const boxesRefs = useRef(new Map())
   const [sectionRectRef, sectionRect] = useRect()
-  const [elastica] = useState(() => new Elastica(config))
-  const timeRef = useRef(0)
   const [javascriptEnable, setJavascriptEnable] = useState(true)
+  const [elastica, setElastica] = useState(() => new Elastica(config))
+  const timeRef = useRef(0)
+
+  useEffect(() => {
+    setElastica(new Elastica(config))
+  }, [config])
 
   const addBox = useCallback((element, slide) => {
     boxesRefs.current.set(element, slide)

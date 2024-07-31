@@ -1,7 +1,9 @@
 'use client'
 
 import { useDrag } from '@use-gesture/react'
-import { useCallback, useRef } from 'react'
+import { adjustArrayLength } from 'libs/utils'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Pane } from 'tweakpane'
 import ReactElastica, {
   AxisAlignedBoundaryBox,
   initalConditionsPresets,
@@ -18,27 +20,26 @@ const data = [
   { name: 'Fermin' },
 ]
 
-const members = [...data, ...data, ...data, ...data]
+const paneParams = {
+  collisions: true,
+  borders: 'periodic',
+  velocity: {
+    x: 0.3,
+    y: 0,
+  },
+  dumpingFactor: 0.001,
+}
 
-const stVels = members.map(() => [0.25 + 0.1 * Math.random(), 0])
-const dumping = -0.001
-
-export function Example2() {
-  const isHovered = useRef(members.map(() => false))
+export function Example2({ data }) {
+  const [items] = useState(adjustArrayLength(data, 18))
+  const isHovered = useRef(items.map(() => false))
+  const params = useTweakpane(paneParams)
 
   return (
     <section className={s.example}>
       <ReactElastica
         config={{
-          gridSize: 8,
-          collisions: true,
-          borders: 'periodic',
-          containerOffsets: {
-            top: -0.2,
-            bottom: 0.2,
-            left: -0.2,
-            right: 0.2,
-          },
+          ...params,
         }}
         initialCondition={initalConditionsPresets.random}
         update={({
@@ -52,16 +53,20 @@ export function Example2() {
             let velocity = velocities[index]
             let position = positions[index]
             let draggin = externalForces[index]
-            const stVel = stVels[index]
+            const stVel = [params.velocity.x, -params.velocity.y]
 
             if (isHovered.current[index]) {
               velocities[index] = velocity.map(
-                (v, i) => v + deltaTime * dumping * (v - 4 * draggin[i]),
+                (v, i) =>
+                  v - deltaTime * params.dumpingFactor * (v - 4 * draggin[i]),
               )
             } else {
               velocities[index] = velocity.map(
                 (v, i) =>
-                  v + deltaTime * dumping * (v - 4 * draggin[i] + stVel[i]),
+                  v -
+                  deltaTime *
+                    params.dumpingFactor *
+                    (v - 4 * draggin[i] + stVel[i]),
               )
             }
 
@@ -73,7 +78,7 @@ export function Example2() {
           })
         }}
       >
-        {members.map(({ name }, index) => (
+        {items.map(({ name }, index) => (
           <Item key={index} name={name} index={index} isHovered={isHovered} />
         ))}
       </ReactElastica>
@@ -121,4 +126,68 @@ function Item({ name, index, isHovered }) {
       </div>
     </AxisAlignedBoundaryBox>
   )
+}
+
+const useTweakpane = (paneParams) => {
+  const [params, setParams] = useState(paneParams)
+
+  useEffect(() => {
+    const pane = new Pane()
+
+    pane
+      .addBinding(paneParams, 'collisions', {
+        label: 'Collisions',
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          collisions: ev.value,
+        }))
+      })
+
+    pane
+      .addBinding(paneParams, 'borders', {
+        label: 'Borders',
+        options: { rigid: 'rigid', periodic: 'periodic' },
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          borders: ev.value,
+        }))
+      })
+
+    pane
+      .addBinding(paneParams, 'velocity', {
+        label: 'Velocity',
+        x: { min: -0.5, max: 0.5, step: 0.01 },
+        y: { min: -0.5, max: 0.5, step: 0.01 },
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          velocity: ev.value,
+        }))
+      })
+
+    pane
+      .addBinding(paneParams, 'dumpingFactor', {
+        label: 'Dumping Factor',
+        min: 0.0001,
+        max: 0.001,
+        step: 0.0001,
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          dumpingFactor: ev.value,
+        }))
+      })
+
+    return () => {
+      pane.dispose()
+    }
+  }, [])
+
+  return params
 }
