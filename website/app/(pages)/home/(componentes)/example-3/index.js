@@ -1,9 +1,12 @@
 'use client'
 
-import ReactElasticCollision, {
-  CollisionBox,
+import { useDrag } from '@use-gesture/react'
+import { useCallback } from 'react'
+import ReactElastica, {
+  AxisAlignedBoundaryBox,
   initalConditionsPresets,
-} from '../../../../../../packages/react/dist/elastic-collisions-react.mjs'
+  useElastica,
+} from '../../../../../../dist/elastica-react.mjs'
 import s from './example.module.scss'
 
 const data = [
@@ -23,13 +26,13 @@ const dumping = -0.001
 export function Example3() {
   return (
     <section className={s.example}>
-      <ReactElasticCollision
+      <ReactElastica
         config={{
           gridSize: 8,
           collisions: true,
           borders: 'rigid',
         }}
-        initialConditions={initalConditionsPresets.random}
+        initialCondition={initalConditionsPresets.random}
         update={({
           boxes,
           positions,
@@ -62,27 +65,48 @@ export function Example3() {
         {members.map(({ name }, index) => (
           <Item key={index} name={name} index={index} />
         ))}
-      </ReactElasticCollision>
+      </ReactElastica>
     </section>
   )
 }
 
 function Item({ name, index }) {
+  const { elastica } = useElastica()
+
+  const onDragStop = useCallback(
+    (newDir) => {
+      const { externalForces } = elastica
+
+      let norm = newDir.map((pos) => pos * pos).reduce((a, b) => a + b)
+      norm = Math.sqrt(norm)
+
+      if (norm === 0) return
+
+      externalForces[index] = newDir.map((pos) => pos / norm)
+    },
+    [elastica],
+  )
+
+  const bind = useDrag(({ down, movement: [mx, my] }) => {
+    if (down && onDragStop) {
+      onDragStop([mx, my])
+    }
+  })
+
   return (
-    <CollisionBox
-      key={index}
-      className={s.item}
-      onDragStop={(newDir, externalForces) => {
-        let norm = newDir.map((pos) => pos * pos).reduce((a, b) => a + b)
-        norm = Math.sqrt(norm)
-
-        if (norm === 0) return
-
-        externalForces[index] = newDir.map((pos) => pos / norm)
-      }}
-      index={index}
-    >
-      <div>{name}</div>
-    </CollisionBox>
+    <AxisAlignedBoundaryBox key={index} className={s.wrapper} {...bind()}>
+      <div
+        className={s.item}
+        onMouseEnter={({ target }) => {
+          console.log(target)
+          target.classList.toggle(s.grabbed, true)
+        }}
+        onMouseLeave={({ target }) => {
+          target.classList.toggle(s.grabbed, false)
+        }}
+      >
+        {name}
+      </div>
+    </AxisAlignedBoundaryBox>
   )
 }

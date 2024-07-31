@@ -1,9 +1,9 @@
 'use client'
 
-import ReactElasticCollision, {
-  CollisionBox,
+import ReactElastica, {
+  AxisAlignedBoundaryBox,
   initalConditionsPresets,
-} from '../../../../../../packages/react/dist/elastic-collisions-react.mjs'
+} from '../../../../../../dist/elastica-react.mjs'
 import s from './example.module.scss'
 
 const data = [
@@ -20,13 +20,13 @@ const members = [...data, ...data]
 export function Example1() {
   return (
     <section className={s.example}>
-      <ReactElasticCollision
+      <ReactElastica
         config={{
           gridSize: 8,
           collisions: true,
           borders: 'rigid',
         }}
-        initialConditions={initalConditionsPresets.random}
+        initialCondition={initalConditionsPresets.random}
         update={({ boxes, positions, velocities, bounced, deltaTime }) => {
           boxes.forEach(({ element }, index) => {
             positions[index] = positions[index].map(
@@ -45,15 +45,15 @@ export function Example1() {
         {members.map(({ name }, index) => (
           <Item key={index} name={name} index={index} />
         ))}
-      </ReactElasticCollision>
+      </ReactElastica>
     </section>
   )
 }
 
 function Item({ name, index }) {
   return (
-    <CollisionBox key={index} className={s.item} index={index}>
+    <AxisAlignedBoundaryBox key={index} className={s.item} index={index}>
       <div>{name}</div>
-    </CollisionBox>
+    </AxisAlignedBoundaryBox>
   )
 }

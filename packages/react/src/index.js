@@ -1,5 +1,4 @@
 import { useFrame, useRect } from '@darkroom.engineering/hamo'
-import { useDrag } from '@use-gesture/react'
 import React, {
   createContext,
   useCallback,
@@ -8,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react'
-import ElasticCollision from '../../engine/dist/elastic-collisions.mjs'
+import Elastica from '../../../dist/elastica.mjs'
 import {
   dragForcePresetsLib,
   initalConditionsPresets,
@@ -16,13 +15,13 @@ import {
 } from './presets'
 import { isEmptyArray } from './utils'
 
-const ElasticCollisionContext = createContext({})
+const ElasticaContext = createContext({})
 
-function useElasticCollision() {
-  return useContext(ElasticCollisionContext)
+function useElastica() {
+  return useContext(ElasticaContext)
 }
 
-function ReactElasticCollision({
+function ReactElastica({
   children,
   className,
   config = {
@@ -36,12 +35,12 @@ function ReactElasticCollision({
       right: 0,
     },
   },
-  initialConditions = () => {},
+  initialCondition = () => {},
   update = () => {},
 }) {
   const boxesRefs = useRef(new Map())
   const [sectionRectRef, sectionRect] = useRect()
-  const [elasticCollision] = useState(() => new ElasticCollision(config))
+  const [elastica] = useState(() => new Elastica(config))
 
   const addBox = useCallback((element, slide) => {
     boxesRefs.current.set(element, slide)
@@ -55,15 +54,15 @@ function ReactElasticCollision({
 
     if (isEmptyArray(boxes) || boxes.some(({ rect }) => !rect)) return
 
-    elasticCollision.initialConditions(boxes, sectionRect, (instances) =>
-      initialConditions({ boxes, ...instances }),
+    elastica.initialCondition(boxes, sectionRect, (instances) =>
+      initialCondition({ boxes, ...instances }),
     )
-  }, [elasticCollision, sectionRect])
+  }, [elastica, sectionRect])
 
   useFrame((_, deltaTime) => {
     const boxes = [...boxesRefs.current.values()]
 
-    elasticCollision.update(boxes, (instance) => {
+    elastica.update(boxes, (instance) => {
       update({ boxes, ...instance, deltaTime })
 
       boxes.forEach((element, index) => {
@@ -85,23 +84,15 @@ function ReactElasticCollision({
       ref={sectionRectRef}
       style={{ position: 'relative', width: '100%', height: '100%' }}
     >
-      <ElasticCollisionContext.Provider
-        value={{ addBox, removeBox, elasticCollision }}
-      >
+      <ElasticaContext.Provider value={{ addBox, removeBox, elastica }}>
         {children}
-      </ElasticCollisionContext.Provider>
+      </ElasticaContext.Provider>
     </div>
   )
 }
 
-function CollisionBox({
-  className,
-  children,
-  onDragStop = null,
-  index = 0,
-  ...props
-}) {
-  const { addBox, removeBox, elasticCollision } = useElasticCollision()
+function AxisAlignedBoundaryBox({ className, children, ...props }) {
+  const { addBox, removeBox, elastica } = useElastica()
   const [setRectRef, rect] = useRect()
   const elementRef = useRef()
 
@@ -118,12 +109,6 @@ function CollisionBox({
     }
   }, [rect, addBox, removeBox])
 
-  const bind = useDrag(({ down, movement: [mx, my] }) => {
-    if (down && onDragStop) {
-      onDragStop([mx, my], elasticCollision.externalForces, index)
-    }
-  })
-
   return (
     <div
       ref={(node) => {
@@ -132,17 +117,18 @@ function CollisionBox({
       }}
       className={className}
       {...props}
+      style={{ willChange: 'transform' }}
     >
-      <div {...bind()}>{children}</div>
+      {children}
     </div>
   )
 }
 
-export default ReactElasticCollision
+export default ReactElastica
 export {
-  CollisionBox,
+  AxisAlignedBoundaryBox,
   dragForcePresetsLib,
   initalConditionsPresets,
   updatePresets,
-  useElasticCollision,
+  useElastica,
 }

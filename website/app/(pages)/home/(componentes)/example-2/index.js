@@ -1,10 +1,12 @@
 'use client'
 
-import { useRef } from 'react'
-import ReactElasticCollision, {
-  CollisionBox,
+import { useDrag } from '@use-gesture/react'
+import { useCallback, useRef } from 'react'
+import ReactElastica, {
+  AxisAlignedBoundaryBox,
   initalConditionsPresets,
-} from '../../../../../../packages/react/dist/elastic-collisions-react.mjs'
+  useElastica,
+} from '../../../../../../dist/elastica-react.mjs'
 import s from './example.module.scss'
 
 const data = [
@@ -16,9 +18,9 @@ const data = [
   { name: 'Fermin' },
 ]
 
-const members = [...data, ...data, ...data, ...data, ...data, ...data]
+const members = [...data, ...data, ...data, ...data]
 
-const stVels = members.map(() => [0.5 * (Math.random() - 0.5), 0])
+const stVels = members.map(() => [0.25 + 0.1 * Math.random(), 0])
 const dumping = -0.001
 
 export function Example2() {
@@ -26,19 +28,19 @@ export function Example2() {
 
   return (
     <section className={s.example}>
-      <ReactElasticCollision
+      <ReactElastica
         config={{
           gridSize: 8,
           collisions: true,
           borders: 'periodic',
           containerOffsets: {
-            top: -0.2,
-            bottom: 0.2,
+            top: -0.25,
+            bottom: 0.25,
             left: -0.2,
             right: 0.2,
           },
         }}
-        initialConditions={initalConditionsPresets.random}
+        initialCondition={initalConditionsPresets.random}
         update={({
           boxes,
           positions,
@@ -74,36 +76,49 @@ export function Example2() {
         {members.map(({ name }, index) => (
           <Item key={index} name={name} index={index} isHovered={isHovered} />
         ))}
-      </ReactElasticCollision>
+      </ReactElastica>
     </section>
   )
 }
 
 function Item({ name, index, isHovered }) {
+  const { elastica } = useElastica()
+
+  const onDragStop = useCallback(
+    (newDir) => {
+      const { externalForces } = elastica
+
+      let norm = newDir.map((pos) => pos * pos).reduce((a, b) => a + b)
+      norm = Math.sqrt(norm)
+
+      if (norm === 0) return
+
+      externalForces[index] = newDir.map((pos) => pos / norm)
+    },
+    [elastica],
+  )
+
+  const bind = useDrag(({ down, movement: [mx, my] }) => {
+    if (down) {
+      onDragStop([mx, my])
+    }
+  })
+
   return (
-    <CollisionBox
-      key={index}
-      className={s.item}
-      onDragStop={(newDir, externalForces) => {
-        let norm = newDir.map((pos) => pos * pos).reduce((a, b) => a + b)
-        norm = Math.sqrt(norm)
-
-        if (norm === 0) return
-
-        externalForces[index] = newDir.map((pos) => pos / norm)
-      }}
-      index={index}
-    >
+    <AxisAlignedBoundaryBox key={index} className={s.wrapper} {...bind()}>
       <div
-        onMouseDown={() => {
+        className={s.item}
+        onMouseEnter={({ target }) => {
           isHovered.current[index] = true
+          target.classList.toggle(s.grabbed, true)
         }}
-        onMouseLeave={() => {
+        onMouseLeave={({ target }) => {
           isHovered.current[index] = false
+          target.classList.toggle(s.grabbed, false)
         }}
       >
         {name}
       </div>
-    </CollisionBox>
+    </AxisAlignedBoundaryBox>
   )
 }

@@ -8,6 +8,6 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "elastic-collisions": "workspace:elastic-collisions*"
+    "elastic-collisions": "workspace:elastica*"
   }
 }

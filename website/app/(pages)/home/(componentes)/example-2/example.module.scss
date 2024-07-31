@@ -4,25 +4,28 @@
   width: 100vw;
   padding-bottom: 10vh;
 
-  .item {
+  .wrapper {
     position: absolute;
     inset: 0;
     width: fit-content;
     height: fit-content;
-    color: var(--theme-primary);
-    background-color: var(--theme-secondary);
-    will-change: transform;
     user-select: none;
     cursor: grab;
-    touch-action: none;
 
-    @include desktop {
-      padding: desktop-vw(12px);
-      border-radius: desktop-vw(8px);
-    }
-
-    > * {
+    .item {
       touch-action: none;
+      color: var(--theme-primary);
+      background-color: var(--theme-secondary);
+
+      @include desktop {
+        padding: desktop-vw(12px);
+        border-radius: desktop-vw(8px);
+      }
+
+      &.grabbed {
+        color: var(--theme-secondary);
+        background-color: var(--white);
+      }
     }
   }
 }

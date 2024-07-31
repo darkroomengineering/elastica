@@ -1,10 +1,10 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global["Elastic Collisions"] = factory());
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Elastica = factory());
 })(this, (function () { 'use strict';
 
-  class ElasticCollision {
+  class Elastica {
     constructor({
       gridSize = 4,
       containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 },
@@ -24,9 +24,9 @@
       this.container = {};
       this.collisionsList = [];
     }
-    //todo pass elements to objects and not to array
+    //TODO pass elements to objects and not to array
 
-    initialConditions(elements, rect, callback = () => {}) {
+    initialCondition(elements, rect, callback = () => {}) {
       this.container = rect;
 
       this.dimensions = elements.map((element, index) => {
@@ -310,7 +310,7 @@
     }
   }
 
-  return ElasticCollision;
+  return Elastica;
 
 }));
-//# sourceMappingURL=elastic-collisions.js.map
+//# sourceMappingURL=elastica.js.map

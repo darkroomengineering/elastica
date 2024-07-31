@@ -1,4 +1,4 @@
-export default class ElasticCollision {
+export default class Elastica {
   constructor({
     gridSize = 4,
     containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 },
@@ -18,9 +18,9 @@ export default class ElasticCollision {
     this.container = {}
     this.collisionsList = []
   }
-  //todo pass elements to objects and not to array
+  //TODO pass elements to objects and not to array
 
-  initialConditions(elements, rect, callback = () => {}) {
+  initialCondition(elements, rect, callback = () => {}) {
     this.container = rect
 
     this.dimensions = elements.map((element, index) => {

@@ -1,4 +1,4 @@
-function randomInitialConditions({ boxes, positions, velocities, container }) {
+function randominitialCondition({ boxes, positions, velocities, container }) {
   boxes.forEach((_, index) => {
     positions[index] = [
       Math.random() * container.width,
@@ -12,7 +12,7 @@ function randomInitialConditions({ boxes, positions, velocities, container }) {
 }
 
 export const initalConditionsPresets = {
-  random: randomInitialConditions,
+  random: randominitialCondition,
 }
 
 function dvdAnimation({ boxes, positions, velocities, deltaTime }) {
