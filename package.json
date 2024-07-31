@@ -1,6 +1,6 @@
 {
   "name": "@darkroom.engineering/elastica",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "scripts": {
     "dev:engine": "npm run dev --prefix ./packages/engine",
     "dev:react": "npm run dev --prefix ./packages/react",

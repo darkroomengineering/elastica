@@ -15,12 +15,12 @@ const examples = [
 ]
 
 const data = [
-  { name: 'Guido' },
-  { name: 'Franco' },
-  { name: 'Lea' },
-  { name: 'Felix' },
-  { name: 'Clément' },
-  { name: 'Fermin' },
+  { name: 'Elastica' },
+  { name: 'Elastica' },
+  { name: 'Elastica' },
+  { name: 'Elastica' },
+  { name: 'Elastica' },
+  { name: 'Elastica' },
 ]
 
 export default function Home() {
