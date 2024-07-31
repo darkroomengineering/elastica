@@ -1,6 +1,6 @@
 # Elastica
 
-⚠️ ### Still in development mode and API might change
+###  ⚠️ Still in development mode - API might change ⚠️
 
 <br/>
 
