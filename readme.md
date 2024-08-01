@@ -1,8 +1,8 @@
 # Elastica
 
-###  ⚠️ Still in development mode - API might change ⚠️
+### ⚠️ Still in development mode - API might change ⚠️
 
-<br/>
+[Demo](https://elastica.darkroom.engineering/)
 
 ## Introduction
 
@@ -10,19 +10,11 @@ Elastica is a JavaScript library providing a physics engine for simulating elast
 
 ## Installation
 
-### JavaScript
-
-using a package manager:
-
 ```bash
 npm i @darkroom.engineering/elastica
 ```
 
-<br/>
-
 ## Setup
-
-### React
 
 ```js
 import Elastica, {
@@ -33,6 +25,8 @@ import Elastica, {
 ```
 
 <br/>
+
+`Elastica` will wrap your component getting the dimensions for borders calculations and the grid size for collisions.
 
 ```js
 <Elastica
@@ -51,6 +45,8 @@ import Elastica, {
 
 <br/>
 
+`AxisAlignedBoundaryBox` will wray your elements getting their size for collisions and positioning.
+
 ## API
 
 ### ReactElastica
@@ -59,15 +55,16 @@ import Elastica, {
 | --------------------- | ----------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `children`            | `ReactNode` | N/A         | Represents the child elements or components rendered within the `ReactElastica` component. These elements are part of the elastic collision simulation.                                                     |
 | `className`           | `string`    | N/A         | Specifies a CSS class for styling the `ReactElastica` container, allowing custom styling and theming.                                                                                                       |
+| `showHashGrid`        | `boolean`   | `false`     | Shows the hash grid for measuing correct grid size.                                                                                                                                                         |
 | `config`              | `object`    | See below   | Configuration object controlling various aspects of the physics simulation.                                                                                                                                 |
-| └─ `gridSize`         | `number`    | `8`         | Defines the size of the hash grid, bigger grid reduces number of computation by collisions.                                                                                                                 |
+| └─ `gridSize`         | `number`    | `8`         | Defines the size of the hash grid, bigger grid reduces number of computation by collisions but should not be smaller than biggest element.                                                                  |
 | └─ `collisions`       | `boolean`   | `true`      | Enables or disables collision detection between elements.                                                                                                                                                   |
 | └─ `borders`          | `string`    | `'rigid'`   | Defines the border behavior. `'rigid'` indicates immovable borders, preventing objects from passing through the container's edges. `'Periodic'` translates elements to opposite border when reaching limit. |
 | └─ `containerOffsets` | `object`    | See below   | Specifies the offsets from the container's edges for the simulation area, allowing for padding or margins.                                                                                                  |
-| └─ `top`              | `number`    | `0`         | Top offset.                                                                                                                                                                                                 |
-| └─ `bottom`           | `number`    | `0`         | Bottom offset.                                                                                                                                                                                              |
-| └─ `left`             | `number`    | `0`         | Left offset.                                                                                                                                                                                                |
-| └─ `right`            | `number`    | `0`         | Right offset.                                                                                                                                                                                               |
+| └── `top`             | `number`    | `0`         | Top offset.                                                                                                                                                                                                 |
+| └── `bottom`          | `number`    | `0`         | Bottom offset.                                                                                                                                                                                              |
+| └── `left`            | `number`    | `0`         | Left offset.                                                                                                                                                                                                |
+| └── `right`           | `number`    | `0`         | Right offset.                                                                                                                                                                                               |
 | `initialCondition`    | `function`  | `() => {}`  | Function to set the initial conditions of the simulation, such as starting positions and velocities of elements. It is called once when the component mounts. Engine instance Class passed as props         |
 | `update`              | `function`  | `() => {}`  | Callback function called on each simulation update, where cinematic equations have to be applied to each element. Engine instance Class passed as props.                                                    |
 
@@ -95,4 +92,4 @@ Object containing preset functions for updating the simulation.
 
 ## Examples
 
-For more examples check [elastica](https://elastica.darkroom.engineering/)
+For more examples check [demo github](<https://github.com/darkroomengineering/elastica/tree/main/website/app/(pages)/home/(componentes)/>)

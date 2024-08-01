@@ -11,16 +11,8 @@ import ReactElastica, {
 } from '../../../../../../dist/elastica-react.mjs'
 import s from './example.module.scss'
 
-const data = [
-  { name: 'Guido' },
-  { name: 'Franco' },
-  { name: 'Lea' },
-  { name: 'Felix' },
-  { name: 'Clément' },
-  { name: 'Fermin' },
-]
-
 const paneParams = {
+  gridSize: 8,
   collisions: true,
   borders: 'rigid',
   dumpingFactor: 0.001,

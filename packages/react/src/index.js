@@ -13,7 +13,7 @@ import {
   initalConditionsPresets,
   updatePresets,
 } from './presets'
-import { isEmptyArray } from './utils'
+import { HashGrid, isEmptyArray, useJavascriptEnable } from './utils'
 
 const ElasticaContext = createContext({})
 
@@ -37,12 +37,13 @@ function ReactElastica({
   },
   initialCondition = () => {},
   update = () => {},
+  showHashGrid = false,
 }) {
+  const timeRef = useRef(0)
   const boxesRefs = useRef(new Map())
   const [sectionRectRef, sectionRect] = useRect()
-  const [javascriptEnable, setJavascriptEnable] = useState(true)
+  const [javascriptEnable, setJavascriptEnable] = useJavascriptEnable()
   const [elastica, setElastica] = useState(() => new Elastica(config))
-  const timeRef = useRef(0)
 
   useEffect(() => {
     setElastica(new Elastica(config))
@@ -55,6 +56,7 @@ function ReactElastica({
     boxesRefs.current.delete(element)
   }, [])
 
+  // Set initial conditions
   useEffect(() => {
     const boxes = [...boxesRefs.current.values()]
 
@@ -65,6 +67,7 @@ function ReactElastica({
     )
   }, [elastica, sectionRect])
 
+  // Update simulation
   useFrame((time) => {
     const boxes = [...boxesRefs.current.values()]
 
@@ -92,18 +95,6 @@ function ReactElastica({
     })
   })
 
-  useEffect(() => {
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        setJavascriptEnable(false)
-      }
-    })
-
-    return () => {
-      document.removeEventListener('visibilitychange', () => {})
-    }
-  }, [])
-
   return (
     <div
       className={className}
@@ -112,6 +103,7 @@ function ReactElastica({
     >
       <ElasticaContext.Provider value={{ addBox, removeBox, elastica }}>
         {children}
+        {showHashGrid && <HashGrid gridSize={elastica.gridSize} />}
       </ElasticaContext.Provider>
     </div>
   )

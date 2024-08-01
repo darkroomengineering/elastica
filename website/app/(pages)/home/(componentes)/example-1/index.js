@@ -10,6 +10,8 @@ import ReactElastica, {
 import s from './example.module.scss'
 
 const paneParams = {
+  gridSize: 8,
+  showHashGrid: false,
   collisions: true,
   borders: 'rigid',
   speed: 1,
@@ -21,9 +23,17 @@ export function Example1({ data }) {
   return (
     <section className={s.example}>
       <ReactElastica
+        showHashGrid={params.showHashGrid}
         config={params}
         initialCondition={initalConditionsPresets.random}
-        update={({ boxes, positions, velocities, bounced, deltaTime }) => {
+        update={({
+          boxes,
+          positions,
+          velocities,
+          bounced,
+          deltaTime,
+          hash,
+        }) => {
           boxes.forEach(({ element }, index) => {
             positions[index] = positions[index].map(
               (pos, i) => pos + params.speed * velocities[index][i] * deltaTime,
@@ -34,6 +44,10 @@ export function Example1({ data }) {
               element.classList.toggle(s.bounce, true)
             } else {
               element.classList.toggle(s.bounce, false)
+            }
+
+            if (params.showHashGrid) {
+              element.textContent = 'elastica-' + hash[index]
             }
           })
         }}
@@ -53,6 +67,31 @@ const useTweakpane = (paneParams) => {
 
   useEffect(() => {
     const pane = new Pane()
+
+    pane
+      .addBinding(paneParams, 'showHashGrid', {
+        label: 'Show Hash Grid',
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          showHashGrid: ev.value,
+        }))
+      })
+
+    pane
+      .addBinding(paneParams, 'gridSize', {
+        label: 'Grid Size',
+        min: 1,
+        max: 10,
+        step: 1,
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          gridSize: parseInt(ev.value),
+        }))
+      })
 
     pane
       .addBinding(paneParams, 'collisions', {
