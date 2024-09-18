@@ -31,7 +31,7 @@
     "gsap": "^3.12.5",
     "just-modulo": "^2.2.0",
     "lenis": "1.1.9",
-    "next": "14.2.5",
+    "next": "14.2.10",
     "next-sitemap": "^4.2.3",
     "postprocessing": "^6.36.0",
     "react": "18.3.1",
