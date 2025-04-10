@@ -1,7 +1,7 @@
 'use client'
 
 import { adjustArrayLength } from 'libs/utils'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Pane } from 'tweakpane'
 import ReactElastica, {
   AxisAlignedBoundaryBox,
@@ -10,15 +10,23 @@ import ReactElastica, {
 import s from './example.module.scss'
 
 const paneParams = {
-  gridSize: 8,
+  gridSize: 6,
   showHashGrid: false,
   collisions: true,
   borders: 'rigid',
   speed: 1,
+  play: true,
 }
 
 export function Example1({ data }) {
-  const params = useTweakpane(paneParams)
+  const elasticaRef = useRef(null)
+  const params = useTweakpane(paneParams, (value) => {
+    if (value) {
+      elasticaRef.current.play()
+    } else {
+      elasticaRef.current.pause()
+    }
+  })
 
   return (
     <section className={s.example}>
@@ -51,6 +59,7 @@ export function Example1({ data }) {
             }
           })
         }}
+        ref={elasticaRef}
       >
         {adjustArrayLength(data, 12).map(({ name }, index) => (
           <AxisAlignedBoundaryBox key={index} className={s.item}>
@@ -62,7 +71,7 @@ export function Example1({ data }) {
   )
 }
 
-const useTweakpane = (paneParams) => {
+function useTweakpane(paneParams, callback) {
   const [params, setParams] = useState(paneParams)
 
   useEffect(() => {
@@ -128,6 +137,14 @@ const useTweakpane = (paneParams) => {
           ...prev,
           speed: ev.value,
         }))
+      })
+
+    pane
+      .addBinding(paneParams, 'play', {
+        label: 'Play',
+      })
+      .on('change', (ev) => {
+        callback(ev.value)
       })
 
     return () => {

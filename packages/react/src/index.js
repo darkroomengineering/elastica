@@ -1,9 +1,11 @@
 import { useFrame, useRect } from '@darkroom.engineering/hamo'
 import React, {
   createContext,
+  forwardRef,
   useCallback,
   useContext,
   useEffect,
+  useImperativeHandle,
   useRef,
   useState,
 } from 'react'
@@ -21,25 +23,29 @@ function useElastica() {
   return useContext(ElasticaContext)
 }
 
-function ReactElastica({
-  children,
-  className,
-  config = {
-    gridSize: 8,
-    collisions: true,
-    borders: 'rigid',
-    containerOffsets: {
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
+const ReactElastica = forwardRef(function ReactElastica(
+  {
+    children,
+    className,
+    config = {
+      gridSize: 8,
+      collisions: true,
+      borders: 'rigid',
+      containerOffsets: {
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+      },
     },
+    initialCondition = () => {},
+    update = () => {},
+    showHashGrid = false,
   },
-  initialCondition = () => {},
-  update = () => {},
-  showHashGrid = false,
-}) {
+  ref,
+) {
   const timeRef = useRef(0)
+  const isPausedRef = useRef(false)
   const boxesRefs = useRef(new Map())
   const [sectionRectRef, sectionRect] = useRect()
   const [javascriptEnable, setJavascriptEnable] = useJavascriptEnable()
@@ -56,6 +62,14 @@ function ReactElastica({
     boxesRefs.current.delete(element)
   }, [])
 
+  const play = useCallback(() => {
+    isPausedRef.current = false
+  }, [])
+
+  const pause = useCallback(() => {
+    isPausedRef.current = true
+  }, [])
+
   // Set initial conditions
   useEffect(() => {
     const boxes = [...boxesRefs.current.values()]
@@ -69,13 +83,14 @@ function ReactElastica({
 
   // Update simulation
   useFrame((time) => {
-    const boxes = [...boxesRefs.current.values()]
+    if (isPausedRef.current) return
 
     if (!javascriptEnable) {
       timeRef.current = time
       setJavascriptEnable(true)
     }
 
+    const boxes = [...boxesRefs.current.values()]
     const deltaTime = Math.min(time - timeRef.current, 100)
     timeRef.current = time
 
@@ -95,6 +110,11 @@ function ReactElastica({
     })
   })
 
+  useImperativeHandle(ref, () => ({
+    play,
+    pause,
+  }))
+
   return (
     <div
       className={className}
@@ -107,10 +127,12 @@ function ReactElastica({
       </ElasticaContext.Provider>
     </div>
   )
-}
+})
+
+ReactElastica.displayName = 'ReactElastica'
 
 function AxisAlignedBoundaryBox({ className, children, ...props }) {
-  const { addBox, removeBox, elastica } = useElastica()
+  const { addBox, removeBox } = useElastica()
   const [setRectRef, rect] = useRect()
   const elementRef = useRef()
 

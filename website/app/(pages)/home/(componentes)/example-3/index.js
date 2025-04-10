@@ -2,7 +2,7 @@
 
 import { useDrag } from '@use-gesture/react'
 import { adjustArrayLength } from 'libs/utils'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pane } from 'tweakpane'
 import ReactElastica, {
   AxisAlignedBoundaryBox,
@@ -16,14 +16,23 @@ const paneParams = {
   collisions: true,
   borders: 'rigid',
   dumpingFactor: 0.001,
+  play: true,
 }
 
 export function Example3({ data }) {
-  const params = useTweakpane(paneParams)
+  const elasticaRef = useRef(null)
+  const params = useTweakpane(paneParams, (value) => {
+    if (value) {
+      elasticaRef.current.play()
+    } else {
+      elasticaRef.current.pause()
+    }
+  })
 
   return (
     <section className={s.example}>
       <ReactElastica
+        ref={elasticaRef}
         config={params}
         initialCondition={initalConditionsPresets.random}
         update={({
@@ -97,7 +106,7 @@ function Item({ name, index }) {
   )
 }
 
-const useTweakpane = (paneParams) => {
+function useTweakpane(paneParams, callback) {
   const [params, setParams] = useState(paneParams)
 
   useEffect(() => {
@@ -138,6 +147,14 @@ const useTweakpane = (paneParams) => {
           ...prev,
           dumpingFactor: ev.value,
         }))
+      })
+
+    pane
+      .addBinding(paneParams, 'play', {
+        label: 'Play',
+      })
+      .on('change', (ev) => {
+        callback(ev.value)
       })
 
     return () => {

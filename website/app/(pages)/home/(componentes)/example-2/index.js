@@ -20,16 +20,25 @@ const paneParams = {
     y: 0,
   },
   dumpingFactor: 0.001,
+  play: true,
 }
 
 export function Example2({ data }) {
+  const elasticaRef = useRef(null)
   const [items] = useState(adjustArrayLength(data, 18))
   const isHovered = useRef(items.map(() => false))
-  const params = useTweakpane(paneParams)
+  const params = useTweakpane(paneParams, (value) => {
+    if (value) {
+      elasticaRef.current.play()
+    } else {
+      elasticaRef.current.pause()
+    }
+  })
 
   return (
     <section className={s.example}>
       <ReactElastica
+        ref={elasticaRef}
         config={{
           ...params,
         }}
@@ -120,7 +129,7 @@ function Item({ name, index, isHovered }) {
   )
 }
 
-const useTweakpane = (paneParams) => {
+function useTweakpane(paneParams, callback) {
   const [params, setParams] = useState(paneParams)
 
   useEffect(() => {
@@ -174,6 +183,14 @@ const useTweakpane = (paneParams) => {
           ...prev,
           dumpingFactor: ev.value,
         }))
+      })
+
+    pane
+      .addBinding(paneParams, 'play', {
+        label: 'Play',
+      })
+      .on('change', (ev) => {
+        callback(ev.value)
       })
 
     return () => {
