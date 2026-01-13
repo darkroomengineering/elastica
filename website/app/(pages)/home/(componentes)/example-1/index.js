@@ -10,9 +10,10 @@ import ReactElastica, {
 import s from './example.module.scss'
 
 const paneParams = {
-  gridSize: 6,
+  gridSize: 5,
   showHashGrid: false,
   collisions: true,
+  useOBB: false,
   borders: 'rigid',
   speed: 1,
   play: true,
@@ -99,6 +100,17 @@ function useTweakpane(paneParams, callback) {
         setParams((prev) => ({
           ...prev,
           gridSize: parseInt(ev.value),
+        }))
+      })
+
+    pane
+      .addBinding(paneParams, 'useOBB', {
+        label: 'Use OBB',
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          useOBB: ev.value,
         }))
       })
 
