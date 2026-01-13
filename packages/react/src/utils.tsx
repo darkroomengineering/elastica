@@ -1,23 +1,27 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 
-export function isEmptyArray(arr) {
+export function isEmptyArray<T>(arr: T[] | null | undefined): boolean {
   if (!arr) return true
 
   return Array.isArray(arr) && arr.length === 0
 }
 
-export function useJavascriptEnable(initState = true) {
+export function useJavascriptEnable(
+  initState = true
+): [boolean, Dispatch<SetStateAction<boolean>>] {
   const [javascriptEnable, setJavascriptEnable] = useState(initState)
 
   useEffect(() => {
-    document.addEventListener('visibilitychange', () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         setJavascriptEnable(false)
       }
-    })
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      document.removeEventListener('visibilitychange', () => {})
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
 
@@ -32,26 +36,21 @@ const fullSize = {
   pointerEvents: 'none',
   width: '100%',
   height: '100%',
+} as const
+
+export type HashGridProps = {
+  gridSize: number
 }
 
-export function HashGrid({ gridSize }) {
+export function HashGrid({ gridSize }: HashGridProps) {
   return (
     <>
-      <div
-        style={{
-          ...fullSize,
-        }}
-      >
+      <div style={{ ...fullSize }}>
         {new Array(gridSize + 1).fill(0).map((_, index) => (
           <span key={index} style={{ border: '1px solid white' }} />
         ))}
       </div>
-      <div
-        style={{
-          flexDirection: 'column',
-          ...fullSize,
-        }}
-      >
+      <div style={{ flexDirection: 'column', ...fullSize }}>
         {new Array(gridSize + 1).fill(0).map((_, index) => (
           <span key={index} style={{ border: '1px solid white' }} />
         ))}

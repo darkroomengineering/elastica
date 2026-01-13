@@ -1,316 +1,816 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Elastica = factory());
-})(this, (function () { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+    typeof define === 'function' && define.amd ? define(['exports'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.Elastica = {}));
+})(this, (function (exports) { 'use strict';
 
-  class Elastica {
-    constructor({
-      gridSize = 4,
-      containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 },
-      collisions = true,
-      borders = 'rigid',
-    } = {}) {
-      this.calculatecCollisions = collisions;
-      this.calculateBorders = borders;
-      this.gridSize = gridSize;
-      this.containerOffsets = containerOffsets;
-      this.positions = [];
-      this.velocities = [];
-      this.externalForces = [];
-      this.dimensions = [];
-      this.bounced = [];
-      this.hash = [];
-      this.container = {};
-      this.collisionsList = [];
-    }
-    //TODO pass elements to objects and not to array
-
-    initialCondition(elements, rect, callback = () => {}) {
-      this.container = rect;
-
-      this.dimensions = elements.map((element, index) => {
-        if (!element) return [0, 0]
-
-        this.externalForces[index] = [0, 0];
-        this.bounced[index] = 0;
-
-        const { rect: elementRect } = element;
-
-        return [elementRect.width / 2, elementRect.height / 2]
-      });
-
-      callback(this);
-
-      this.positions.forEach((pos, index) => {
-        this.hash[index] =
-          Math.floor(this.gridSize * (pos[0] / this.container.width)) +
-          Math.floor(this.gridSize * (pos[1] / this.container.height)) *
-            this.gridSize;
-
-        this.setPosition(elements[index]?.element, {
-          x: pos[0] - this.dimensions[index][0],
-          y: pos[1] - this.dimensions[index][1],
-        });
-      });
-    }
-
-    polarCoordinates(vector) {
-      let speed = Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1]);
-      const angle = Math.atan2(vector[1], vector[0]);
-
-      return { speed, angle }
-    }
-
-    cartesianCoordinates(speed, angle) {
-      return [speed * Math.cos(angle), speed * Math.sin(angle)]
-    }
-
-    hasBounced(index) {
-      return (this.bounced[index] += 1)
-    }
-
-    setPosition(element, { x = 0, y = 0, z = 0 }) {
-      if (element) {
-        element.style.cssText = `transform: translate3d(${x}px, ${y}px, ${z}px); will-change: transform;`;
-      }
-    }
-
-    rigidBorders(elements) {
-      if (this.calculateBorders !== 'rigid') return
-
-      const top = this.containerOffsets.top;
-      const left = this.containerOffsets.left;
-      const right = this.containerOffsets.right + 1;
-      const bottom = this.containerOffsets.bottom + 1;
-
-      for (let index = 0; index < elements.length; index++) {
-        // Particle cinematic properties
-        const dimension = this.dimensions[index];
-        let velocity = this.velocities[index];
-        let position = this.positions[index];
-
-        // Top wall
-        if (position[1] < dimension[1] + this.container.height * top) {
-          this.hasBounced(index);
-          this.velocities[index][1] = -velocity[1];
-          this.positions[index][1] = dimension[1] + this.container.height * top;
+    /**
+     * Handle rigid borders - bodies bounce off container edges
+     */
+    function handleRigidBorders(state, elementCount, onBounce) {
+        const { container, containerOffsets } = state;
+        const top = containerOffsets.top;
+        const left = containerOffsets.left;
+        const right = containerOffsets.right + 1;
+        const bottom = containerOffsets.bottom + 1;
+        for (let index = 0; index < elementCount; index++) {
+            const dimension = state.dimensions[index];
+            const velocity = state.velocities[index];
+            const position = state.positions[index];
+            if (!dimension || !velocity || !position)
+                continue;
+            // Top wall
+            if (position[1] < dimension[1] + container.height * top) {
+                onBounce?.(index);
+                state.velocities[index] = [velocity[0], -velocity[1]];
+                state.positions[index] = [position[0], dimension[1] + container.height * top];
+            }
+            // Left wall
+            if (position[0] < dimension[0] + container.width * left) {
+                onBounce?.(index);
+                state.velocities[index] = [-velocity[0], state.velocities[index][1]];
+                state.positions[index] = [dimension[0] + container.width * left, state.positions[index][1]];
+            }
+            // Bottom wall
+            if (position[1] > container.height * bottom - dimension[1]) {
+                onBounce?.(index);
+                state.velocities[index] = [state.velocities[index][0], -velocity[1]];
+                state.positions[index] = [state.positions[index][0], container.height * bottom - dimension[1]];
+            }
+            // Right wall
+            if (position[0] > container.width * right - dimension[0]) {
+                onBounce?.(index);
+                state.velocities[index] = [-velocity[0], state.velocities[index][1]];
+                state.positions[index] = [container.width * right - dimension[0], state.positions[index][1]];
+            }
         }
-
-        // Left wall
-        if (position[0] < dimension[0] + this.container.width * left) {
-          this.hasBounced(index);
-          this.velocities[index][0] = -velocity[0];
-          this.positions[index][0] = dimension[0] + this.container.width * left;
+    }
+    /**
+     * Handle periodic borders - bodies wrap around container edges
+     */
+    function handlePeriodicBorders(state, elementCount) {
+        const { container, containerOffsets } = state;
+        const top = containerOffsets.top;
+        const left = containerOffsets.left;
+        const right = containerOffsets.right + 1;
+        const bottom = containerOffsets.bottom + 1;
+        for (let index = 0; index < elementCount; index++) {
+            const dimension = state.dimensions[index];
+            const position = state.positions[index];
+            const velocity = state.velocities[index];
+            if (!dimension || !position || !velocity)
+                continue;
+            const dir = [Math.sign(velocity[0]), Math.sign(velocity[1])];
+            // Top wall - wrap to bottom
+            if (dir[1] === -1 && position[1] < dimension[1] + container.height * top) {
+                state.positions[index] = [position[0], dimension[1] + container.height * bottom];
+            }
+            // Bottom wall - wrap to top
+            if (dir[1] === 1 && position[1] > container.height * bottom - dimension[1]) {
+                state.positions[index] = [state.positions[index][0], container.height * top - dimension[1]];
+            }
+            // Left wall - wrap to right
+            if (dir[0] === -1 && position[0] < dimension[0] + container.width * left) {
+                state.positions[index] = [dimension[0] + container.width * right, state.positions[index][1]];
+            }
+            // Right wall - wrap to left
+            if (dir[0] === 1 && position[0] > container.width * right - dimension[0]) {
+                state.positions[index] = [container.width * left - dimension[0], state.positions[index][1]];
+            }
         }
-
-        // Bottom wall
-        if (position[1] > this.container.height * bottom - dimension[1]) {
-          this.hasBounced(index);
-          this.velocities[index][1] = -velocity[1];
-          this.positions[index][1] = this.container.height * bottom - dimension[1];
-        }
-
-        // Right wall
-        if (position[0] > this.container.width * right - dimension[0]) {
-          this.hasBounced(index);
-          this.velocities[index][0] = -velocity[0];
-          this.positions[index][0] = this.container.width * right - dimension[0];
-        }
-      }
     }
 
-    periodicBorders(elements) {
-      if (this.calculateBorders !== 'periodic') return
-
-      const top = this.containerOffsets.top;
-      const left = this.containerOffsets.left;
-      const right = this.containerOffsets.right + 1;
-      const bottom = this.containerOffsets.bottom + 1;
-
-      for (let index = 0; index < elements.length; index++) {
-        // Particle cinematic properties
-        const dimension = this.dimensions[index];
-        let position = this.positions[index];
-        let dir = this.velocities[index].map((v) => Math.sign(v));
-
-        // Top wall
-        if (
-          dir[1] === -1 &&
-          position[1] < dimension[1] + this.container.height * top
-        ) {
-          this.positions[index][1] = dimension[1] + this.container.height * bottom;
+    /**
+     * Check if two bodies are in neighboring hash cells
+     */
+    function isNeighbor(state, indexA, indexB) {
+        const hashA = state.hash[indexA];
+        const hashB = state.hash[indexB];
+        if (hashA === undefined || hashB === undefined)
+            return false;
+        for (let i = -1; i < 2; i++) {
+            for (let j = -1; j < 2; j++) {
+                const box = hashA + state.gridSize * i + j;
+                if (box < 0 || box > state.gridSize * state.gridSize) {
+                    continue;
+                }
+                if (box === hashB) {
+                    return true;
+                }
+            }
         }
-
-        // Bottom wall
-        if (
-          dir[1] === 1 &&
-          position[1] > this.container.height * bottom - dimension[1]
-        ) {
-          this.positions[index][1] = this.container.height * top - dimension[1];
-        }
-
-        // Left wall
-        if (
-          dir[0] === -1 &&
-          position[0] < dimension[0] + this.container.width * left
-        ) {
-          this.positions[index][0] = dimension[0] + this.container.width * right;
-        }
-
-        // Right wall
-        if (
-          dir[0] === 1 &&
-          position[0] > this.container.width * right - dimension[0]
-        ) {
-          this.positions[index][0] = this.container.width * left - dimension[0];
-        }
-      }
+        return false;
     }
-
-    isNeighboor(current, index) {
-      const neighboorHash = this.hash[index];
-      let hashItem = this.hash[current];
-      let isNeighboor = false;
-
-      for (let i = -1; i < 2; i++) {
-        for (let j = -1; j < 2; j++) {
-          let box = hashItem + this.gridSize * i + j;
-
-          if (box < 0 || box > this.gridSize * this.gridSize) {
-            continue
-          }
-
-          if (box === neighboorHash) {
-            isNeighboor = true;
-            break
-          }
+    /**
+     * Check if two AABBs are overlapping
+     */
+    function testAABB(state, indexA, indexB) {
+        const dimA = state.dimensions[indexA];
+        const posA = state.positions[indexA];
+        const dimB = state.dimensions[indexB];
+        const posB = state.positions[indexB];
+        if (!dimA || !posA || !dimB || !posB) {
+            return false;
         }
-      }
-
-      return isNeighboor
+        const overlapX = Math.abs(posA[0] - posB[0]) < dimA[0] + dimB[0];
+        const overlapY = Math.abs(posA[1] - posB[1]) < dimA[1] + dimB[1];
+        return overlapX && overlapY;
     }
-
-    axisAlignedBoundaryBoxes(index, idy) {
-      const dimension = this.dimensions[index];
-      const position = this.positions[index];
-
-      const neighboorDimension = this.dimensions[idy];
-      const neighboorPosition = this.positions[idy];
-
-      const overlaping = position.map(
-        (pos, idx) =>
-          Math.abs(pos - neighboorPosition[idx]) <
-          dimension[idx] + neighboorDimension[idx],
-      );
-
-      return overlaping.every((overlap) => overlap)
+    /**
+     * Calculate the superposition/exclusion force between two overlapping AABBs
+     * Returns a force vector to push bodies apart
+     */
+    function calculateSuperposition(state, indexA, indexB) {
+        const posA = state.positions[indexA];
+        const dimA = state.dimensions[indexA];
+        const posB = state.positions[indexB];
+        const dimB = state.dimensions[indexB];
+        if (!posA || !dimA || !posB || !dimB) {
+            return [0, 0];
+        }
+        const overlapX = dimA[0] + dimB[0] - Math.abs(posA[0] - posB[0]);
+        const overlapY = dimA[1] + dimB[1] - Math.abs(posA[1] - posB[1]);
+        const dirX = -Math.sign(posA[0] - posB[0]);
+        const dirY = -Math.sign(posA[1] - posB[1]);
+        return [
+            dirX * Math.max(1 / overlapX, 0.5),
+            dirY * Math.max(1 / overlapY, 0.5),
+        ];
     }
-
-    //TODO improve this function
-    calculateSuperposition(index, idy) {
-      const posA = this.positions[index];
-      const dimA = this.dimensions[index];
-      const posB = this.positions[idy];
-      const dimB = this.dimensions[idy];
-
-      const overlaping = posA.map(
-        (pos, idx) => dimA[idx] + dimB[idx] - Math.abs(pos - posB[idx]),
-      );
-
-      const overlapDir = posA.map((pos, idx) => -Math.sign(pos - posB[idx]));
-
-      return overlaping.map((v, i) => overlapDir[i] * Math.max(1 / v, 0.5))
-    }
-
-    collisions(elements) {
-      if (!this.calculatecCollisions) return
-      this.collisionsList = [];
-
-      for (let index = 0; index < elements.length; index++) {
-        let velocity = this.velocities[index];
-
-        // Collisions from particle X to all other
-        this.hash.forEach((neighboorHash, idy) => {
-          //Discard same element
-          if (idy === index) return
-
-          let neighboorVelocity = this.velocities[idy];
-
-          // Collisions are pairwise so need to check if already collided
-          if (
-            this.collisionsList.some(
-              ({ loop, inHash }) => loop === idy && inHash === index,
-            )
-          )
-            return
-
-          // Discard if not a neighboor
-          if (!this.isNeighboor(index, idy)) return
-
-          const hasCollision = this.axisAlignedBoundaryBoxes(index, idy);
-
-          //no colisions
-          if (!hasCollision) {
-            return
-          }
-
-          // Add to collision list
-          this.collisionsList.push({ loop: index, inHash: idy });
-
-          // Calculate initial kinetic energy
-          const initialKE =
-            0.5 *
-            (velocity.reduce((sum, v) => sum + v * v, 0) +
-              neighboorVelocity.reduce((sum, v) => sum + v * v, 0));
-
-          // Resolve superpositions
-          let exclusionForce = this.calculateSuperposition(index, idy);
-
-          // Apply superposition forces
-          let collisonVelocity = velocity.map((v, idx) => v + exclusionForce[idx]);
-          let neighboorCollisionVelocity = neighboorVelocity.map(
-            (v, idx) => v - exclusionForce[idx],
-          );
-
-          // Calculate new kinetic energy
-          const finalKE =
-            0.5 *
-            (collisonVelocity.reduce((sum, v) => sum + v * v, 0) +
-              neighboorCollisionVelocity.reduce((sum, v) => sum + v * v, 0));
-
-          // Scale velocities to conserve energy
-          if (finalKE !== 0) {
+    /**
+     * Resolve AABB collision with energy conservation
+     * Swaps velocities and scales to conserve kinetic energy
+     */
+    function resolveAABBCollision(state, indexA, indexB) {
+        const velA = state.velocities[indexA];
+        const velB = state.velocities[indexB];
+        if (!velA || !velB)
+            return;
+        // Calculate initial kinetic energy (assuming equal masses)
+        const initialKE = 0.5 * (velA[0] * velA[0] + velA[1] * velA[1] + velB[0] * velB[0] + velB[1] * velB[1]);
+        // Calculate exclusion force
+        const exclusionForce = calculateSuperposition(state, indexA, indexB);
+        // Apply exclusion force to velocities
+        let newVelA = [
+            velA[0] + exclusionForce[0],
+            velA[1] + exclusionForce[1],
+        ];
+        let newVelB = [
+            velB[0] - exclusionForce[0],
+            velB[1] - exclusionForce[1],
+        ];
+        // Calculate final kinetic energy
+        const finalKE = 0.5 * (newVelA[0] * newVelA[0] + newVelA[1] * newVelA[1] +
+            newVelB[0] * newVelB[0] + newVelB[1] * newVelB[1]);
+        // Scale to conserve energy
+        if (finalKE !== 0) {
             const scale = Math.sqrt(initialKE / finalKE);
-            collisonVelocity = collisonVelocity.map((v) => v * scale);
-            neighboorCollisionVelocity = neighboorCollisionVelocity.map(
-              (v) => v * scale,
-            );
-          }
-
-          // Swap velocities
-          this.velocities[index] = neighboorCollisionVelocity;
-          this.velocities[idy] = collisonVelocity;
-        });
-      }
+            newVelA = [newVelA[0] * scale, newVelA[1] * scale];
+            newVelB = [newVelB[0] * scale, newVelB[1] * scale];
+        }
+        // Swap velocities (this creates the "bouncing" effect)
+        state.velocities[indexA] = newVelB;
+        state.velocities[indexB] = newVelA;
+    }
+    /**
+     * Detect and resolve all AABB collisions
+     */
+    function detectAndResolveAABB(state, elementCount, onCollision) {
+        const collisionsList = [];
+        for (let indexA = 0; indexA < elementCount; indexA++) {
+            const velA = state.velocities[indexA];
+            if (!velA)
+                continue;
+            for (let indexB = indexA + 1; indexB < elementCount; indexB++) {
+                const velB = state.velocities[indexB];
+                if (!velB)
+                    continue;
+                // Skip if not in neighboring cells
+                if (!isNeighbor(state, indexA, indexB))
+                    continue;
+                // Test for collision
+                if (!testAABB(state, indexA, indexB))
+                    continue;
+                // Record collision
+                collisionsList.push({ loop: indexA, inHash: indexB });
+                // Callback for bounce tracking
+                onCollision?.(indexA, indexB);
+                // Resolve collision
+                resolveAABBCollision(state, indexA, indexB);
+            }
+        }
+        return collisionsList;
     }
 
-    update(elements, callback) {
-      this.rigidBorders(elements);
-      this.periodicBorders(elements);
-      this.collisions(elements);
-      callback(this);
-
-      this.positions.forEach((pos, index) => {
-        this.hash[index] =
-          Math.floor((this.gridSize * pos[0]) / this.container.width) +
-          Math.floor((this.gridSize * pos[1]) / this.container.height) *
-            this.gridSize;
-      });
+    /**
+     * Convert a vector to polar coordinates (speed and angle)
+     */
+    function toPolar(vector) {
+        const speed = Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1]);
+        const angle = Math.atan2(vector[1], vector[0]);
+        return { speed, angle };
     }
-  }
+    /**
+     * Convert polar coordinates to a cartesian vector
+     */
+    function toCartesian(speed, angle) {
+        return [speed * Math.cos(angle), speed * Math.sin(angle)];
+    }
+    /**
+     * Calculate dot product of two vectors
+     */
+    function dot(a, b) {
+        return a[0] * b[0] + a[1] * b[1];
+    }
+    /**
+     * Calculate 2D cross product (returns scalar)
+     * Result is the z-component of the 3D cross product
+     */
+    function cross(a, b) {
+        return a[0] * b[1] - a[1] * b[0];
+    }
+    /**
+     * Calculate the magnitude (length) of a vector
+     */
+    function magnitude(v) {
+        return Math.sqrt(v[0] * v[0] + v[1] * v[1]);
+    }
+    /**
+     * Calculate squared magnitude (avoids sqrt for comparisons)
+     */
+    function magnitudeSquared(v) {
+        return v[0] * v[0] + v[1] * v[1];
+    }
+    /**
+     * Normalize a vector to unit length
+     */
+    function normalize(v) {
+        const mag = magnitude(v);
+        if (mag === 0)
+            return [0, 0];
+        return [v[0] / mag, v[1] / mag];
+    }
+    /**
+     * Add two vectors
+     */
+    function add(a, b) {
+        return [a[0] + b[0], a[1] + b[1]];
+    }
+    /**
+     * Subtract vector b from vector a
+     */
+    function subtract(a, b) {
+        return [a[0] - b[0], a[1] - b[1]];
+    }
+    /**
+     * Scale a vector by a scalar
+     */
+    function scale(v, s) {
+        return [v[0] * s, v[1] * s];
+    }
+    /**
+     * Negate a vector
+     */
+    function negate(v) {
+        return [-v[0], -v[1]];
+    }
+    /**
+     * Rotate a point around the origin by an angle (radians)
+     */
+    function rotate(point, angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return [
+            point[0] * cos - point[1] * sin,
+            point[0] * sin + point[1] * cos,
+        ];
+    }
+    /**
+     * Rotate a point around a center by an angle (radians)
+     */
+    function rotateAround(point, center, angle) {
+        const translated = [point[0] - center[0], point[1] - center[1]];
+        const rotated = rotate(translated, angle);
+        return [rotated[0] + center[0], rotated[1] + center[1]];
+    }
+    /**
+     * Calculate perpendicular vector (rotate 90 degrees counter-clockwise)
+     */
+    function perpendicular(v) {
+        return [-v[1], v[0]];
+    }
+    /**
+     * Linear interpolation between two vectors
+     */
+    function lerp(a, b, t) {
+        return [
+            a[0] + (b[0] - a[0]) * t,
+            a[1] + (b[1] - a[1]) * t,
+        ];
+    }
+    /**
+     * Calculate distance between two points
+     */
+    function distance(a, b) {
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    /**
+     * Calculate squared distance between two points (avoids sqrt)
+     */
+    function distanceSquared(a, b) {
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        return dx * dx + dy * dy;
+    }
 
-  return Elastica;
+    /**
+     * Get the four corners of a rotated rectangle (OBB)
+     * Returns corners in order: top-left, top-right, bottom-right, bottom-left
+     */
+    function getOBBCorners(state, index) {
+        const position = state.positions[index];
+        const dimension = state.dimensions[index];
+        const angle = state.angles[index];
+        if (!position || !dimension || angle === undefined)
+            return null;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        const hw = dimension[0];
+        const hh = dimension[1];
+        // Local corner offsets (unrotated)
+        const localCorners = [
+            [-hw, -hh],
+            [hw, -hh],
+            [hw, hh],
+            [-hw, hh],
+        ];
+        // Rotate and translate to world coordinates
+        return localCorners.map(([lx, ly]) => [
+            position[0] + lx * cos - ly * sin,
+            position[1] + lx * sin + ly * cos,
+        ]);
+    }
+    /**
+     * Get the two edge normals (axes) for SAT collision test
+     */
+    function getOBBAxes(state, index) {
+        const angle = state.angles[index];
+        if (angle === undefined)
+            return null;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return [
+            [cos, sin],
+            [-sin, cos],
+        ];
+    }
+    /**
+     * Project an OBB onto an axis and return the min/max projection values
+     */
+    function projectOBBOntoAxis(state, index, axis) {
+        const corners = getOBBCorners(state, index);
+        if (!corners)
+            return null;
+        let min = Infinity;
+        let max = -Infinity;
+        for (const corner of corners) {
+            const projection = corner[0] * axis[0] + corner[1] * axis[1];
+            min = Math.min(min, projection);
+            max = Math.max(max, projection);
+        }
+        return [min, max];
+    }
+    /**
+     * SAT (Separating Axis Theorem) collision test between two OBBs
+     */
+    function satCollisionTest(state, indexA, indexB) {
+        const axesA = getOBBAxes(state, indexA);
+        const axesB = getOBBAxes(state, indexB);
+        if (!axesA || !axesB) {
+            return { collided: false };
+        }
+        const axes = [...axesA, ...axesB];
+        let minOverlap = Infinity;
+        let minOverlapAxis = null;
+        for (const axis of axes) {
+            const projA = projectOBBOntoAxis(state, indexA, axis);
+            const projB = projectOBBOntoAxis(state, indexB, axis);
+            if (!projA || !projB) {
+                return { collided: false };
+            }
+            const overlap = Math.min(projA[1], projB[1]) - Math.max(projA[0], projB[0]);
+            if (overlap <= 0) {
+                return { collided: false };
+            }
+            if (overlap < minOverlap) {
+                minOverlap = overlap;
+                minOverlapAxis = axis;
+            }
+        }
+        if (!minOverlapAxis) {
+            return { collided: false };
+        }
+        const posA = state.positions[indexA];
+        const posB = state.positions[indexB];
+        if (!posA || !posB) {
+            return { collided: false };
+        }
+        // Ensure normal points from A to B
+        const centerDiff = [posB[0] - posA[0], posB[1] - posA[1]];
+        const dot = centerDiff[0] * minOverlapAxis[0] + centerDiff[1] * minOverlapAxis[1];
+        const normal = dot < 0
+            ? [-minOverlapAxis[0], -minOverlapAxis[1]]
+            : [minOverlapAxis[0], minOverlapAxis[1]];
+        const contactPoint = [
+            (posA[0] + posB[0]) / 2,
+            (posA[1] + posB[1]) / 2,
+        ];
+        const contact = {
+            point: contactPoint,
+            normal: normal,
+            penetration: minOverlap,
+        };
+        return { collided: true, contact };
+    }
+    /**
+     * Check if two OBBs are potentially close enough to collide (broad phase)
+     */
+    function isOBBNeighbor(state, indexA, indexB) {
+        const posA = state.positions[indexA];
+        const posB = state.positions[indexB];
+        const dimA = state.dimensions[indexA];
+        const dimB = state.dimensions[indexB];
+        if (!posA || !posB || !dimA || !dimB)
+            return false;
+        // Maximum extent is the diagonal
+        const maxExtentA = Math.sqrt(dimA[0] * dimA[0] + dimA[1] * dimA[1]);
+        const maxExtentB = Math.sqrt(dimB[0] * dimB[0] + dimB[1] * dimB[1]);
+        const maxDist = maxExtentA + maxExtentB;
+        const maxDistSquared = maxDist * maxDist;
+        return distanceSquared(posA, posB) <= maxDistSquared;
+    }
+    /**
+     * Calculate kinetic energy (linear + rotational) for a body
+     */
+    function getKineticEnergy(state, index) {
+        const velocity = state.velocities[index];
+        const angularVelocity = state.angularVelocities[index];
+        const mass = state.masses[index];
+        const inertia = state.momentsOfInertia[index];
+        if (!velocity || angularVelocity === undefined || mass === undefined || inertia === undefined) {
+            return 0;
+        }
+        const linearKE = 0.5 * mass * (velocity[0] * velocity[0] + velocity[1] * velocity[1]);
+        const rotationalKE = 0.5 * inertia * angularVelocity * angularVelocity;
+        return linearKE + rotationalKE;
+    }
+    /**
+     * Resolve OBB collision with energy conservation
+     */
+    function resolveOBBCollision(state, indexA, indexB, contact) {
+        const posA = state.positions[indexA];
+        const posB = state.positions[indexB];
+        const velA = state.velocities[indexA];
+        const velB = state.velocities[indexB];
+        const massA = state.masses[indexA];
+        const massB = state.masses[indexB];
+        const inertiaA = state.momentsOfInertia[indexA];
+        const inertiaB = state.momentsOfInertia[indexB];
+        const angVelA = state.angularVelocities[indexA];
+        const angVelB = state.angularVelocities[indexB];
+        const restA = state.restitutions[indexA];
+        const restB = state.restitutions[indexB];
+        if (!posA || !posB || !velA || !velB ||
+            massA === undefined || massB === undefined ||
+            inertiaA === undefined || inertiaB === undefined ||
+            angVelA === undefined || angVelB === undefined ||
+            restA === undefined || restB === undefined) {
+            return;
+        }
+        const { normal, penetration } = contact;
+        const restitution = Math.min(restA, restB);
+        // Step 1: Calculate initial total kinetic energy
+        const initialKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB);
+        // Step 2: Calculate repulsion strength based on overlap
+        const overlapForce = Math.max(penetration, 1);
+        const repulsionStrength = 1 / overlapForce;
+        // Step 3: Apply velocity changes along collision normal
+        const newVelA = [
+            velA[0] - normal[0] * repulsionStrength,
+            velA[1] - normal[1] * repulsionStrength,
+        ];
+        const newVelB = [
+            velB[0] + normal[0] * repulsionStrength,
+            velB[1] + normal[1] * repulsionStrength,
+        ];
+        // Step 4: Apply angular velocity changes from torque
+        const contactPoint = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2];
+        const rAx = contactPoint[0] - posA[0];
+        const rAy = contactPoint[1] - posA[1];
+        const rBx = contactPoint[0] - posB[0];
+        const rBy = contactPoint[1] - posB[1];
+        const torqueA = rAx * (-normal[1] * repulsionStrength) - rAy * (-normal[0] * repulsionStrength);
+        const torqueB = rBx * (normal[1] * repulsionStrength) - rBy * (normal[0] * repulsionStrength);
+        const newAngVelA = angVelA + torqueA / inertiaA;
+        const newAngVelB = angVelB + torqueB / inertiaB;
+        // Step 5: Apply new velocities temporarily
+        state.velocities[indexA] = newVelA;
+        state.velocities[indexB] = newVelB;
+        state.angularVelocities[indexA] = newAngVelA;
+        state.angularVelocities[indexB] = newAngVelB;
+        // Step 6: Calculate final kinetic energy and scale to conserve
+        const finalKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB);
+        if (finalKE > 0) {
+            const targetKE = initialKE * restitution;
+            const scale = Math.sqrt(targetKE / finalKE);
+            state.velocities[indexA] = [newVelA[0] * scale, newVelA[1] * scale];
+            state.velocities[indexB] = [newVelB[0] * scale, newVelB[1] * scale];
+            state.angularVelocities[indexA] = newAngVelA * scale;
+            state.angularVelocities[indexB] = newAngVelB * scale;
+        }
+        // Step 7: Position correction
+        const slop = 0.5;
+        const percent = 0.96;
+        if (penetration > slop) {
+            const correction = (penetration - slop) * percent;
+            const totalMass = massA + massB;
+            state.positions[indexA] = [
+                posA[0] - normal[0] * correction * (massB / totalMass),
+                posA[1] - normal[1] * correction * (massB / totalMass),
+            ];
+            state.positions[indexB] = [
+                posB[0] + normal[0] * correction * (massA / totalMass),
+                posB[1] + normal[1] * correction * (massA / totalMass),
+            ];
+        }
+    }
+    /**
+     * Detect and resolve all OBB collisions
+     */
+    function detectAndResolveOBB(state, elementCount, onCollision) {
+        const collisionsList = [];
+        for (let indexA = 0; indexA < elementCount; indexA++) {
+            const velA = state.velocities[indexA];
+            if (!velA)
+                continue;
+            for (let indexB = indexA + 1; indexB < elementCount; indexB++) {
+                const velB = state.velocities[indexB];
+                if (!velB)
+                    continue;
+                // Broad phase check
+                if (!isOBBNeighbor(state, indexA, indexB))
+                    continue;
+                // Narrow phase SAT test
+                const result = satCollisionTest(state, indexA, indexB);
+                if (!result.collided || !result.contact)
+                    continue;
+                collisionsList.push({ loop: indexA, inHash: indexB });
+                onCollision?.(indexA, indexB);
+                // Resolve collision
+                resolveOBBCollision(state, indexA, indexB, result.contact);
+            }
+        }
+        return collisionsList;
+    }
+    /**
+     * Integrate angular motion (update angles from angular velocities)
+     */
+    function integrateAngularMotion(state) {
+        for (let i = 0; i < state.angles.length; i++) {
+            const angle = state.angles[i];
+            const angularVelocity = state.angularVelocities[i];
+            if (angle !== undefined && angularVelocity !== undefined) {
+                state.angles[i] = angle + angularVelocity;
+            }
+        }
+    }
+
+    class Elastica {
+        constructor({ gridSize = 4, containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 }, collisions = true, borders = 'rigid', useOBB = true, defaultMass = 10, defaultRestitution = 0.8, } = {}) {
+            this.calculatecCollisions = collisions;
+            this.calculateBorders = borders;
+            this.gridSize = gridSize;
+            this.containerOffsets = {
+                top: containerOffsets.top ?? 0,
+                bottom: containerOffsets.bottom ?? 0,
+                left: containerOffsets.left ?? 0,
+                right: containerOffsets.right ?? 0,
+            };
+            this.container = { width: 0, height: 0 };
+            this.collisionsList = [];
+            // Per-body arrays
+            this.positions = [];
+            this.velocities = [];
+            this.externalForces = [];
+            this.dimensions = [];
+            this.bounced = [];
+            this.hash = [];
+            // OBB rigid body properties
+            this.useOBB = useOBB;
+            this.angles = [];
+            this.angularVelocities = [];
+            this.masses = [];
+            this.momentsOfInertia = [];
+            this.restitutions = [];
+            this.defaultMass = defaultMass;
+            this.defaultRestitution = defaultRestitution;
+        }
+        initialCondition(elements, rect, callback = () => { }) {
+            this.container = rect;
+            this.dimensions = elements.map((element, index) => {
+                if (!element)
+                    return [0, 0];
+                this.externalForces[index] = [0, 0];
+                this.bounced[index] = 0;
+                // Initialize OBB rigid body properties
+                this.angles[index] = 0;
+                this.angularVelocities[index] = 0;
+                this.masses[index] = this.defaultMass;
+                this.restitutions[index] = this.defaultRestitution;
+                const { rect: elementRect } = element;
+                const halfWidth = elementRect.width / 2;
+                const halfHeight = elementRect.height / 2;
+                // Calculate moment of inertia for rectangle: I = (m/12) * (w² + h²)
+                const width = elementRect.width;
+                const height = elementRect.height;
+                this.momentsOfInertia[index] =
+                    (this.defaultMass / 12) * (width * width + height * height);
+                return [halfWidth, halfHeight];
+            });
+            callback(this);
+            this.positions.forEach((pos, index) => {
+                this.hash[index] =
+                    Math.floor(this.gridSize * (pos[0] / this.container.width)) +
+                        Math.floor(this.gridSize * (pos[1] / this.container.height)) *
+                            this.gridSize;
+                const element = elements[index];
+                const dimension = this.dimensions[index];
+                if (element && dimension) {
+                    this.setPosition(element.element, {
+                        x: pos[0] - dimension[0],
+                        y: pos[1] - dimension[1],
+                    });
+                }
+            });
+        }
+        // Math utilities (delegated)
+        polarCoordinates(vector) {
+            return toPolar(vector);
+        }
+        cartesianCoordinates(speed, angle) {
+            return toCartesian(speed, angle);
+        }
+        // Bounce tracking
+        hasBounced(index) {
+            const current = this.bounced[index] ?? 0;
+            this.bounced[index] = current + 1;
+            return this.bounced[index];
+        }
+        // DOM positioning
+        setPosition(element, { x = 0, y = 0, z = 0, angle = 0 }) {
+            if (element) {
+                if (angle !== 0) {
+                    element.style.cssText = `transform: translate3d(${x}px, ${y}px, ${z}px) rotate(${angle}rad); will-change: transform;`;
+                }
+                else {
+                    element.style.cssText = `transform: translate3d(${x}px, ${y}px, ${z}px); will-change: transform;`;
+                }
+            }
+        }
+        // Property setters
+        setAngle(index, angle) {
+            if (index >= 0 && index < this.angles.length) {
+                this.angles[index] = angle;
+            }
+        }
+        setAngularVelocity(index, angularVelocity) {
+            if (index >= 0 && index < this.angularVelocities.length) {
+                this.angularVelocities[index] = angularVelocity;
+            }
+        }
+        setMass(index, mass) {
+            if (index >= 0 && index < this.masses.length) {
+                this.masses[index] = mass;
+                // Recalculate moment of inertia
+                const dimension = this.dimensions[index];
+                if (dimension) {
+                    const width = dimension[0] * 2;
+                    const height = dimension[1] * 2;
+                    this.momentsOfInertia[index] = (mass / 12) * (width * width + height * height);
+                }
+            }
+        }
+        setRestitution(index, restitution) {
+            if (index >= 0 && index < this.restitutions.length) {
+                this.restitutions[index] = Math.max(0, Math.min(1, restitution));
+            }
+        }
+        // Get state objects for collision modules
+        getAABBState() {
+            return {
+                positions: this.positions,
+                velocities: this.velocities,
+                dimensions: this.dimensions,
+                hash: this.hash,
+                gridSize: this.gridSize,
+            };
+        }
+        getOBBState() {
+            return {
+                positions: this.positions,
+                velocities: this.velocities,
+                dimensions: this.dimensions,
+                angles: this.angles,
+                angularVelocities: this.angularVelocities,
+                masses: this.masses,
+                momentsOfInertia: this.momentsOfInertia,
+                restitutions: this.restitutions,
+            };
+        }
+        // Main update loop
+        update(elements, callback) {
+            const elementCount = elements.length;
+            const borderState = {
+                positions: this.positions,
+                velocities: this.velocities,
+                dimensions: this.dimensions,
+                container: this.container,
+                containerOffsets: this.containerOffsets,
+            };
+            // Handle borders
+            if (this.calculateBorders === 'rigid') {
+                handleRigidBorders(borderState, elementCount, (index) => this.hasBounced(index));
+            }
+            else if (this.calculateBorders === 'periodic') {
+                handlePeriodicBorders(borderState, elementCount);
+            }
+            // Handle collisions
+            if (this.calculatecCollisions) {
+                if (this.useOBB) {
+                    const obbState = this.getOBBState();
+                    this.collisionsList = detectAndResolveOBB(obbState, elementCount, (indexA, indexB) => {
+                        this.hasBounced(indexA);
+                        this.hasBounced(indexB);
+                    });
+                    integrateAngularMotion(obbState);
+                }
+                else {
+                    const aabbState = this.getAABBState();
+                    this.collisionsList = detectAndResolveAABB(aabbState, elementCount, (indexA, indexB) => {
+                        this.hasBounced(indexA);
+                        this.hasBounced(indexB);
+                    });
+                }
+            }
+            callback(this);
+            // Update spatial hash
+            this.positions.forEach((pos, index) => {
+                this.hash[index] =
+                    Math.floor((this.gridSize * pos[0]) / this.container.width) +
+                        Math.floor((this.gridSize * pos[1]) / this.container.height) *
+                            this.gridSize;
+            });
+        }
+    }
+
+    exports.add = add;
+    exports.calculateSuperposition = calculateSuperposition;
+    exports.cross = cross;
+    exports.default = Elastica;
+    exports.detectAndResolveAABB = detectAndResolveAABB;
+    exports.detectAndResolveOBB = detectAndResolveOBB;
+    exports.distance = distance;
+    exports.distanceSquared = distanceSquared;
+    exports.dot = dot;
+    exports.getKineticEnergy = getKineticEnergy;
+    exports.getOBBAxes = getOBBAxes;
+    exports.getOBBCorners = getOBBCorners;
+    exports.handlePeriodicBorders = handlePeriodicBorders;
+    exports.handleRigidBorders = handleRigidBorders;
+    exports.integrateAngularMotion = integrateAngularMotion;
+    exports.isNeighbor = isNeighbor;
+    exports.isOBBNeighbor = isOBBNeighbor;
+    exports.lerp = lerp;
+    exports.magnitude = magnitude;
+    exports.magnitudeSquared = magnitudeSquared;
+    exports.negate = negate;
+    exports.normalize = normalize;
+    exports.perpendicular = perpendicular;
+    exports.projectOBBOntoAxis = projectOBBOntoAxis;
+    exports.resolveAABBCollision = resolveAABBCollision;
+    exports.resolveOBBCollision = resolveOBBCollision;
+    exports.rotate = rotate;
+    exports.rotateAround = rotateAround;
+    exports.satCollisionTest = satCollisionTest;
+    exports.scale = scale;
+    exports.subtract = subtract;
+    exports.testAABB = testAABB;
+    exports.toCartesian = toCartesian;
+    exports.toPolar = toPolar;
+
+    Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
 //# sourceMappingURL=elastica.js.map

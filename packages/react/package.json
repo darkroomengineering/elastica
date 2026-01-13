@@ -6,8 +6,8 @@
     "watch": "rollup --bundleConfigAsCjs -c -w"
   },
   "dependencies": {
+    "@darkroom.engineering/elastica": "workspace:*",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "elastic-collisions": "workspace:elastica*"
+    "react-dom": "^18.2.0"
   }
 }

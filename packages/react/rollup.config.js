@@ -1,13 +1,13 @@
-import babel from '@rollup/plugin-babel'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import terser from '@rollup/plugin-terser'
+import typescript from '@rollup/plugin-typescript'
 import path from 'path'
 
 const rootDist = path.resolve(__dirname, '../../dist/')
 
 export default [
   {
-    input: './src/index.js',
+    input: './src/index.tsx',
     output: [
       {
         file: path.join(rootDist, 'elastica-react.mjs'),
@@ -23,14 +23,20 @@ export default [
         ],
       },
     ],
-    external: ['react', 'react-dom'],
+    external: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+      '@darkroom.engineering/elastica',
+      '@darkroom.engineering/hamo',
+    ],
     plugins: [
-      nodeResolve({ extensions: ['.js', '.jsx'] }),
-      babel({
-        babelHelpers: 'bundled',
-        presets: ['@babel/preset-react'],
-        extensions: ['.js', '.jsx'],
+      typescript({
+        tsconfig: './tsconfig.json',
+        declaration: true,
+        declarationDir: path.join(rootDist, 'react'),
       }),
+      nodeResolve({ extensions: ['.ts', '.tsx'] }),
     ],
   },
 ]

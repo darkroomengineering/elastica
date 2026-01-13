@@ -2,14 +2,14 @@
   "name": "@darkroom.engineering/elastica",
   "version": "0.0.14",
   "scripts": {
-    "dev:engine": "npm run dev --prefix ./packages/engine",
-    "dev:react": "npm run dev --prefix ./packages/react",
-    "build:engine": "npm run build --prefix ./packages/engine",
-    "build:react": "npm run build --prefix ./packages/react",
-    "build": "npm-run-all clean build:engine build:react",
+    "dev:engine": "cd packages/engine && bun run dev",
+    "dev:react": "cd packages/react && bun run dev",
+    "build:engine": "cd packages/engine && bun run build",
+    "build:react": "cd packages/react && bun run build",
+    "build": "bun run clean && bun run build:engine && bun run build:react",
     "clean": "shx rm -rf dist/*",
-    "publish": "npm publish",
-    "publish:dev": "npm publish --tag dev"
+    "publish": "bun publish",
+    "publish:dev": "bun publish --tag dev"
   },
   "keywords": [
     "Elastic Collision",
@@ -38,11 +38,16 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "npm-run-all": "^4.1.5",
     "react": ">=18.2.0",
     "react-dom": ">=18.2.0",
     "rollup": "^4.17.2",
     "shx": "^0.3.4",
+    "tslib": "^2.8.1",
+    "typescript": "^5.7.3",
     "@babel/core": "^7.24.9",
     "@babel/preset-react": "^7.24.7"
   },
@@ -64,12 +69,15 @@
   "module": "./dist/elastica.mjs",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "default": "./dist/elastica.mjs"
     },
     "./react": {
+      "types": "./dist/react/index.d.ts",
       "default": "./dist/elastica-react.mjs"
     }
   },
+  "types": "./dist/index.d.ts",
   "publishConfig": {
     "access": "public"
   }

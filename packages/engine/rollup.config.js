@@ -1,11 +1,19 @@
 import terser from '@rollup/plugin-terser'
+import typescript from '@rollup/plugin-typescript'
 import path from 'path'
 
 const rootDist = path.resolve(__dirname, '../../dist/')
 
 export default [
   {
-    input: './src/index.js',
+    input: './src/index.ts',
+    plugins: [
+      typescript({
+        tsconfig: './tsconfig.json',
+        declaration: true,
+        declarationDir: rootDist,
+      }),
+    ],
     output: [
       {
         file: path.join(rootDist, 'elastica.mjs'),

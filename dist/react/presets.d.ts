@@ -1,0 +1,33 @@
+import type { Container, ElementData, Vector2D } from '@darkroom.engineering/elastica';
+export type { Container, ElementData, Vector2D };
+export type InitialConditionParams = {
+    boxes: (ElementData | null | undefined)[];
+    positions: Vector2D[];
+    velocities: Vector2D[];
+    container: Container;
+    useOBB: boolean;
+    angles: number[];
+    angularVelocities: number[];
+    masses: number[];
+    momentsOfInertia: number[];
+    restitutions: number[];
+};
+export type UpdateParams = {
+    boxes: (ElementData | null | undefined)[];
+    positions: Vector2D[];
+    velocities: Vector2D[];
+    externalForces: Vector2D[];
+    deltaTime: number;
+    useOBB: boolean;
+    angles: number[];
+    angularVelocities: number[];
+    masses: number[];
+    momentsOfInertia: number[];
+    restitutions: number[];
+};
+export type InitialConditionPreset = (params: InitialConditionParams) => void;
+export type UpdatePreset = (params: UpdateParams) => void;
+export type DragForcePreset = (newDir: Vector2D, externalForces: Vector2D[], index: number) => void;
+export declare const initalConditionsPresets: Record<string, InitialConditionPreset>;
+export declare const updatePresets: Record<string, UpdatePreset>;
+export declare const dragForcePresetsLib: Record<string, DragForcePreset>;

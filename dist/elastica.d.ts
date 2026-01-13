@@ -1,0 +1,41 @@
+import type { BorderType, CollisionRecord, Container, ContainerOffsets, ElasticaConfigOBB, ElementData, PolarCoordinates, Vector2D } from './types';
+export default class Elastica {
+    calculatecCollisions: boolean;
+    calculateBorders: BorderType;
+    gridSize: number;
+    containerOffsets: ContainerOffsets;
+    container: Container;
+    collisionsList: CollisionRecord[];
+    positions: Vector2D[];
+    velocities: Vector2D[];
+    externalForces: Vector2D[];
+    dimensions: Vector2D[];
+    bounced: number[];
+    hash: number[];
+    useOBB: boolean;
+    angles: number[];
+    angularVelocities: number[];
+    masses: number[];
+    momentsOfInertia: number[];
+    restitutions: number[];
+    defaultMass: number;
+    defaultRestitution: number;
+    constructor({ gridSize, containerOffsets, collisions, borders, useOBB, defaultMass, defaultRestitution, }?: ElasticaConfigOBB);
+    initialCondition(elements: (ElementData | null | undefined)[], rect: Container, callback?: (elastica: Elastica) => void): void;
+    polarCoordinates(vector: Vector2D): PolarCoordinates;
+    cartesianCoordinates(speed: number, angle: number): Vector2D;
+    hasBounced(index: number): number;
+    setPosition(element: HTMLElement | null | undefined, { x, y, z, angle }: {
+        x?: number;
+        y?: number;
+        z?: number;
+        angle?: number;
+    }): void;
+    setAngle(index: number, angle: number): void;
+    setAngularVelocity(index: number, angularVelocity: number): void;
+    setMass(index: number, mass: number): void;
+    setRestitution(index: number, restitution: number): void;
+    private getAABBState;
+    private getOBBState;
+    update(elements: (ElementData | null | undefined)[], callback: (elastica: Elastica) => void): void;
+}
