@@ -1,0 +1,64 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    // "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    // "allowImportingTsExtensions": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "useUnknownInCatchVariables": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUncheckedSideEffectImports": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "~/*": ["./*"],
+      "~/hooks": ["./lib/hooks"],
+      "~/hooks/*": ["./lib/hooks/*"],
+      "~/styles": ["./lib/styles"],
+      "~/styles/*": ["./lib/styles/*"],
+      "~/integrations/*": ["./lib/integrations/*"],
+      "~/webgl": ["./lib/webgl"],
+      "~/webgl/*": ["./lib/webgl/*"],
+      "~/dev": ["./lib/dev"],
+      "~/dev/*": ["./lib/dev/*"],
+      "~/utils": ["./lib/utils"],
+      "~/utils/*": ["./lib/utils/*"],
+      "~/config": ["./lib/styles/config.ts"],
+      "@elastica": ["../dist/elastica-react.mjs"],
+      "@elastica/*": ["../dist/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "lib/utils/types.d.ts",
+    "lib/utils/css.d.ts",
+    "lib/utils/elastica.d.ts",
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

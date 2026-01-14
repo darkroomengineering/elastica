@@ -1,6 +1,10 @@
 {
   "name": "@darkroom.engineering/elastica",
   "version": "0.0.14",
+  "workspaces": [
+    "packages/*",
+    "website"
+  ],
   "scripts": {
     "dev:engine": "cd packages/engine && bun run dev",
     "dev:react": "cd packages/react && bun run dev",
@@ -29,10 +33,9 @@
   "files": [
     "dist"
   ],
-  "dependencies": {
-    "@darkroom.engineering/hamo": "^0.6.45"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "@darkroom.engineering/hamo": "^0.6.45",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
@@ -53,13 +56,17 @@
   },
   "peerDependencies": {
     "react": ">=18.2.0",
-    "react-dom": ">=18.2.0"
+    "react-dom": ">=18.2.0",
+    "@darkroom.engineering/hamo": ">=0.6.0"
   },
   "peerDependenciesMeta": {
     "react": {
       "optional": true
     },
     "react-dom": {
+      "optional": true
+    },
+    "@darkroom.engineering/hamo": {
       "optional": true
     }
   },

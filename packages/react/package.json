@@ -5,9 +5,18 @@
     "build": "rollup --bundleConfigAsCjs -c",
     "watch": "rollup --bundleConfigAsCjs -c -w"
   },
-  "dependencies": {
-    "@darkroom.engineering/elastica": "workspace:*",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+  "devDependencies": {
+    "@darkroom.engineering/hamo": "^0.6.45"
+  },
+  "peerDependencies": {
+    "@darkroom.engineering/elastica": "*",
+    "@darkroom.engineering/hamo": ">=0.6.0",
+    "react": ">=18.2.0",
+    "react-dom": ">=18.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@darkroom.engineering/hamo": {
+      "optional": true
+    }
   }
 }

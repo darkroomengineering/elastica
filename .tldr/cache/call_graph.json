@@ -1,7 +1,158 @@
 {
-  "edges": [],
-  "languages": [
-    "python"
+  "edges": [
+    {
+      "from_file": "packages/engine/src/collision/obb.ts",
+      "from_func": "projectOBBOntoAxis",
+      "to_file": "packages/engine/src/collision/obb.ts",
+      "to_func": "getOBBCorners"
+    },
+    {
+      "from_file": "packages/engine/src/elastica.ts",
+      "from_func": "Elastica.update",
+      "to_file": "packages/engine/src/collision/obb.ts",
+      "to_func": "detectAndResolveOBB"
+    },
+    {
+      "from_file": "packages/engine/src/math.ts",
+      "from_func": "normalize",
+      "to_file": "packages/engine/src/math.ts",
+      "to_func": "magnitude"
+    },
+    {
+      "from_file": "packages/engine/src/collision/aabb.ts",
+      "from_func": "resolveAABBCollision",
+      "to_file": "packages/engine/src/collision/aabb.ts",
+      "to_func": "calculateSuperposition"
+    },
+    {
+      "from_file": "packages/engine/src/elastica.ts",
+      "from_func": "Elastica.update",
+      "to_file": "packages/engine/src/elastica.ts",
+      "to_func": "getOBBState"
+    },
+    {
+      "from_file": "packages/engine/src/elastica.ts",
+      "from_func": "Elastica.update",
+      "to_file": "packages/engine/src/borders.ts",
+      "to_func": "handleRigidBorders"
+    },
+    {
+      "from_file": "packages/engine/src/collision/obb.ts",
+      "from_func": "detectAndResolveOBB",
+      "to_file": "packages/engine/src/collision/obb.ts",
+      "to_func": "isOBBNeighbor"
+    },
+    {
+      "from_file": "packages/engine/src/collision/obb.ts",
+      "from_func": "isOBBNeighbor",
+      "to_file": "packages/engine/src/math.ts",
+      "to_func": "distanceSquared"
+    },
+    {
+      "from_file": "packages/engine/src/collision/obb.ts",
+      "from_func": "satCollisionTest",
+      "to_file": "packages/engine/src/collision/obb.ts",
+      "to_func": "projectOBBOntoAxis"
+    },
+    {
+      "from_file": "packages/engine/src/collision/obb.ts",
+      "from_func": "resolveOBBCollision",
+      "to_file": "packages/engine/src/collision/obb.ts",
+      "to_func": "getKineticEnergy"
+    },
+    {
+      "from_file": "packages/engine/src/elastica.ts",
+      "from_func": "Elastica.update",
+      "to_file": "packages/engine/src/elastica.ts",
+      "to_func": "getAABBState"
+    },
+    {
+      "from_file": "packages/engine/src/collision/aabb.ts",
+      "from_func": "detectAndResolveAABB",
+      "to_file": "packages/engine/src/collision/aabb.ts",
+      "to_func": "testAABB"
+    },
+    {
+      "from_file": "packages/engine/src/elastica.ts",
+      "from_func": "Elastica.update",
+      "to_file": "packages/engine/src/borders.ts",
+      "to_func": "handlePeriodicBorders"
+    },
+    {
+      "from_file": "packages/engine/src/collision/aabb.ts",
+      "from_func": "detectAndResolveAABB",
+      "to_file": "packages/engine/src/collision/aabb.ts",
+      "to_func": "isNeighbor"
+    },
+    {
+      "from_file": "packages/engine/src/collision/obb.ts",
+      "from_func": "detectAndResolveOBB",
+      "to_file": "packages/engine/src/collision/obb.ts",
+      "to_func": "resolveOBBCollision"
+    },
+    {
+      "from_file": "packages/engine/src/elastica.ts",
+      "from_func": "Elastica.update",
+      "to_file": "packages/engine/src/collision/aabb.ts",
+      "to_func": "detectAndResolveAABB"
+    },
+    {
+      "from_file": "packages/engine/src/elastica.ts",
+      "from_func": "Elastica.update",
+      "to_file": "packages/engine/src/elastica.ts",
+      "to_func": "hasBounced"
+    },
+    {
+      "from_file": "packages/engine/src/elastica.ts",
+      "from_func": "Elastica.initialCondition",
+      "to_file": "packages/engine/src/elastica.ts",
+      "to_func": "setPosition"
+    },
+    {
+      "from_file": "packages/engine/src/elastica.ts",
+      "from_func": "Elastica.update",
+      "to_file": "packages/engine/src/collision/obb.ts",
+      "to_func": "integrateAngularMotion"
+    },
+    {
+      "from_file": "packages/engine/src/elastica.ts",
+      "from_func": "Elastica.polarCoordinates",
+      "to_file": "packages/engine/src/math.ts",
+      "to_func": "toPolar"
+    },
+    {
+      "from_file": "packages/engine/src/elastica.ts",
+      "from_func": "Elastica.cartesianCoordinates",
+      "to_file": "packages/engine/src/math.ts",
+      "to_func": "toCartesian"
+    },
+    {
+      "from_file": "packages/engine/src/collision/aabb.ts",
+      "from_func": "detectAndResolveAABB",
+      "to_file": "packages/engine/src/collision/aabb.ts",
+      "to_func": "resolveAABBCollision"
+    },
+    {
+      "from_file": "packages/engine/src/math.ts",
+      "from_func": "rotateAround",
+      "to_file": "packages/engine/src/math.ts",
+      "to_func": "rotate"
+    },
+    {
+      "from_file": "packages/engine/src/collision/obb.ts",
+      "from_func": "detectAndResolveOBB",
+      "to_file": "packages/engine/src/collision/obb.ts",
+      "to_func": "satCollisionTest"
+    },
+    {
+      "from_file": "packages/engine/src/collision/obb.ts",
+      "from_func": "satCollisionTest",
+      "to_file": "packages/engine/src/collision/obb.ts",
+      "to_func": "getOBBAxes"
+    }
   ],
-  "timestamp": 1768337310.914287
+  "languages": [
+    "typescript"
+  ],
+  "timestamp": 1768388476.9350069
 }

@@ -1,64 +1,85 @@
-# Elastica Examples Website
+[![SATUS](https://assets.darkroom.engineering/satus/banner.gif)](https://github.com/darkroomengineering/satus)
 
-## Setup:
+# Satūs
 
-The usual process for Next.js based apps/websites:
+A modern Next.js 16 starter with React 19, Tailwind CSS v4, and optional WebGL. *Satūs* means "beginning" in Latin.
 
-1. Install node modules:
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/darkroomengineering/satus)
 
-   `$ pnpm i`
+> **Note**: This README is for template developers. For client handoff, see [PROD-README.md](PROD-README.md).
 
-2. Get the .env variables from Vercel (check `.env.template`), after [installing Vercel CLI](https://vercel.com/docs/cli):
+## Quick Start
 
-   `$ vc link`
+```bash
+bun install
+bun run setup:project    # Interactive setup - choose integrations
+cp .env.example .env.local
+bun dev
+```
 
-   `$ vc env pull`
+Or skip setup and keep everything: `bun install && bun dev`
 
-3. run development environment:
+## Tech Stack
 
-   `$ pnpm dev`
+| Category | Technologies |
+|----------|--------------|
+| Framework | Next.js 16, React 19.2, TypeScript |
+| Styling | Tailwind CSS v4, CSS Modules |
+| Optional | React Three Fiber, GSAP, Sanity, Shopify, HubSpot |
+| Tooling | Bun, Biome, Turbopack |
 
-## Stack:
+## Project Structure
 
-- [Lenis](https://github.com/darkroomengineering/lenis)
-- [Tempus](https://github.com/darkroomengineering/tempus)
-- [Hamo](https://github.com/darkroomengineering/hamo)
-- [PNPM](https://pnpm.io/)
-- [Next.js](https://nextjs.org/)
-- [Three.js](https://threejs.org/)
-- [@react-three/drei](https://github.com/pmndrs/drei)
-- [@react-three/fiber](https://docs.pmnd.rs/react-three-fiber/getting-started/introduction)
-- [GSAP](https://greensock.com/gsap/)
-- Sass (Modules)
-- [Zustand](https://github.com/pmndrs/zustand)
-- GraphQL (CMS API)
-- [Next-Sitemap](https://github.com/iamvishnusankar/next-sitemap) (postbuild script)
-- [@svgr/webpack](https://github.com/gregberge/svgr/tree/main) (SVG Imports in `next.config.js`)
+```
+app/                    # Next.js pages and routes
+components/             # UI components
+lib/                    # Everything non-UI
+  ├── hooks/           # Custom React hooks
+  ├── integrations/    # Third-party services
+  ├── styles/          # CSS & Tailwind
+  ├── webgl/           # 3D graphics (optional)
+  └── dev/             # Debug tools (optional)
+```
 
-## Code Style & Linting:
+> **Mental model:** UI → `components/`, everything else → `lib/`
 
-- Eslint ([Next](https://nextjs.org/docs/basic-features/eslint#eslint-config) and [Prettier](https://github.com/prettier/eslint-config-prettier) plugins)
-- [Prettier](https://prettier.io/) with the following settings available in `.pretierrc`:
-  ```json
-  {
-    "endOfLine": "auto",
-    "semi": false,
-    "singleQuote": true
-  }
-  ```
-- [Husky + lint-staged precommit hooks](https://github.com/okonet/lint-staged)
+## Documentation
 
-## Third Party (optional tools):
+| Area | Documentation |
+|------|---------------|
+| Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) — Key decisions & patterns |
+| App Router | [app/README.md](app/README.md) — Pages, layouts, routing |
+| Components | [components/README.md](components/README.md) — UI reference |
+| Library | [lib/README.md](lib/README.md) — Hooks, utils, integrations |
+| Integrations | [lib/integrations/README.md](lib/integrations/README.md) — Sanity, Shopify, etc. |
 
-- [Vercel (Hosting & Continuous Deployment)](https://vercel.com/home)
-- [GitHub Versioning](https://github.com/)
+## Scripts
 
-## Folder Structure:
+```bash
+bun dev              # Development server
+bun build            # Production build
+bun lint             # Biome linter
+bun run generate     # Generate pages/components
+bun run setup:project  # Configure integrations
+```
 
-Alongside the usual Next.js App Router folder structure (`/public`, `/app`, etc.) We've added a few other folders to keep the code easier to read:
+## Key Conventions
 
-- **/components:** Reusable components with their respective Sass file
-- **/docs:** Readmes on how to use third party tools at darkroom
-- **/hooks:** Reusable Custom Hooks
-- **/libs:** Reusable Scripts and State Storing, hubspot integration, sass utils, etc.
-- **/styles:** Global styles and Sass partials
+- **Images**: Use `~/components/ui/image` (never `next/image` directly)
+- **Links**: Use `~/components/ui/link` (auto-handles external links)
+- **CSS Modules**: Import as `s` → `import s from './component.module.css'`
+- **Debug Tools**: Toggle with `Cmd/Ctrl + O`
+
+## Deployment
+
+```bash
+vercel
+```
+
+**Required GitHub Secret**: `VERCEL_TOKEN` for Lighthouse CI workflow.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for deployment checklist and cache strategies.
+
+## License
+
+MIT — Built by [darkroom.engineering](https://darkroom.engineering)
