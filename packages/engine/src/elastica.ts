@@ -46,7 +46,7 @@ export default class Elastica {
     collisions = true,
     borders = 'rigid',
     useOBB = true,
-    defaultMass = 10,
+    defaultMass = 1,
     defaultRestitution = 0.8,
   }: ElasticaConfigOBB = {}) {
     this.calculatecCollisions = collisions

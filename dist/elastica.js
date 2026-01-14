@@ -588,7 +588,7 @@
     }
 
     class Elastica {
-        constructor({ gridSize = 4, containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 }, collisions = true, borders = 'rigid', useOBB = true, defaultMass = 10, defaultRestitution = 0.8, } = {}) {
+        constructor({ gridSize = 4, containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 }, collisions = true, borders = 'rigid', useOBB = true, defaultMass = 1, defaultRestitution = 0.8, } = {}) {
             this.calculatecCollisions = collisions;
             this.calculateBorders = borders;
             this.gridSize = gridSize;
