@@ -6,10 +6,12 @@ import { useFrame, useRect } from '@darkroom.engineering/hamo'
 import {
   createContext,
   forwardRef,
+  memo,
   useCallback,
   useContext,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
   type HTMLAttributes,
@@ -34,7 +36,9 @@ export type {
   UpdateParams
 } from './presets'
 export {
-  AxisAlignedBoundaryBox,
+  BoundaryBox,
+  // Deprecated alias for backwards compatibility
+  BoundaryBox as AxisAlignedBoundaryBox,
   dragForcePresetsLib,
   initalConditionsPresets,
   updatePresets,
@@ -71,23 +75,26 @@ export type ReactElasticaProps = {
   showHashGrid?: boolean
 }
 
+// Default config values
+const DEFAULT_CONFIG: ElasticaConfigOBB = {
+  gridSize: 8,
+  collisions: true,
+  borders: 'rigid',
+  useOBB: true,
+  containerOffsets: {
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+}
+
 const ReactElastica = forwardRef<ReactElasticaRef, ReactElasticaProps>(
   function ReactElastica(
     {
       children,
       className,
-      config = {
-        gridSize: 8,
-        collisions: true,
-        borders: 'rigid',
-        useOBB: true,
-        containerOffsets: {
-          top: 0,
-          bottom: 0,
-          left: 0,
-          right: 0,
-        },
-      },
+      config,
       initialCondition = () => {},
       update = () => {},
       showHashGrid = false,
@@ -99,11 +106,53 @@ const ReactElastica = forwardRef<ReactElasticaRef, ReactElasticaProps>(
     const boxesRefs = useRef(new Map<HTMLElement, ElementData>())
     const [sectionRectRef, sectionRect] = useRect()
     const [javascriptEnable, setJavascriptEnable] = useJavascriptEnable()
-    const [elastica, setElastica] = useState(() => new Elastica(config))
+
+    // Memoize config to prevent unnecessary engine recreation
+    // Only recreate when actual config values change, not object reference
+    const stableConfig = useMemo<ElasticaConfigOBB>(() => ({
+      gridSize: config?.gridSize ?? DEFAULT_CONFIG.gridSize,
+      collisions: config?.collisions ?? DEFAULT_CONFIG.collisions,
+      borders: config?.borders ?? DEFAULT_CONFIG.borders,
+      useOBB: config?.useOBB ?? DEFAULT_CONFIG.useOBB,
+      containerOffsets: {
+        top: config?.containerOffsets?.top ?? DEFAULT_CONFIG.containerOffsets?.top ?? 0,
+        bottom: config?.containerOffsets?.bottom ?? DEFAULT_CONFIG.containerOffsets?.bottom ?? 0,
+        left: config?.containerOffsets?.left ?? DEFAULT_CONFIG.containerOffsets?.left ?? 0,
+        right: config?.containerOffsets?.right ?? DEFAULT_CONFIG.containerOffsets?.right ?? 0,
+      },
+      defaultMass: config?.defaultMass,
+      defaultRestitution: config?.defaultRestitution,
+    }), [
+      config?.gridSize,
+      config?.collisions,
+      config?.borders,
+      config?.useOBB,
+      config?.containerOffsets?.top,
+      config?.containerOffsets?.bottom,
+      config?.containerOffsets?.left,
+      config?.containerOffsets?.right,
+      config?.defaultMass,
+      config?.defaultRestitution,
+    ])
+
+    const [elastica, setElastica] = useState(() => new Elastica(stableConfig))
+
+    // Store callbacks in refs to avoid effect re-runs when they change
+    const initialConditionRef = useRef(initialCondition)
+    const updateRef = useRef(update)
+
+    // Keep refs up to date
+    useEffect(() => {
+      initialConditionRef.current = initialCondition
+    }, [initialCondition])
 
     useEffect(() => {
-      setElastica(new Elastica(config))
-    }, [config])
+      updateRef.current = update
+    }, [update])
+
+    useEffect(() => {
+      setElastica(new Elastica(stableConfig))
+    }, [stableConfig])
 
     const addBox = useCallback((element: HTMLElement, slide: ElementData) => {
       boxesRefs.current.set(element, slide)
@@ -121,16 +170,16 @@ const ReactElastica = forwardRef<ReactElasticaRef, ReactElasticaProps>(
       isPausedRef.current = true
     }, [])
 
-    // Set initial conditions
+    // Set initial conditions - only re-run when elastica or sectionRect changes
     useEffect(() => {
       const boxes = [...boxesRefs.current.values()]
 
       if (isEmptyArray(boxes) || boxes.some(({ rect }) => !rect)) return
 
       elastica.initialCondition(boxes, sectionRect, (instances) =>
-        initialCondition({ boxes, ...instances })
+        initialConditionRef.current({ boxes, ...instances })
       )
-    }, [elastica, sectionRect, initialCondition])
+    }, [elastica, sectionRect])
 
     // Update simulation
     useFrame((time: number) => {
@@ -146,9 +195,9 @@ const ReactElastica = forwardRef<ReactElasticaRef, ReactElasticaProps>(
       timeRef.current = time
 
       elastica.update(boxes, (instance) => {
-        update({ 
-          boxes, 
-          ...instance, 
+        updateRef.current({
+          boxes,
+          ...instance,
           deltaTime,
           hash: instance.hash,
           gridSize: instance.gridSize,
@@ -180,30 +229,49 @@ const ReactElastica = forwardRef<ReactElasticaRef, ReactElasticaProps>(
 
 ReactElastica.displayName = 'ReactElastica'
 
-export type AxisAlignedBoundaryBoxProps = HTMLAttributes<HTMLDivElement>
+export type BoundaryBoxProps = HTMLAttributes<HTMLDivElement>
 
-function AxisAlignedBoundaryBox({
+/** @deprecated Use BoundaryBoxProps instead */
+export type AxisAlignedBoundaryBoxProps = BoundaryBoxProps
+
+const BoundaryBox = memo(function BoundaryBox({
   className,
   children,
   ...props
-}: AxisAlignedBoundaryBoxProps) {
+}: BoundaryBoxProps) {
   const context = useElastica()
   const [setRectRef, rect] = useRect()
   const elementRef = useRef<HTMLDivElement | null>(null)
+  const elementDataRef = useRef<ElementData | null>(null)
 
+  // Register element once on mount, cleanup on unmount
   useEffect(() => {
-    if (elementRef.current && context) {
-      const element = elementRef.current
-      context.addBox(element, {
-        element,
-        rect,
-      })
+    const element = elementRef.current
+    if (!element || !context) return
 
-      return () => {
-        context.removeBox(element)
-      }
+    // Create element data object that will be mutated with rect updates
+    const elementData: ElementData = {
+      element,
+      rect,
     }
-  }, [rect, context])
+    elementDataRef.current = elementData
+    context.addBox(element, elementData)
+
+    return () => {
+      context.removeBox(element)
+      elementDataRef.current = null
+    }
+    // Only depend on context, not rect - we update rect separately
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [context])
+
+  // Update rect in place without re-registering
+  useEffect(() => {
+    if (elementDataRef.current && rect) {
+      // Mutate the existing element data to update rect
+      elementDataRef.current.rect = rect
+    }
+  }, [rect])
 
   return (
     <div
@@ -217,7 +285,7 @@ function AxisAlignedBoundaryBox({
       {children}
     </div>
   )
-}
+})
 
 export default ReactElastica
 

@@ -1,7 +1,7 @@
 'use client'
 
 import ReactElastica, {
-  AxisAlignedBoundaryBox,
+  BoundaryBox,
   initalConditionsPresets,
   type ReactElasticaRef,
   type UpdateParams,
@@ -43,11 +43,11 @@ interface ItemProps {
 
 function Item({ name }: ItemProps) {
   return (
-    <AxisAlignedBoundaryBox className="absolute inset-0 w-fit h-fit select-none">
+    <BoundaryBox className="absolute inset-0 w-fit h-fit select-none">
       <div className="text-primary bg-secondary dr-p-8 dr-rounded-12">
         {name}
       </div>
-    </AxisAlignedBoundaryBox>
+    </BoundaryBox>
   )
 }
 

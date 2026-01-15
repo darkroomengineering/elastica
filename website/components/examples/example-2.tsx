@@ -1,7 +1,7 @@
 'use client'
 
 import ReactElastica, {
-  AxisAlignedBoundaryBox,
+  BoundaryBox,
   initalConditionsPresets,
   type ReactElasticaRef,
   type UpdateParams,
@@ -138,16 +138,16 @@ export function Example2({ data }: Example2Props) {
           })
         }}
       >
-        <AxisAlignedBoundaryBox className="text-primary bg-secondary absolute top-1/2 left-3/4 -translate-x-1/2 -translate-y-1/2 dr-w-400 dr-h-100 select-none flex items-center justify-center dr-text-32" data-state="static" >
-        static</AxisAlignedBoundaryBox>
-        <AxisAlignedBoundaryBox className="text-primary bg-secondary absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 dr-w-400 dr-h-100 select-none flex items-center justify-center dr-text-32" data-state="static" >
-        static</AxisAlignedBoundaryBox>
+        <BoundaryBox className="text-primary bg-secondary absolute top-1/2 left-3/4 -translate-x-1/2 -translate-y-1/2 dr-w-400 dr-h-100 select-none flex items-center justify-center dr-text-32" data-state="static" >
+        static</BoundaryBox>
+        <BoundaryBox className="text-primary bg-secondary absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 dr-w-400 dr-h-100 select-none flex items-center justify-center dr-text-32" data-state="static" >
+        static</BoundaryBox>
         {items.map(({ name }, index) => (
-         <AxisAlignedBoundaryBox key={index} className="absolute inset-0 w-fit h-fit select-none" data-state="dynamic">
+         <BoundaryBox key={index} className="absolute inset-0 w-fit h-fit select-none" data-state="dynamic">
           <div className="text-primary bg-secondary dr-p-8 dr-rounded-12">
             {name}
           </div>
-         </AxisAlignedBoundaryBox>
+         </BoundaryBox>
         ))}
       </ReactElastica>
     </section>

@@ -10,36 +10,36 @@ export type AABBState = {
   hash: number[]
   gridSize: number
   isStatic: boolean[]
+  buckets: Map<number, number[]>
 }
 
 /**
- * Check if two bodies are in neighboring hash cells
+ * Get neighbor cell IDs for a given cell (3x3 grid)
+ * Returns array of valid cell IDs including the cell itself
  */
-export function isNeighbor(
-  state: AABBState,
-  indexA: number,
-  indexB: number
-): boolean {
-  const hashA = state.hash[indexA]
-  const hashB = state.hash[indexB]
+export function getNeighborCellIds(
+  cellId: number,
+  gridSize: number
+): number[] {
+  const cellX = cellId % gridSize
+  const cellY = Math.floor(cellId / gridSize)
+  const neighbors: number[] = []
 
-  if (hashA === undefined || hashB === undefined) return false
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const nx = cellX + dx
+      const ny = cellY + dy
 
-  for (let i = -1; i < 2; i++) {
-    for (let j = -1; j < 2; j++) {
-      const box = hashA + state.gridSize * i + j
-
-      if (box < 0 || box > state.gridSize * state.gridSize) {
+      // Skip out-of-bounds cells
+      if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) {
         continue
       }
 
-      if (box === hashB) {
-        return true
-      }
+      neighbors.push(nx + ny * gridSize)
     }
   }
 
-  return false
+  return neighbors
 }
 
 /**
@@ -174,6 +174,7 @@ export function resolveAABBCollision(
 
 /**
  * Detect and resolve all AABB collisions
+ * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
  */
 export function detectAndResolveAABB(
   state: AABBState,
@@ -181,29 +182,48 @@ export function detectAndResolveAABB(
   onCollision?: (indexA: number, indexB: number) => void
 ): CollisionRecord[] {
   const collisionsList: CollisionRecord[] = []
+  // Track checked pairs to avoid duplicate checks
+  const checkedPairs = new Set<string>()
 
   for (let indexA = 0; indexA < elementCount; indexA++) {
     const velA = state.velocities[indexA]
     if (!velA) continue
 
-    for (let indexB = indexA + 1; indexB < elementCount; indexB++) {
-      const velB = state.velocities[indexB]
-      if (!velB) continue
+    const cellIdA = state.hash[indexA]
+    if (cellIdA === undefined) continue
 
-      // Skip if not in neighboring cells
-      if (!isNeighbor(state, indexA, indexB)) continue
+    // Get all neighbor cell IDs
+    const neighborCells = getNeighborCellIds(cellIdA, state.gridSize)
 
-      // Test for collision
-      if (!testAABB(state, indexA, indexB)) continue
+    // Check elements in neighboring cells only
+    for (const neighborCellId of neighborCells) {
+      const bucket = state.buckets.get(neighborCellId)
+      if (!bucket) continue
 
-      // Record collision
-      collisionsList.push({ loop: indexA, inHash: indexB })
+      for (const indexB of bucket) {
+        // Skip self and ensure we only check each pair once (lower index first)
+        if (indexA >= indexB) continue
 
-      // Callback for bounce tracking
-      onCollision?.(indexA, indexB)
+        const velB = state.velocities[indexB]
+        if (!velB) continue
 
-      // Resolve collision
-      resolveAABBCollision(state, indexA, indexB)
+        // Create pair key to avoid duplicate checks
+        const pairKey = `${indexA}:${indexB}`
+        if (checkedPairs.has(pairKey)) continue
+        checkedPairs.add(pairKey)
+
+        // Test for collision
+        if (!testAABB(state, indexA, indexB)) continue
+
+        // Record collision
+        collisionsList.push({ loop: indexA, inHash: indexB })
+
+        // Callback for bounce tracking
+        onCollision?.(indexA, indexB)
+
+        // Resolve collision
+        resolveAABBCollision(state, indexA, indexB)
+      }
     }
   }
 

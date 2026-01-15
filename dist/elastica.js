@@ -87,25 +87,25 @@
     }
 
     /**
-     * Check if two bodies are in neighboring hash cells
+     * Get neighbor cell IDs for a given cell (3x3 grid)
+     * Returns array of valid cell IDs including the cell itself
      */
-    function isNeighbor(state, indexA, indexB) {
-        const hashA = state.hash[indexA];
-        const hashB = state.hash[indexB];
-        if (hashA === undefined || hashB === undefined)
-            return false;
-        for (let i = -1; i < 2; i++) {
-            for (let j = -1; j < 2; j++) {
-                const box = hashA + state.gridSize * i + j;
-                if (box < 0 || box > state.gridSize * state.gridSize) {
+    function getNeighborCellIds(cellId, gridSize) {
+        const cellX = cellId % gridSize;
+        const cellY = Math.floor(cellId / gridSize);
+        const neighbors = [];
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const nx = cellX + dx;
+                const ny = cellY + dy;
+                // Skip out-of-bounds cells
+                if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) {
                     continue;
                 }
-                if (box === hashB) {
-                    return true;
-                }
+                neighbors.push(nx + ny * gridSize);
             }
         }
-        return false;
+        return neighbors;
     }
     /**
      * Check if two AABBs are overlapping
@@ -208,29 +208,48 @@
     }
     /**
      * Detect and resolve all AABB collisions
+     * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
      */
     function detectAndResolveAABB(state, elementCount, onCollision) {
         const collisionsList = [];
+        // Track checked pairs to avoid duplicate checks
+        const checkedPairs = new Set();
         for (let indexA = 0; indexA < elementCount; indexA++) {
             const velA = state.velocities[indexA];
             if (!velA)
                 continue;
-            for (let indexB = indexA + 1; indexB < elementCount; indexB++) {
-                const velB = state.velocities[indexB];
-                if (!velB)
+            const cellIdA = state.hash[indexA];
+            if (cellIdA === undefined)
+                continue;
+            // Get all neighbor cell IDs
+            const neighborCells = getNeighborCellIds(cellIdA, state.gridSize);
+            // Check elements in neighboring cells only
+            for (const neighborCellId of neighborCells) {
+                const bucket = state.buckets.get(neighborCellId);
+                if (!bucket)
                     continue;
-                // Skip if not in neighboring cells
-                if (!isNeighbor(state, indexA, indexB))
-                    continue;
-                // Test for collision
-                if (!testAABB(state, indexA, indexB))
-                    continue;
-                // Record collision
-                collisionsList.push({ loop: indexA, inHash: indexB });
-                // Callback for bounce tracking
-                onCollision?.(indexA, indexB);
-                // Resolve collision
-                resolveAABBCollision(state, indexA, indexB);
+                for (const indexB of bucket) {
+                    // Skip self and ensure we only check each pair once (lower index first)
+                    if (indexA >= indexB)
+                        continue;
+                    const velB = state.velocities[indexB];
+                    if (!velB)
+                        continue;
+                    // Create pair key to avoid duplicate checks
+                    const pairKey = `${indexA}:${indexB}`;
+                    if (checkedPairs.has(pairKey))
+                        continue;
+                    checkedPairs.add(pairKey);
+                    // Test for collision
+                    if (!testAABB(state, indexA, indexB))
+                        continue;
+                    // Record collision
+                    collisionsList.push({ loop: indexA, inHash: indexB });
+                    // Callback for bounce tracking
+                    onCollision?.(indexA, indexB);
+                    // Resolve collision
+                    resolveAABBCollision(state, indexA, indexB);
+                }
             }
         }
         return collisionsList;
@@ -360,10 +379,132 @@
     }
 
     /**
+     * Simple object pool for Vector2D arrays to reduce GC pressure in hot paths.
+     *
+     * USAGE:
+     *   const vec = vectorPool.acquire()   // Get a [0, 0] vector
+     *   vec[0] = x; vec[1] = y             // Use it
+     *   vectorPool.release(vec)            // Return it when done
+     *
+     * IMPORTANT: Only use for temporary calculations within a single function.
+     * Do not store pooled vectors in state - they will be reused!
+     */
+    class VectorPool {
+        constructor(initialSize = 64, maxSize = 256) {
+            this.pool = [];
+            this.maxSize = maxSize;
+            // Pre-allocate initial vectors
+            for (let i = 0; i < initialSize; i++) {
+                this.pool.push([0, 0]);
+            }
+        }
+        /**
+         * Get a vector from the pool (or create a new one if empty)
+         * Vector is reset to [0, 0]
+         */
+        acquire() {
+            if (this.pool.length > 0) {
+                const vec = this.pool.pop();
+                vec[0] = 0;
+                vec[1] = 0;
+                return vec;
+            }
+            return [0, 0];
+        }
+        /**
+         * Return a vector to the pool for reuse
+         */
+        release(vec) {
+            if (this.pool.length < this.maxSize) {
+                this.pool.push(vec);
+            }
+            // If pool is full, let GC collect it
+        }
+        /**
+         * Get current pool size (for debugging)
+         */
+        get size() {
+            return this.pool.length;
+        }
+    }
+    /**
+     * Pool for 4-corner arrays used in OBB collision detection
+     */
+    class CornersPool {
+        constructor(initialSize = 32, maxSize = 128) {
+            this.pool = [];
+            this.maxSize = maxSize;
+            for (let i = 0; i < initialSize; i++) {
+                this.pool.push([[0, 0], [0, 0], [0, 0], [0, 0]]);
+            }
+        }
+        acquire() {
+            if (this.pool.length > 0) {
+                const corners = this.pool.pop();
+                // Reset all corners
+                for (let i = 0; i < 4; i++) {
+                    corners[i][0] = 0;
+                    corners[i][1] = 0;
+                }
+                return corners;
+            }
+            return [[0, 0], [0, 0], [0, 0], [0, 0]];
+        }
+        release(corners) {
+            if (this.pool.length < this.maxSize) {
+                this.pool.push(corners);
+            }
+        }
+        get size() {
+            return this.pool.length;
+        }
+    }
+    /**
+     * Pool for axes arrays used in SAT collision test
+     * Each axes array holds 4 Vector2D (2 from each OBB)
+     */
+    class AxesPool {
+        constructor(initialSize = 32, maxSize = 128) {
+            this.pool = [];
+            this.maxSize = maxSize;
+            for (let i = 0; i < initialSize; i++) {
+                this.pool.push([[0, 0], [0, 0], [0, 0], [0, 0]]);
+            }
+        }
+        acquire() {
+            if (this.pool.length > 0) {
+                const axes = this.pool.pop();
+                // Reset axes
+                for (let i = 0; i < 4; i++) {
+                    axes[i][0] = 0;
+                    axes[i][1] = 0;
+                }
+                return axes;
+            }
+            return [[0, 0], [0, 0], [0, 0], [0, 0]];
+        }
+        release(axes) {
+            if (this.pool.length < this.maxSize && axes.length === 4) {
+                this.pool.push(axes);
+            }
+        }
+        get size() {
+            return this.pool.length;
+        }
+    }
+    // Global pool instances
+    new VectorPool();
+    const cornersPool = new CornersPool();
+    const axesPool = new AxesPool();
+
+    /**
      * Get the four corners of a rotated rectangle (OBB)
      * Returns corners in order: top-left, top-right, bottom-right, bottom-left
+     *
+     * @param corners - Optional pre-allocated corners array to fill (from pool)
+     * @returns The corners array, or null if invalid state
      */
-    function getOBBCorners(state, index) {
+    function getOBBCorners(state, index, corners) {
         const position = state.positions[index];
         const dimension = state.dimensions[index];
         const angle = state.angles[index];
@@ -373,18 +514,19 @@
         const sin = Math.sin(angle);
         const hw = dimension[0];
         const hh = dimension[1];
-        // Local corner offsets (unrotated)
-        const localCorners = [
-            [-hw, -hh],
-            [hw, -hh],
-            [hw, hh],
-            [-hw, hh],
-        ];
-        // Rotate and translate to world coordinates
-        return localCorners.map(([lx, ly]) => [
-            position[0] + lx * cos - ly * sin,
-            position[1] + lx * sin + ly * cos,
-        ]);
+        // Local corner offsets (unrotated): TL, TR, BR, BL
+        const localX = [-hw, hw, hw, -hw];
+        const localY = [-hh, -hh, hh, hh];
+        // Use provided corners or allocate new ones
+        const result = corners ?? cornersPool.acquire();
+        // Rotate and translate to world coordinates (no .map() allocation)
+        for (let i = 0; i < 4; i++) {
+            const lx = localX[i];
+            const ly = localY[i];
+            result[i][0] = position[0] + lx * cos - ly * sin;
+            result[i][1] = position[1] + lx * sin + ly * cos;
+        }
+        return result;
     }
     /**
      * Get the two edge normals (axes) for SAT collision test
@@ -418,6 +560,7 @@
     }
     /**
      * SAT (Separating Axis Theorem) collision test between two OBBs
+     * Uses object pooling to minimize allocations in hot path.
      */
     function satCollisionTest(state, indexA, indexB) {
         const axesA = getOBBAxes(state, indexA);
@@ -425,17 +568,28 @@
         if (!axesA || !axesB) {
             return { collided: false };
         }
-        const axes = [...axesA, ...axesB];
+        // Use pooled axes array instead of spread allocation
+        const axes = axesPool.acquire();
+        axes[0][0] = axesA[0][0];
+        axes[0][1] = axesA[0][1];
+        axes[1][0] = axesA[1][0];
+        axes[1][1] = axesA[1][1];
+        axes[2][0] = axesB[0][0];
+        axes[2][1] = axesB[0][1];
+        axes[3][0] = axesB[1][0];
+        axes[3][1] = axesB[1][1];
         let minOverlap = Infinity;
         let minOverlapAxis = null;
         for (const axis of axes) {
             const projA = projectOBBOntoAxis(state, indexA, axis);
             const projB = projectOBBOntoAxis(state, indexB, axis);
             if (!projA || !projB) {
+                axesPool.release(axes);
                 return { collided: false };
             }
             const overlap = Math.min(projA[1], projB[1]) - Math.max(projA[0], projB[0]);
             if (overlap <= 0) {
+                axesPool.release(axes);
                 return { collided: false };
             }
             if (overlap < minOverlap) {
@@ -443,6 +597,10 @@
                 minOverlapAxis = axis;
             }
         }
+        // Release axes - we've extracted what we need (minOverlapAxis values)
+        const savedAxisX = minOverlapAxis ? minOverlapAxis[0] : 0;
+        const savedAxisY = minOverlapAxis ? minOverlapAxis[1] : 0;
+        axesPool.release(axes);
         if (!minOverlapAxis) {
             return { collided: false };
         }
@@ -452,11 +610,12 @@
             return { collided: false };
         }
         // Ensure normal points from A to B
-        const centerDiff = [posB[0] - posA[0], posB[1] - posA[1]];
-        const dot = centerDiff[0] * minOverlapAxis[0] + centerDiff[1] * minOverlapAxis[1];
+        const centerDiffX = posB[0] - posA[0];
+        const centerDiffY = posB[1] - posA[1];
+        const dot = centerDiffX * savedAxisX + centerDiffY * savedAxisY;
         const normal = dot < 0
-            ? [-minOverlapAxis[0], -minOverlapAxis[1]]
-            : [minOverlapAxis[0], minOverlapAxis[1]];
+            ? [-savedAxisX, -savedAxisY]
+            : [savedAxisX, savedAxisY];
         const contactPoint = [
             (posA[0] + posB[0]) / 2,
             (posA[1] + posB[1]) / 2,
@@ -470,6 +629,7 @@
     }
     /**
      * Check if two OBBs are potentially close enough to collide (broad phase)
+     * Used as secondary filter after spatial hash for rotated boxes
      */
     function isOBBNeighbor(state, indexA, indexB) {
         const posA = state.positions[indexA];
@@ -502,6 +662,9 @@
     }
     /**
      * Resolve OBB collision with energy conservation
+     *
+     * PERF NOTE: Creates multiple Vector2D arrays per collision resolution.
+     * For high collision counts, consider mutating in-place or using object pooling.
      */
     function resolveOBBCollision(state, indexA, indexB, contact) {
         const posA = state.positions[indexA];
@@ -664,28 +827,50 @@
     }
     /**
      * Detect and resolve all OBB collisions
+     * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
      */
     function detectAndResolveOBB(state, elementCount, onCollision) {
         const collisionsList = [];
+        // Track checked pairs to avoid duplicate checks
+        const checkedPairs = new Set();
         for (let indexA = 0; indexA < elementCount; indexA++) {
             const velA = state.velocities[indexA];
             if (!velA)
                 continue;
-            for (let indexB = indexA + 1; indexB < elementCount; indexB++) {
-                const velB = state.velocities[indexB];
-                if (!velB)
+            const cellIdA = state.hash[indexA];
+            if (cellIdA === undefined)
+                continue;
+            // Get all neighbor cell IDs
+            const neighborCells = getNeighborCellIds(cellIdA, state.gridSize);
+            // Check elements in neighboring cells only
+            for (const neighborCellId of neighborCells) {
+                const bucket = state.buckets.get(neighborCellId);
+                if (!bucket)
                     continue;
-                // Broad phase check
-                if (!isOBBNeighbor(state, indexA, indexB))
-                    continue;
-                // Narrow phase SAT test
-                const result = satCollisionTest(state, indexA, indexB);
-                if (!result.collided || !result.contact)
-                    continue;
-                collisionsList.push({ loop: indexA, inHash: indexB });
-                onCollision?.(indexA, indexB);
-                // Resolve collision
-                resolveOBBCollision(state, indexA, indexB, result.contact);
+                for (const indexB of bucket) {
+                    // Skip self and ensure we only check each pair once (lower index first)
+                    if (indexA >= indexB)
+                        continue;
+                    const velB = state.velocities[indexB];
+                    if (!velB)
+                        continue;
+                    // Create pair key to avoid duplicate checks
+                    const pairKey = `${indexA}:${indexB}`;
+                    if (checkedPairs.has(pairKey))
+                        continue;
+                    checkedPairs.add(pairKey);
+                    // Broad phase distance check (for rotated boxes that may span cells)
+                    if (!isOBBNeighbor(state, indexA, indexB))
+                        continue;
+                    // Narrow phase SAT test
+                    const result = satCollisionTest(state, indexA, indexB);
+                    if (!result.collided || !result.contact)
+                        continue;
+                    collisionsList.push({ loop: indexA, inHash: indexB });
+                    onCollision?.(indexA, indexB);
+                    // Resolve collision
+                    resolveOBBCollision(state, indexA, indexB, result.contact);
+                }
             }
         }
         return collisionsList;
@@ -725,6 +910,7 @@
             this.hash = [];
             this.isStatic = [];
             this.staticPositions = [];
+            this.buckets = new Map();
             // OBB rigid body properties
             this.useOBB = useOBB;
             this.angles = [];
@@ -759,15 +945,15 @@
                 return [halfWidth, halfHeight];
             });
             callback(this);
+            const elementCount = elements.length;
             // Cache static element positions after initialization
-            this.positions.forEach((pos, index) => {
-                if (this.isStatic[index] && pos) {
+            for (let index = 0; index < elementCount; index++) {
+                const pos = this.positions[index];
+                if (!pos)
+                    continue;
+                if (this.isStatic[index]) {
                     this.staticPositions[index] = [pos[0], pos[1]];
                 }
-                this.hash[index] =
-                    Math.floor(this.gridSize * (pos[0] / this.container.width)) +
-                        Math.floor(this.gridSize * (pos[1] / this.container.height)) *
-                            this.gridSize;
                 const element = elements[index];
                 const dimension = this.dimensions[index];
                 if (element && dimension) {
@@ -776,7 +962,62 @@
                         y: pos[1] - dimension[1],
                     }, index);
                 }
-            });
+            }
+            // Build initial spatial hash with buckets
+            this.updateSpatialHash(elementCount);
+        }
+        // Spatial hash utilities
+        computeCellId(pos) {
+            const cellX = Math.floor((this.gridSize * pos[0]) / this.container.width);
+            const cellY = Math.floor((this.gridSize * pos[1]) / this.container.height);
+            // Clamp to valid range to handle edge cases
+            const clampedX = Math.max(0, Math.min(this.gridSize - 1, cellX));
+            const clampedY = Math.max(0, Math.min(this.gridSize - 1, cellY));
+            return clampedX + clampedY * this.gridSize;
+        }
+        updateSpatialHash(elementCount) {
+            // Clear all buckets
+            this.buckets.clear();
+            // Populate hash and buckets in single pass
+            for (let index = 0; index < elementCount; index++) {
+                const pos = this.positions[index];
+                if (!pos)
+                    continue;
+                const cellId = this.computeCellId(pos);
+                this.hash[index] = cellId;
+                // Add to bucket
+                const bucket = this.buckets.get(cellId);
+                if (bucket) {
+                    bucket.push(index);
+                }
+                else {
+                    this.buckets.set(cellId, [index]);
+                }
+            }
+        }
+        // Get indices of elements in neighboring cells (3x3 grid around cell)
+        getNeighborIndices(cellId) {
+            const indices = [];
+            const cellX = cellId % this.gridSize;
+            const cellY = Math.floor(cellId / this.gridSize);
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    const nx = cellX + dx;
+                    const ny = cellY + dy;
+                    // Skip out-of-bounds cells
+                    if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) {
+                        continue;
+                    }
+                    const neighborCellId = nx + ny * this.gridSize;
+                    const bucket = this.buckets.get(neighborCellId);
+                    if (bucket) {
+                        for (let i = 0; i < bucket.length; i++) {
+                            indices.push(bucket[i]);
+                        }
+                    }
+                }
+            }
+            return indices;
         }
         // Math utilities (delegated)
         polarCoordinates(vector) {
@@ -839,6 +1080,7 @@
                 hash: this.hash,
                 gridSize: this.gridSize,
                 isStatic: this.isStatic,
+                buckets: this.buckets,
             };
         }
         getOBBState() {
@@ -852,6 +1094,9 @@
                 momentsOfInertia: this.momentsOfInertia,
                 restitutions: this.restitutions,
                 isStatic: this.isStatic,
+                hash: this.hash,
+                gridSize: this.gridSize,
+                buckets: this.buckets,
             };
         }
         // Main update loop
@@ -906,7 +1151,8 @@
                 }
             }
             // Update DOM positions
-            elements.forEach((element, index) => {
+            for (let index = 0; index < elementCount; index++) {
+                const element = elements[index];
                 const position = this.positions[index];
                 const dimension = this.dimensions[index];
                 const angle = this.useOBB ? this.angles[index] : 0;
@@ -917,14 +1163,9 @@
                         angle: angle ?? 0,
                     }, index);
                 }
-            });
-            // Update spatial hash
-            this.positions.forEach((pos, index) => {
-                this.hash[index] =
-                    Math.floor((this.gridSize * pos[0]) / this.container.width) +
-                        Math.floor((this.gridSize * pos[1]) / this.container.height) *
-                            this.gridSize;
-            });
+            }
+            // Update spatial hash with buckets for next frame
+            this.updateSpatialHash(elementCount);
         }
     }
 
@@ -938,12 +1179,12 @@
     exports.distanceSquared = distanceSquared;
     exports.dot = dot;
     exports.getKineticEnergy = getKineticEnergy;
+    exports.getNeighborCellIds = getNeighborCellIds;
     exports.getOBBAxes = getOBBAxes;
     exports.getOBBCorners = getOBBCorners;
     exports.handlePeriodicBorders = handlePeriodicBorders;
     exports.handleRigidBorders = handleRigidBorders;
     exports.integrateAngularMotion = integrateAngularMotion;
-    exports.isNeighbor = isNeighbor;
     exports.isOBBNeighbor = isOBBNeighbor;
     exports.lerp = lerp;
     exports.magnitude = magnitude;

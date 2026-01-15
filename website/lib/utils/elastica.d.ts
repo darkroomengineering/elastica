@@ -111,10 +111,10 @@ declare module '@elastica' {
 
   export function useElastica(): ElasticaContextValue
 
-  export type AxisAlignedBoundaryBoxProps = HTMLAttributes<HTMLDivElement>
+  export type BoundaryBoxProps = HTMLAttributes<HTMLDivElement>
 
-  export function AxisAlignedBoundaryBox(
-    props: AxisAlignedBoundaryBoxProps
+  export function BoundaryBox(
+    props: BoundaryBoxProps
   ): JSX.Element
 
   const ReactElastica: React.ForwardRefExoticComponent<

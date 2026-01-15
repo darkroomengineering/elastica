@@ -9,11 +9,13 @@ export type AABBState = {
     hash: number[];
     gridSize: number;
     isStatic: boolean[];
+    buckets: Map<number, number[]>;
 };
 /**
- * Check if two bodies are in neighboring hash cells
+ * Get neighbor cell IDs for a given cell (3x3 grid)
+ * Returns array of valid cell IDs including the cell itself
  */
-export declare function isNeighbor(state: AABBState, indexA: number, indexB: number): boolean;
+export declare function getNeighborCellIds(cellId: number, gridSize: number): number[];
 /**
  * Check if two AABBs are overlapping
  */
@@ -30,5 +32,6 @@ export declare function calculateSuperposition(state: AABBState, indexA: number,
 export declare function resolveAABBCollision(state: AABBState, indexA: number, indexB: number): void;
 /**
  * Detect and resolve all AABB collisions
+ * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
  */
 export declare function detectAndResolveAABB(state: AABBState, elementCount: number, onCollision?: (indexA: number, indexB: number) => void): CollisionRecord[];

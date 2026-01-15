@@ -14,6 +14,7 @@ export default class Elastica {
     hash: number[];
     isStatic: boolean[];
     staticPositions: Vector2D[];
+    buckets: Map<number, number[]>;
     useOBB: boolean;
     angles: number[];
     angularVelocities: number[];
@@ -24,6 +25,9 @@ export default class Elastica {
     defaultRestitution: number;
     constructor({ gridSize, containerOffsets, collisions, borders, useOBB, defaultMass, defaultRestitution, }?: ElasticaConfigOBB);
     initialCondition(elements: (ElementData | null | undefined)[], rect: Container, callback?: (elastica: Elastica) => void): void;
+    private computeCellId;
+    updateSpatialHash(elementCount: number): void;
+    getNeighborIndices(cellId: number): number[];
     polarCoordinates(vector: Vector2D): PolarCoordinates;
     cartesianCoordinates(speed: number, angle: number): Vector2D;
     hasBounced(index: number): number;

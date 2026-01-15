@@ -32,6 +32,10 @@ export default class Elastica {
   isStatic: boolean[]
   staticPositions: Vector2D[] // Cached positions for static elements
 
+  // Spatial hash buckets: cellId → element indices
+  // This enables O(n×k) collision detection instead of O(n²)
+  buckets: Map<number, number[]>
+
   // OBB rigid body properties
   useOBB: boolean
   angles: number[]
@@ -72,6 +76,7 @@ export default class Elastica {
     this.hash = []
     this.isStatic = []
     this.staticPositions = []
+    this.buckets = new Map()
 
     // OBB rigid body properties
     this.useOBB = useOBB
@@ -120,16 +125,16 @@ export default class Elastica {
 
     callback(this)
 
+    const elementCount = elements.length
+
     // Cache static element positions after initialization
-    this.positions.forEach((pos, index) => {
-      if (this.isStatic[index] && pos) {
+    for (let index = 0; index < elementCount; index++) {
+      const pos = this.positions[index]
+      if (!pos) continue
+
+      if (this.isStatic[index]) {
         this.staticPositions[index] = [pos[0], pos[1]]
       }
-
-      this.hash[index] =
-        Math.floor(this.gridSize * (pos[0] / this.container.width)) +
-        Math.floor(this.gridSize * (pos[1] / this.container.height)) *
-          this.gridSize
 
       const element = elements[index]
       const dimension = this.dimensions[index]
@@ -139,7 +144,71 @@ export default class Elastica {
           y: pos[1] - dimension[1],
         }, index)
       }
-    })
+    }
+
+    // Build initial spatial hash with buckets
+    this.updateSpatialHash(elementCount)
+  }
+
+  // Spatial hash utilities
+  private computeCellId(pos: Vector2D): number {
+    const cellX = Math.floor((this.gridSize * pos[0]) / this.container.width)
+    const cellY = Math.floor((this.gridSize * pos[1]) / this.container.height)
+    // Clamp to valid range to handle edge cases
+    const clampedX = Math.max(0, Math.min(this.gridSize - 1, cellX))
+    const clampedY = Math.max(0, Math.min(this.gridSize - 1, cellY))
+    return clampedX + clampedY * this.gridSize
+  }
+
+  updateSpatialHash(elementCount: number): void {
+    // Clear all buckets
+    this.buckets.clear()
+
+    // Populate hash and buckets in single pass
+    for (let index = 0; index < elementCount; index++) {
+      const pos = this.positions[index]
+      if (!pos) continue
+
+      const cellId = this.computeCellId(pos)
+      this.hash[index] = cellId
+
+      // Add to bucket
+      const bucket = this.buckets.get(cellId)
+      if (bucket) {
+        bucket.push(index)
+      } else {
+        this.buckets.set(cellId, [index])
+      }
+    }
+  }
+
+  // Get indices of elements in neighboring cells (3x3 grid around cell)
+  getNeighborIndices(cellId: number): number[] {
+    const indices: number[] = []
+    const cellX = cellId % this.gridSize
+    const cellY = Math.floor(cellId / this.gridSize)
+
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = cellX + dx
+        const ny = cellY + dy
+
+        // Skip out-of-bounds cells
+        if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) {
+          continue
+        }
+
+        const neighborCellId = nx + ny * this.gridSize
+        const bucket = this.buckets.get(neighborCellId)
+        if (bucket) {
+          for (let i = 0; i < bucket.length; i++) {
+            indices.push(bucket[i]!)
+          }
+        }
+      }
+    }
+
+    return indices
   }
 
   // Math utilities (delegated)
@@ -215,6 +284,7 @@ export default class Elastica {
       hash: this.hash,
       gridSize: this.gridSize,
       isStatic: this.isStatic,
+      buckets: this.buckets,
     }
   }
 
@@ -229,6 +299,9 @@ export default class Elastica {
       momentsOfInertia: this.momentsOfInertia,
       restitutions: this.restitutions,
       isStatic: this.isStatic,
+      hash: this.hash,
+      gridSize: this.gridSize,
+      buckets: this.buckets,
     }
   }
 
@@ -299,7 +372,8 @@ export default class Elastica {
     }
 
     // Update DOM positions
-    elements.forEach((element, index) => {
+    for (let index = 0; index < elementCount; index++) {
+      const element = elements[index]
       const position = this.positions[index]
       const dimension = this.dimensions[index]
       const angle = this.useOBB ? this.angles[index] : 0
@@ -311,14 +385,9 @@ export default class Elastica {
           angle: angle ?? 0,
         }, index)
       }
-    })
+    }
 
-    // Update spatial hash
-    this.positions.forEach((pos, index) => {
-      this.hash[index] =
-        Math.floor((this.gridSize * pos[0]) / this.container.width) +
-        Math.floor((this.gridSize * pos[1]) / this.container.height) *
-          this.gridSize
-    })
+    // Update spatial hash with buckets for next frame
+    this.updateSpatialHash(elementCount)
   }
 }

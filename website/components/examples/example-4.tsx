@@ -2,7 +2,7 @@
 
 import type { InitialConditionParams } from '@elastica'
 import ReactElastica, {
-  AxisAlignedBoundaryBox,
+  BoundaryBox,
   type ReactElasticaRef,
   type UpdateParams,
 } from '@elastica'
@@ -224,12 +224,12 @@ export function Example4(_props: Example4Props) {
         ref={elasticaRef}
       >
         {words.map(({ name }, index) => (
-          <AxisAlignedBoundaryBox
+          <BoundaryBox
             key={index}
             className='absolute inset-0 w-fit h-fit text-contrast dr-text-24'
           >
             {name}
-          </AxisAlignedBoundaryBox>
+          </BoundaryBox>
         ))}
       </ReactElastica>
     </section>

@@ -12,12 +12,18 @@ export type OBBState = {
     momentsOfInertia: number[];
     restitutions: number[];
     isStatic: boolean[];
+    hash: number[];
+    gridSize: number;
+    buckets: Map<number, number[]>;
 };
 /**
  * Get the four corners of a rotated rectangle (OBB)
  * Returns corners in order: top-left, top-right, bottom-right, bottom-left
+ *
+ * @param corners - Optional pre-allocated corners array to fill (from pool)
+ * @returns The corners array, or null if invalid state
  */
-export declare function getOBBCorners(state: OBBState, index: number): [Vector2D, Vector2D, Vector2D, Vector2D] | null;
+export declare function getOBBCorners(state: OBBState, index: number, corners?: [Vector2D, Vector2D, Vector2D, Vector2D]): [Vector2D, Vector2D, Vector2D, Vector2D] | null;
 /**
  * Get the two edge normals (axes) for SAT collision test
  */
@@ -28,10 +34,12 @@ export declare function getOBBAxes(state: OBBState, index: number): [Vector2D, V
 export declare function projectOBBOntoAxis(state: OBBState, index: number, axis: Vector2D): [number, number] | null;
 /**
  * SAT (Separating Axis Theorem) collision test between two OBBs
+ * Uses object pooling to minimize allocations in hot path.
  */
 export declare function satCollisionTest(state: OBBState, indexA: number, indexB: number): CollisionResult;
 /**
  * Check if two OBBs are potentially close enough to collide (broad phase)
+ * Used as secondary filter after spatial hash for rotated boxes
  */
 export declare function isOBBNeighbor(state: OBBState, indexA: number, indexB: number): boolean;
 /**
@@ -40,10 +48,14 @@ export declare function isOBBNeighbor(state: OBBState, indexA: number, indexB: n
 export declare function getKineticEnergy(state: OBBState, index: number): number;
 /**
  * Resolve OBB collision with energy conservation
+ *
+ * PERF NOTE: Creates multiple Vector2D arrays per collision resolution.
+ * For high collision counts, consider mutating in-place or using object pooling.
  */
 export declare function resolveOBBCollision(state: OBBState, indexA: number, indexB: number, contact: ContactPoint): void;
 /**
  * Detect and resolve all OBB collisions
+ * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
  */
 export declare function detectAndResolveOBB(state: OBBState, elementCount: number, onCollision?: (indexA: number, indexB: number) => void): CollisionRecord[];
 /**

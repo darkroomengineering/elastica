@@ -1,5 +1,7 @@
 import { distanceSquared } from '../math'
+import { axesPool, cornersPool, vectorPool } from '../pool'
 import type { CollisionRecord, CollisionResult, ContactPoint, Vector2D } from '../types'
+import { getNeighborCellIds } from './aabb'
 
 /**
  * State required for OBB collision detection
@@ -14,15 +16,23 @@ export type OBBState = {
   momentsOfInertia: number[]
   restitutions: number[]
   isStatic: boolean[]
+  // Spatial hash for broad phase
+  hash: number[]
+  gridSize: number
+  buckets: Map<number, number[]>
 }
 
 /**
  * Get the four corners of a rotated rectangle (OBB)
  * Returns corners in order: top-left, top-right, bottom-right, bottom-left
+ *
+ * @param corners - Optional pre-allocated corners array to fill (from pool)
+ * @returns The corners array, or null if invalid state
  */
 export function getOBBCorners(
   state: OBBState,
-  index: number
+  index: number,
+  corners?: [Vector2D, Vector2D, Vector2D, Vector2D]
 ): [Vector2D, Vector2D, Vector2D, Vector2D] | null {
   const position = state.positions[index]
   const dimension = state.dimensions[index]
@@ -35,19 +45,22 @@ export function getOBBCorners(
   const hw = dimension[0]
   const hh = dimension[1]
 
-  // Local corner offsets (unrotated)
-  const localCorners: [Vector2D, Vector2D, Vector2D, Vector2D] = [
-    [-hw, -hh],
-    [hw, -hh],
-    [hw, hh],
-    [-hw, hh],
-  ]
+  // Local corner offsets (unrotated): TL, TR, BR, BL
+  const localX = [-hw, hw, hw, -hw]
+  const localY = [-hh, -hh, hh, hh]
 
-  // Rotate and translate to world coordinates
-  return localCorners.map(([lx, ly]) => [
-    position[0] + lx * cos - ly * sin,
-    position[1] + lx * sin + ly * cos,
-  ]) as [Vector2D, Vector2D, Vector2D, Vector2D]
+  // Use provided corners or allocate new ones
+  const result = corners ?? cornersPool.acquire()
+
+  // Rotate and translate to world coordinates (no .map() allocation)
+  for (let i = 0; i < 4; i++) {
+    const lx = localX[i]!
+    const ly = localY[i]!
+    result[i]![0] = position[0] + lx * cos - ly * sin
+    result[i]![1] = position[1] + lx * sin + ly * cos
+  }
+
+  return result
 }
 
 /**
@@ -94,6 +107,7 @@ export function projectOBBOntoAxis(
 
 /**
  * SAT (Separating Axis Theorem) collision test between two OBBs
+ * Uses object pooling to minimize allocations in hot path.
  */
 export function satCollisionTest(
   state: OBBState,
@@ -107,7 +121,12 @@ export function satCollisionTest(
     return { collided: false }
   }
 
-  const axes = [...axesA, ...axesB]
+  // Use pooled axes array instead of spread allocation
+  const axes = axesPool.acquire()
+  axes[0]![0] = axesA[0][0]; axes[0]![1] = axesA[0][1]
+  axes[1]![0] = axesA[1][0]; axes[1]![1] = axesA[1][1]
+  axes[2]![0] = axesB[0][0]; axes[2]![1] = axesB[0][1]
+  axes[3]![0] = axesB[1][0]; axes[3]![1] = axesB[1][1]
 
   let minOverlap = Infinity
   let minOverlapAxis: Vector2D | null = null
@@ -117,12 +136,14 @@ export function satCollisionTest(
     const projB = projectOBBOntoAxis(state, indexB, axis)
 
     if (!projA || !projB) {
+      axesPool.release(axes)
       return { collided: false }
     }
 
     const overlap = Math.min(projA[1], projB[1]) - Math.max(projA[0], projB[0])
 
     if (overlap <= 0) {
+      axesPool.release(axes)
       return { collided: false }
     }
 
@@ -131,6 +152,11 @@ export function satCollisionTest(
       minOverlapAxis = axis
     }
   }
+
+  // Release axes - we've extracted what we need (minOverlapAxis values)
+  const savedAxisX = minOverlapAxis ? minOverlapAxis[0] : 0
+  const savedAxisY = minOverlapAxis ? minOverlapAxis[1] : 0
+  axesPool.release(axes)
 
   if (!minOverlapAxis) {
     return { collided: false }
@@ -144,12 +170,13 @@ export function satCollisionTest(
   }
 
   // Ensure normal points from A to B
-  const centerDiff: Vector2D = [posB[0] - posA[0], posB[1] - posA[1]]
-  const dot = centerDiff[0] * minOverlapAxis[0] + centerDiff[1] * minOverlapAxis[1]
+  const centerDiffX = posB[0] - posA[0]
+  const centerDiffY = posB[1] - posA[1]
+  const dot = centerDiffX * savedAxisX + centerDiffY * savedAxisY
 
   const normal: Vector2D = dot < 0
-    ? [-minOverlapAxis[0], -minOverlapAxis[1]]
-    : [minOverlapAxis[0], minOverlapAxis[1]]
+    ? [-savedAxisX, -savedAxisY]
+    : [savedAxisX, savedAxisY]
 
   const contactPoint: Vector2D = [
     (posA[0] + posB[0]) / 2,
@@ -167,6 +194,7 @@ export function satCollisionTest(
 
 /**
  * Check if two OBBs are potentially close enough to collide (broad phase)
+ * Used as secondary filter after spatial hash for rotated boxes
  */
 export function isOBBNeighbor(
   state: OBBState,
@@ -211,6 +239,9 @@ export function getKineticEnergy(state: OBBState, index: number): number {
 
 /**
  * Resolve OBB collision with energy conservation
+ *
+ * PERF NOTE: Creates multiple Vector2D arrays per collision resolution.
+ * For high collision counts, consider mutating in-place or using object pooling.
  */
 export function resolveOBBCollision(
   state: OBBState,
@@ -408,6 +439,7 @@ export function resolveOBBCollision(
 
 /**
  * Detect and resolve all OBB collisions
+ * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
  */
 export function detectAndResolveOBB(
   state: OBBState,
@@ -415,28 +447,50 @@ export function detectAndResolveOBB(
   onCollision?: (indexA: number, indexB: number) => void
 ): CollisionRecord[] {
   const collisionsList: CollisionRecord[] = []
+  // Track checked pairs to avoid duplicate checks
+  const checkedPairs = new Set<string>()
 
   for (let indexA = 0; indexA < elementCount; indexA++) {
     const velA = state.velocities[indexA]
     if (!velA) continue
 
-    for (let indexB = indexA + 1; indexB < elementCount; indexB++) {
-      const velB = state.velocities[indexB]
-      if (!velB) continue
+    const cellIdA = state.hash[indexA]
+    if (cellIdA === undefined) continue
 
-      // Broad phase check
-      if (!isOBBNeighbor(state, indexA, indexB)) continue
+    // Get all neighbor cell IDs
+    const neighborCells = getNeighborCellIds(cellIdA, state.gridSize)
 
-      // Narrow phase SAT test
-      const result = satCollisionTest(state, indexA, indexB)
+    // Check elements in neighboring cells only
+    for (const neighborCellId of neighborCells) {
+      const bucket = state.buckets.get(neighborCellId)
+      if (!bucket) continue
 
-      if (!result.collided || !result.contact) continue
+      for (const indexB of bucket) {
+        // Skip self and ensure we only check each pair once (lower index first)
+        if (indexA >= indexB) continue
 
-      collisionsList.push({ loop: indexA, inHash: indexB })
-      onCollision?.(indexA, indexB)
+        const velB = state.velocities[indexB]
+        if (!velB) continue
 
-      // Resolve collision
-      resolveOBBCollision(state, indexA, indexB, result.contact)
+        // Create pair key to avoid duplicate checks
+        const pairKey = `${indexA}:${indexB}`
+        if (checkedPairs.has(pairKey)) continue
+        checkedPairs.add(pairKey)
+
+        // Broad phase distance check (for rotated boxes that may span cells)
+        if (!isOBBNeighbor(state, indexA, indexB)) continue
+
+        // Narrow phase SAT test
+        const result = satCollisionTest(state, indexA, indexB)
+
+        if (!result.collided || !result.contact) continue
+
+        collisionsList.push({ loop: indexA, inHash: indexB })
+        onCollision?.(indexA, indexB)
+
+        // Resolve collision
+        resolveOBBCollision(state, indexA, indexB, result.contact)
+      }
     }
   }
 

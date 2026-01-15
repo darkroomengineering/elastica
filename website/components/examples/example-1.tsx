@@ -1,7 +1,7 @@
 'use client'
 
 import ReactElastica, {
-  AxisAlignedBoundaryBox,
+  BoundaryBox,
   initalConditionsPresets,
   useElastica,
   type ReactElasticaRef,
@@ -170,7 +170,7 @@ function DraggableItem({ name, index, className, onHoverChange }: ItemProps) {
   }, [])
 
   return (
-    <AxisAlignedBoundaryBox 
+    <BoundaryBox 
       className={cn(
         "absolute inset-0 w-fit h-fit select-none cursor-grab touch-none", 
         isGrabbed && 'text-secondary bg-white',
@@ -184,7 +184,7 @@ function DraggableItem({ name, index, className, onHoverChange }: ItemProps) {
       >
         {name}
       </div>
-    </AxisAlignedBoundaryBox>
+    </BoundaryBox>
   )
 }
 
