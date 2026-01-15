@@ -21,13 +21,19 @@ declare module '@elastica' {
     dimensions: Vector2D[]
     angles: number[]
     angularVelocities: number[]
+    masses: number[]
+    momentsOfInertia: number[]
+    restitutions: number[]
     deltaTime: number
     bounced: number[]
     hash: number[]
+    gridSize: number
     useOBB: boolean
+    isStatic: boolean[]
     setPosition: (
       element: HTMLElement | null | undefined,
-      pos: { x: number; y: number; angle: number }
+      pos: { x: number; y: number; angle: number },
+      index: number
     ) => void
   }
 
@@ -38,6 +44,7 @@ declare module '@elastica' {
     container: { width: number; height: number }
     angles: number[]
     angularVelocities: number[]
+    isStatic: boolean[]
   }
 
   export interface ElasticaConfigOBB {
@@ -102,7 +109,7 @@ declare module '@elastica' {
     elastica: Elastica
   }
 
-  export function useElastica(): ElasticaContextValue | null
+  export function useElastica(): ElasticaContextValue
 
   export type AxisAlignedBoundaryBoxProps = HTMLAttributes<HTMLDivElement>
 

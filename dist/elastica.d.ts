@@ -12,6 +12,8 @@ export default class Elastica {
     dimensions: Vector2D[];
     bounced: number[];
     hash: number[];
+    isStatic: boolean[];
+    staticPositions: Vector2D[];
     useOBB: boolean;
     angles: number[];
     angularVelocities: number[];
@@ -30,7 +32,7 @@ export default class Elastica {
         y?: number;
         z?: number;
         angle?: number;
-    }): void;
+    }, index: number): void;
     setAngle(index: number, angle: number): void;
     setAngularVelocity(index: number, angularVelocity: number): void;
     setMass(index: number, mass: number): void;

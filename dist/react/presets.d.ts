@@ -11,6 +11,7 @@ export type InitialConditionParams = {
     masses: number[];
     momentsOfInertia: number[];
     restitutions: number[];
+    isStatic: boolean[];
 };
 export type UpdateParams = {
     boxes: (ElementData | null | undefined)[];
@@ -24,6 +25,10 @@ export type UpdateParams = {
     masses: number[];
     momentsOfInertia: number[];
     restitutions: number[];
+    hash: number[];
+    gridSize: number;
+    bounced: number[];
+    isStatic: boolean[];
 };
 export type InitialConditionPreset = (params: InitialConditionParams) => void;
 export type UpdatePreset = (params: UpdateParams) => void;

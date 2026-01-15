@@ -9,6 +9,7 @@ export type AABBState = {
   dimensions: Vector2D[]
   hash: number[]
   gridSize: number
+  isStatic: boolean[]
 }
 
 /**
@@ -108,12 +109,41 @@ export function resolveAABBCollision(
 
   if (!velA || !velB) return
 
-  // Calculate initial kinetic energy (assuming equal masses)
-  const initialKE =
-    0.5 * (velA[0] * velA[0] + velA[1] * velA[1] + velB[0] * velB[0] + velB[1] * velB[1])
+  const isStaticA = state.isStatic[indexA] ?? false
+  const isStaticB = state.isStatic[indexB] ?? false
+
+  // Skip if both are static
+  if (isStaticA && isStaticB) return
 
   // Calculate exclusion force
   const exclusionForce = calculateSuperposition(state, indexA, indexB)
+
+  // Handle static-dynamic collision
+  if (isStaticA || isStaticB) {
+    if (isStaticA) {
+      // A is static, B is dynamic - apply double force to B and reverse it
+      const newVelB: Vector2D = [
+        velB[0] - exclusionForce[0] * 2,
+        velB[1] - exclusionForce[1] * 2,
+      ]
+      state.velocities[indexB] = newVelB
+      // Keep A's velocity unchanged (it's static)
+    } else {
+      // B is static, A is dynamic - apply double force to A
+      const newVelA: Vector2D = [
+        velA[0] + exclusionForce[0] * 2,
+        velA[1] + exclusionForce[1] * 2,
+      ]
+      state.velocities[indexA] = newVelA
+      // Keep B's velocity unchanged (it's static)
+    }
+    return
+  }
+
+  // Both are dynamic - original behavior
+  // Calculate initial kinetic energy (assuming equal masses)
+  const initialKE =
+    0.5 * (velA[0] * velA[0] + velA[1] * velA[1] + velB[0] * velB[0] + velB[1] * velB[1])
 
   // Apply exclusion force to velocities
   let newVelA: Vector2D = [

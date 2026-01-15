@@ -8,6 +8,7 @@ export type BorderState = {
     dimensions: Vector2D[];
     container: Container;
     containerOffsets: ContainerOffsets;
+    isStatic: boolean[];
 };
 /**
  * Handle rigid borders - bodies bounce off container edges

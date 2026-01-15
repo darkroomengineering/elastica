@@ -9,7 +9,7 @@ type ElasticaContextValue = {
     removeBox: (element: HTMLElement) => void;
     elastica: Elastica;
 };
-declare function useElastica(): ElasticaContextValue | null;
+declare function useElastica(): ElasticaContextValue;
 export type ReactElasticaRef = {
     play: () => void;
     pause: () => void;

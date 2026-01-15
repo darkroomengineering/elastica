@@ -11,6 +11,7 @@ export type OBBState = {
     masses: number[];
     momentsOfInertia: number[];
     restitutions: number[];
+    isStatic: boolean[];
 };
 /**
  * Get the four corners of a rotated rectangle (OBB)

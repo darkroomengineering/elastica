@@ -14,6 +14,9 @@
         const right = containerOffsets.right + 1;
         const bottom = containerOffsets.bottom + 1;
         for (let index = 0; index < elementCount; index++) {
+            // Skip static elements
+            if (state.isStatic[index])
+                continue;
             const dimension = state.dimensions[index];
             const velocity = state.velocities[index];
             const position = state.positions[index];
@@ -55,6 +58,9 @@
         const right = containerOffsets.right + 1;
         const bottom = containerOffsets.bottom + 1;
         for (let index = 0; index < elementCount; index++) {
+            // Skip static elements
+            if (state.isStatic[index])
+                continue;
             const dimension = state.dimensions[index];
             const position = state.positions[index];
             const velocity = state.velocities[index];
@@ -146,10 +152,38 @@
         const velB = state.velocities[indexB];
         if (!velA || !velB)
             return;
-        // Calculate initial kinetic energy (assuming equal masses)
-        const initialKE = 0.5 * (velA[0] * velA[0] + velA[1] * velA[1] + velB[0] * velB[0] + velB[1] * velB[1]);
+        const isStaticA = state.isStatic[indexA] ?? false;
+        const isStaticB = state.isStatic[indexB] ?? false;
+        // Skip if both are static
+        if (isStaticA && isStaticB)
+            return;
         // Calculate exclusion force
         const exclusionForce = calculateSuperposition(state, indexA, indexB);
+        // Handle static-dynamic collision
+        if (isStaticA || isStaticB) {
+            if (isStaticA) {
+                // A is static, B is dynamic - apply double force to B and reverse it
+                const newVelB = [
+                    velB[0] - exclusionForce[0] * 2,
+                    velB[1] - exclusionForce[1] * 2,
+                ];
+                state.velocities[indexB] = newVelB;
+                // Keep A's velocity unchanged (it's static)
+            }
+            else {
+                // B is static, A is dynamic - apply double force to A
+                const newVelA = [
+                    velA[0] + exclusionForce[0] * 2,
+                    velA[1] + exclusionForce[1] * 2,
+                ];
+                state.velocities[indexA] = newVelA;
+                // Keep B's velocity unchanged (it's static)
+            }
+            return;
+        }
+        // Both are dynamic - original behavior
+        // Calculate initial kinetic energy (assuming equal masses)
+        const initialKE = 0.5 * (velA[0] * velA[0] + velA[1] * velA[1] + velB[0] * velB[0] + velB[1] * velB[1]);
         // Apply exclusion force to velocities
         let newVelA = [
             velA[0] + exclusionForce[0],
@@ -489,13 +523,95 @@
             restA === undefined || restB === undefined) {
             return;
         }
+        const isStaticA = state.isStatic[indexA] ?? false;
+        const isStaticB = state.isStatic[indexB] ?? false;
+        // Skip if both are static
+        if (isStaticA && isStaticB)
+            return;
         const { normal, penetration } = contact;
         const restitution = Math.min(restA, restB);
-        // Step 1: Calculate initial total kinetic energy
-        const initialKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB);
         // Step 2: Calculate repulsion strength based on overlap
         const overlapForce = Math.max(penetration, 1);
         const repulsionStrength = 1 / overlapForce;
+        // Handle static-dynamic collision
+        if (isStaticA || isStaticB) {
+            if (isStaticA) {
+                // A is static, B is dynamic - treat A as having infinite mass
+                const initialKE = getKineticEnergy(state, indexB);
+                // Apply double repulsion force to dynamic object
+                const newVelB = [
+                    velB[0] + normal[0] * repulsionStrength * 2,
+                    velB[1] + normal[1] * repulsionStrength * 2,
+                ];
+                // Calculate torque on dynamic object
+                const contactPoint = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2];
+                const rBx = contactPoint[0] - posB[0];
+                const rBy = contactPoint[1] - posB[1];
+                const torqueB = rBx * (normal[1] * repulsionStrength * 2) - rBy * (normal[0] * repulsionStrength * 2);
+                const newAngVelB = angVelB + torqueB / inertiaB;
+                // Apply new velocities temporarily
+                state.velocities[indexB] = newVelB;
+                state.angularVelocities[indexB] = newAngVelB;
+                // Scale to conserve energy with restitution
+                const finalKE = getKineticEnergy(state, indexB);
+                if (finalKE > 0) {
+                    const targetKE = initialKE * restitution;
+                    const scale = Math.sqrt(targetKE / finalKE);
+                    state.velocities[indexB] = [newVelB[0] * scale, newVelB[1] * scale];
+                    state.angularVelocities[indexB] = newAngVelB * scale;
+                }
+                // Position correction - only move dynamic object
+                const slop = 0.5;
+                const percent = 0.96;
+                if (penetration > slop) {
+                    const correction = (penetration - slop) * percent;
+                    state.positions[indexB] = [
+                        posB[0] + normal[0] * correction,
+                        posB[1] + normal[1] * correction,
+                    ];
+                }
+            }
+            else {
+                // B is static, A is dynamic - treat B as having infinite mass
+                const initialKE = getKineticEnergy(state, indexA);
+                // Apply double repulsion force to dynamic object
+                const newVelA = [
+                    velA[0] - normal[0] * repulsionStrength * 2,
+                    velA[1] - normal[1] * repulsionStrength * 2,
+                ];
+                // Calculate torque on dynamic object
+                const contactPoint = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2];
+                const rAx = contactPoint[0] - posA[0];
+                const rAy = contactPoint[1] - posA[1];
+                const torqueA = rAx * (-normal[1] * repulsionStrength * 2) - rAy * (-normal[0] * repulsionStrength * 2);
+                const newAngVelA = angVelA + torqueA / inertiaA;
+                // Apply new velocities temporarily
+                state.velocities[indexA] = newVelA;
+                state.angularVelocities[indexA] = newAngVelA;
+                // Scale to conserve energy with restitution
+                const finalKE = getKineticEnergy(state, indexA);
+                if (finalKE > 0) {
+                    const targetKE = initialKE * restitution;
+                    const scale = Math.sqrt(targetKE / finalKE);
+                    state.velocities[indexA] = [newVelA[0] * scale, newVelA[1] * scale];
+                    state.angularVelocities[indexA] = newAngVelA * scale;
+                }
+                // Position correction - only move dynamic object
+                const slop = 0.5;
+                const percent = 0.96;
+                if (penetration > slop) {
+                    const correction = (penetration - slop) * percent;
+                    state.positions[indexA] = [
+                        posA[0] - normal[0] * correction,
+                        posA[1] - normal[1] * correction,
+                    ];
+                }
+            }
+            return;
+        }
+        // Both are dynamic - original behavior
+        // Step 1: Calculate initial total kinetic energy
+        const initialKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB);
         // Step 3: Apply velocity changes along collision normal
         const newVelA = [
             velA[0] - normal[0] * repulsionStrength,
@@ -607,6 +723,8 @@
             this.dimensions = [];
             this.bounced = [];
             this.hash = [];
+            this.isStatic = [];
+            this.staticPositions = [];
             // OBB rigid body properties
             this.useOBB = useOBB;
             this.angles = [];
@@ -622,6 +740,7 @@
             this.dimensions = elements.map((element, index) => {
                 if (!element)
                     return [0, 0];
+                this.isStatic[index] = element.element?.dataset.state === 'static';
                 this.externalForces[index] = [0, 0];
                 this.bounced[index] = 0;
                 // Initialize OBB rigid body properties
@@ -640,7 +759,11 @@
                 return [halfWidth, halfHeight];
             });
             callback(this);
+            // Cache static element positions after initialization
             this.positions.forEach((pos, index) => {
+                if (this.isStatic[index] && pos) {
+                    this.staticPositions[index] = [pos[0], pos[1]];
+                }
                 this.hash[index] =
                     Math.floor(this.gridSize * (pos[0] / this.container.width)) +
                         Math.floor(this.gridSize * (pos[1] / this.container.height)) *
@@ -651,7 +774,7 @@
                     this.setPosition(element.element, {
                         x: pos[0] - dimension[0],
                         y: pos[1] - dimension[1],
-                    });
+                    }, index);
                 }
             });
         }
@@ -669,8 +792,8 @@
             return this.bounced[index];
         }
         // DOM positioning
-        setPosition(element, { x = 0, y = 0, z = 0, angle = 0 }) {
-            if (element) {
+        setPosition(element, { x = 0, y = 0, z = 0, angle = 0 }, index) {
+            if (element && !this.isStatic[index]) {
                 if (angle !== 0) {
                     element.style.cssText = `transform: translate3d(${x}px, ${y}px, ${z}px) rotate(${angle}rad); will-change: transform;`;
                 }
@@ -715,6 +838,7 @@
                 dimensions: this.dimensions,
                 hash: this.hash,
                 gridSize: this.gridSize,
+                isStatic: this.isStatic,
             };
         }
         getOBBState() {
@@ -727,17 +851,34 @@
                 masses: this.masses,
                 momentsOfInertia: this.momentsOfInertia,
                 restitutions: this.restitutions,
+                isStatic: this.isStatic,
             };
         }
         // Main update loop
         update(elements, callback) {
             const elementCount = elements.length;
+            // User callback runs first (allows modification of velocities/positions)
+            callback(this);
+            // Reset static elements after user callback (single pass, minimal overhead)
+            for (let index = 0; index < elementCount; index++) {
+                if (this.isStatic[index]) {
+                    const cachedPos = this.staticPositions[index];
+                    if (cachedPos) {
+                        // Restore position from cache (in case user modified it)
+                        this.positions[index] = cachedPos;
+                    }
+                    // Reset velocities to zero (static elements don't move)
+                    this.velocities[index] = [0, 0];
+                    this.angularVelocities[index] = 0;
+                }
+            }
             const borderState = {
                 positions: this.positions,
                 velocities: this.velocities,
                 dimensions: this.dimensions,
                 container: this.container,
                 containerOffsets: this.containerOffsets,
+                isStatic: this.isStatic,
             };
             // Handle borders
             if (this.calculateBorders === 'rigid') {
@@ -764,7 +905,19 @@
                     });
                 }
             }
-            callback(this);
+            // Update DOM positions
+            elements.forEach((element, index) => {
+                const position = this.positions[index];
+                const dimension = this.dimensions[index];
+                const angle = this.useOBB ? this.angles[index] : 0;
+                if (element && position && dimension) {
+                    this.setPosition(element.element, {
+                        x: position[0] - dimension[0],
+                        y: position[1] - dimension[1],
+                        angle: angle ?? 0,
+                    }, index);
+                }
+            });
             // Update spatial hash
             this.positions.forEach((pos, index) => {
                 this.hash[index] =

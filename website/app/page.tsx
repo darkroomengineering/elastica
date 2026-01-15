@@ -10,10 +10,10 @@ import { Wrapper } from '~/components/layout/wrapper'
 import s from './page.module.css'
 
 const examples = [
-  { name: 'Example 1', component: 'Example1' },
-  { name: 'Example 2', component: 'Example2' },
-  { name: 'Example 3', component: 'Example3' },
-  { name: 'Example 4', component: 'Example4' },
+  { name: 'Basics', component: 'Example1' },
+  { name: 'Gravity', component: 'Example2' },
+  { name: 'Follow', component: 'Example3' },
+  { name: 'Flocking', component: 'Example4' },
 ] as const
 
 const data = [

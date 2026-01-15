@@ -3,11 +3,9 @@
 import ReactElastica, {
   AxisAlignedBoundaryBox,
   initalConditionsPresets,
-  useElastica,
   type ReactElasticaRef,
   type UpdateParams,
 } from '@elastica'
-import { useDrag } from '@use-gesture/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pane } from 'tweakpane'
 import { adjustArrayLength } from '~/utils/array'
@@ -24,19 +22,136 @@ interface Example2Params {
   velocity: { x: number; y: number }
   dumpingFactor: number
   play: boolean
+  influenceRadius: number
+  forceStrength: number
 }
 
 const initialParams: Example2Params = {
   gridSize: 5,
   collisions: true,
-  borders: 'periodic',
-  useOBB: false,
+  borders: 'rigid',
+  useOBB: true,
   velocity: {
-    x: 0.3,
-    y: 0,
+    x: 0,
+    y: 0.25,
   },
   dumpingFactor: 0.001,
   play: true,
+  influenceRadius: 200,
+  forceStrength: 2.0,
+}
+
+export function Example2({ data }: Example2Props) {
+  const elasticaRef = useRef<ReactElasticaRef>(null)
+  const containerRef = useRef<HTMLElement>(null)
+  const [items] = useState(() => adjustArrayLength(data, 32))
+  const mousePos = useRef<{ x: number; y: number } | null>(null)
+  const params = useTweakpane(initialParams, (value) => {
+    if (value) {
+      elasticaRef.current?.play()
+    } else {
+      elasticaRef.current?.pause()
+    }
+  })
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+    mousePos.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    }
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    mousePos.current = null
+  }, [])
+
+  return (
+    <section
+      ref={containerRef}
+      className="fixed h-full w-full"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <ReactElastica
+        ref={elasticaRef}
+        config={{
+          ...params,
+        }}
+        initialCondition={initalConditionsPresets.random}
+        update={({
+          boxes,
+          positions,
+          velocities,
+          externalForces,
+          deltaTime,
+        }: UpdateParams) => {
+          const mouse = mousePos.current
+
+          boxes.forEach((_, index) => {
+            const velocity = velocities[index]
+            const position = positions[index]
+            if (!velocity || !position) return
+
+            const stVel = [params.velocity.x, -params.velocity.y]
+
+            // Calculate force based on mouse proximity
+            if (mouse) {
+              const dx = mouse.x - position[0]
+              const dy = mouse.y - position[1]
+              const distance = Math.sqrt(dx * dx + dy * dy)
+
+              if (distance < params.influenceRadius && distance > 0) {
+                // Calculate repelling force (inverse relationship)
+                const forceMagnitude =
+                  (params.influenceRadius - distance) / params.influenceRadius
+                const forceScale = params.forceStrength
+
+                // Apply force away from cursor
+                externalForces[index] = [
+                  (-dx / distance) * forceMagnitude * forceScale,
+                  (-dy / distance) * forceMagnitude * forceScale,
+                ]
+              } else {
+                externalForces[index] = [0, 0]
+              }
+            } else {
+              externalForces[index] = [0, 0]
+            }
+
+            const force = externalForces[index] ?? [0, 0]
+
+            // Update velocities with damping and forces
+            velocities[index] = velocity.map(
+              (v, i) =>
+                v -
+                deltaTime *
+                  params.dumpingFactor *
+                  (v - 4 * (force[i] ?? 0) + (stVel[i] ?? 0))
+            ) as [number, number]
+
+            // Update positions
+            positions[index] = position.map(
+              (pos, i) => pos + (velocity[i] ?? 0) * deltaTime
+            ) as [number, number]
+          })
+        }}
+      >
+        <AxisAlignedBoundaryBox className="text-primary bg-secondary absolute top-1/2 left-3/4 -translate-x-1/2 -translate-y-1/2 dr-w-400 dr-h-100 select-none flex items-center justify-center dr-text-32" data-state="static" >
+        static</AxisAlignedBoundaryBox>
+        <AxisAlignedBoundaryBox className="text-primary bg-secondary absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 dr-w-400 dr-h-100 select-none flex items-center justify-center dr-text-32" data-state="static" >
+        static</AxisAlignedBoundaryBox>
+        {items.map(({ name }, index) => (
+         <AxisAlignedBoundaryBox key={index} className="absolute inset-0 w-fit h-fit select-none" data-state="dynamic">
+          <div className="text-primary bg-secondary dr-p-8 dr-rounded-12">
+            {name}
+          </div>
+         </AxisAlignedBoundaryBox>
+        ))}
+      </ReactElastica>
+    </section>
+  )
 }
 
 function useTweakpane(
@@ -111,6 +226,34 @@ function useTweakpane(
       })
 
     pane
+      .addBinding(localParams, 'influenceRadius', {
+        label: 'Influence Radius',
+        min: 50,
+        max: 400,
+        step: 10,
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          influenceRadius: ev.value,
+        }))
+      })
+
+    pane
+      .addBinding(localParams, 'forceStrength', {
+        label: 'Force Strength',
+        min: 0.5,
+        max: 5.0,
+        step: 0.1,
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          forceStrength: ev.value,
+        }))
+      })
+
+    pane
       .addBinding(localParams, 'play', {
         label: 'Play',
       })
@@ -125,124 +268,4 @@ function useTweakpane(
   }, [])
 
   return params
-}
-
-interface ItemProps {
-  name: string
-  index: number
-  isHovered: React.MutableRefObject<boolean[]>
-}
-
-function Item({ name, index, isHovered }: ItemProps) {
-  const context = useElastica()
-
-  const onDragStop = useCallback(
-    (newDir: number[]) => {
-      if (!context) return
-      const { elastica } = context
-      const { externalForces } = elastica
-
-      let norm = newDir.map((pos) => pos * pos).reduce((a, b) => a + b)
-      norm = Math.sqrt(norm)
-
-      if (norm === 0) return
-
-      externalForces[index] = newDir.map((pos) => pos / norm) as [
-        number,
-        number,
-      ]
-    },
-    [context, index]
-  )
-
-  const bind = useDrag(({ down, movement: [mx, my] }) => {
-    if (down) {
-      onDragStop([mx, my])
-    }
-  })
-
-  return (
-    <AxisAlignedBoundaryBox className="absolute inset-0 w-fit h-fit select-none cursor-grab touch-none" {...bind()}>
-      <div
-        className="text-primary bg-secondary dr-p-8 dr-rounded-12 data-[grabbed=true]:text-secondary data-[grabbed=true]:bg-white"
-        onMouseEnter={({ target }) => {
-          isHovered.current[index] = true
-          ;(target as HTMLElement).dataset.grabbed = 'true'
-        }}
-        onMouseLeave={({ target }) => {
-          isHovered.current[index] = false
-          ;(target as HTMLElement).dataset.grabbed = 'false'
-        }}
-      >
-        {name}
-      </div>
-    </AxisAlignedBoundaryBox>
-  )
-}
-
-export function Example2({ data }: Example2Props) {
-  const elasticaRef = useRef<ReactElasticaRef>(null)
-  const [items] = useState(() => adjustArrayLength(data, 18))
-  const isHovered = useRef(items.map(() => false))
-  const params = useTweakpane(initialParams, (value) => {
-    if (value) {
-      elasticaRef.current?.play()
-    } else {
-      elasticaRef.current?.pause()
-    }
-  })
-
-  return (
-    <section className="fixed h-full w-full">
-      <ReactElastica
-        ref={elasticaRef}
-        config={{
-          ...params,
-        }}
-        initialCondition={initalConditionsPresets.random}
-        update={({
-          boxes,
-          positions,
-          velocities,
-          externalForces,
-          deltaTime,
-        }: UpdateParams) => {
-          boxes.forEach((_, index) => {
-            const velocity = velocities[index]
-            const position = positions[index]
-            const draggin = externalForces[index]
-            if (!velocity || !position || !draggin) return
-
-            const stVel = [params.velocity.x, -params.velocity.y]
-
-            if (isHovered.current[index]) {
-              velocities[index] = velocity.map(
-                (v, i) =>
-                  v -
-                  deltaTime * params.dumpingFactor * (v - 4 * (draggin[i] ?? 0))
-              ) as [number, number]
-            } else {
-              velocities[index] = velocity.map(
-                (v, i) =>
-                  v -
-                  deltaTime *
-                    params.dumpingFactor *
-                    (v - 4 * (draggin[i] ?? 0) + (stVel[i] ?? 0))
-              ) as [number, number]
-            }
-
-            positions[index] = position.map(
-              (pos, i) => pos + (velocity[i] ?? 0) * deltaTime
-            ) as [number, number]
-
-            externalForces[index] = [0, 0]
-          })
-        }}
-      >
-        {items.map(({ name }, index) => (
-          <Item key={index} name={name} index={index} isHovered={isHovered} />
-        ))}
-      </ReactElastica>
-    </section>
-  )
 }

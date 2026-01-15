@@ -49,8 +49,12 @@ type ElasticaContextValue = {
 
 const ElasticaContext = createContext<ElasticaContextValue | null>(null)
 
-function useElastica(): ElasticaContextValue | null {
-  return useContext(ElasticaContext)
+function useElastica(): ElasticaContextValue {
+  const context = useContext(ElasticaContext)
+  if (!context) {
+    throw new Error('useElastica must be used within a ReactElastica provider')
+  }
+  return context
 }
 
 export type ReactElasticaRef = {
@@ -142,20 +146,14 @@ const ReactElastica = forwardRef<ReactElasticaRef, ReactElasticaProps>(
       timeRef.current = time
 
       elastica.update(boxes, (instance) => {
-        update({ boxes, ...instance, deltaTime })
-
-        boxes.forEach((element, index) => {
-          const position = instance.positions[index]
-          const dimensions = instance.dimensions[index]
-          const angle = instance.useOBB ? instance.angles[index] : 0
-
-          if (position && dimensions) {
-            instance.setPosition(element?.element, {
-              x: position[0] - dimensions[0],
-              y: position[1] - dimensions[1],
-              angle: angle ?? 0,
-            })
-          }
+        update({ 
+          boxes, 
+          ...instance, 
+          deltaTime,
+          hash: instance.hash,
+          gridSize: instance.gridSize,
+          bounced: instance.bounced,
+          isStatic: instance.isStatic
         })
       })
     })

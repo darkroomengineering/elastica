@@ -29,6 +29,8 @@ export default class Elastica {
   dimensions: Vector2D[]
   bounced: number[]
   hash: number[]
+  isStatic: boolean[]
+  staticPositions: Vector2D[] // Cached positions for static elements
 
   // OBB rigid body properties
   useOBB: boolean
@@ -68,6 +70,8 @@ export default class Elastica {
     this.dimensions = []
     this.bounced = []
     this.hash = []
+    this.isStatic = []
+    this.staticPositions = []
 
     // OBB rigid body properties
     this.useOBB = useOBB
@@ -89,6 +93,8 @@ export default class Elastica {
 
     this.dimensions = elements.map((element, index) => {
       if (!element) return [0, 0] as Vector2D
+
+      this.isStatic[index] = element.element?.dataset.state === 'static'
 
       this.externalForces[index] = [0, 0]
       this.bounced[index] = 0
@@ -114,7 +120,12 @@ export default class Elastica {
 
     callback(this)
 
+    // Cache static element positions after initialization
     this.positions.forEach((pos, index) => {
+      if (this.isStatic[index] && pos) {
+        this.staticPositions[index] = [pos[0], pos[1]]
+      }
+
       this.hash[index] =
         Math.floor(this.gridSize * (pos[0] / this.container.width)) +
         Math.floor(this.gridSize * (pos[1] / this.container.height)) *
@@ -126,7 +137,7 @@ export default class Elastica {
         this.setPosition(element.element, {
           x: pos[0] - dimension[0],
           y: pos[1] - dimension[1],
-        })
+        }, index)
       }
     })
   }
@@ -150,9 +161,10 @@ export default class Elastica {
   // DOM positioning
   setPosition(
     element: HTMLElement | null | undefined,
-    { x = 0, y = 0, z = 0, angle = 0 }: { x?: number; y?: number; z?: number; angle?: number }
+    { x = 0, y = 0, z = 0, angle = 0 }: { x?: number; y?: number; z?: number; angle?: number },
+    index: number
   ): void {
-    if (element) {
+    if (element && !this.isStatic[index]) {
       if (angle !== 0) {
         element.style.cssText = `transform: translate3d(${x}px, ${y}px, ${z}px) rotate(${angle}rad); will-change: transform;`
       } else {
@@ -202,6 +214,7 @@ export default class Elastica {
       dimensions: this.dimensions,
       hash: this.hash,
       gridSize: this.gridSize,
+      isStatic: this.isStatic,
     }
   }
 
@@ -215,6 +228,7 @@ export default class Elastica {
       masses: this.masses,
       momentsOfInertia: this.momentsOfInertia,
       restitutions: this.restitutions,
+      isStatic: this.isStatic,
     }
   }
 
@@ -224,12 +238,31 @@ export default class Elastica {
     callback: (elastica: Elastica) => void
   ): void {
     const elementCount = elements.length
+
+    // User callback runs first (allows modification of velocities/positions)
+    callback(this)
+
+    // Reset static elements after user callback (single pass, minimal overhead)
+    for (let index = 0; index < elementCount; index++) {
+      if (this.isStatic[index]) {
+        const cachedPos = this.staticPositions[index]
+        if (cachedPos) {
+          // Restore position from cache (in case user modified it)
+          this.positions[index] = cachedPos
+        }
+        // Reset velocities to zero (static elements don't move)
+        this.velocities[index] = [0, 0]
+        this.angularVelocities[index] = 0
+      }
+    }
+
     const borderState = {
       positions: this.positions,
       velocities: this.velocities,
       dimensions: this.dimensions,
       container: this.container,
       containerOffsets: this.containerOffsets,
+      isStatic: this.isStatic,
     }
 
     // Handle borders
@@ -265,7 +298,20 @@ export default class Elastica {
       }
     }
 
-    callback(this)
+    // Update DOM positions
+    elements.forEach((element, index) => {
+      const position = this.positions[index]
+      const dimension = this.dimensions[index]
+      const angle = this.useOBB ? this.angles[index] : 0
+
+      if (element && position && dimension) {
+        this.setPosition(element.element, {
+          x: position[0] - dimension[0],
+          y: position[1] - dimension[1],
+          angle: angle ?? 0,
+        }, index)
+      }
+    })
 
     // Update spatial hash
     this.positions.forEach((pos, index) => {

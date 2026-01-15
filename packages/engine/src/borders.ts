@@ -9,6 +9,7 @@ export type BorderState = {
   dimensions: Vector2D[]
   container: Container
   containerOffsets: ContainerOffsets
+  isStatic: boolean[]
 }
 
 /**
@@ -26,6 +27,9 @@ export function handleRigidBorders(
   const bottom = containerOffsets.bottom + 1
 
   for (let index = 0; index < elementCount; index++) {
+    // Skip static elements
+    if (state.isStatic[index]) continue
+
     const dimension = state.dimensions[index]
     const velocity = state.velocities[index]
     const position = state.positions[index]
@@ -76,6 +80,9 @@ export function handlePeriodicBorders(
   const bottom = containerOffsets.bottom + 1
 
   for (let index = 0; index < elementCount; index++) {
+    // Skip static elements
+    if (state.isStatic[index]) continue
+
     const dimension = state.dimensions[index]
     const position = state.positions[index]
     const velocity = state.velocities[index]

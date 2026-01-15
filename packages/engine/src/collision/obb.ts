@@ -13,6 +13,7 @@ export type OBBState = {
   masses: number[]
   momentsOfInertia: number[]
   restitutions: number[]
+  isStatic: boolean[]
 }
 
 /**
@@ -240,15 +241,108 @@ export function resolveOBBCollision(
     return
   }
 
+  const isStaticA = state.isStatic[indexA] ?? false
+  const isStaticB = state.isStatic[indexB] ?? false
+
+  // Skip if both are static
+  if (isStaticA && isStaticB) return
+
   const { normal, penetration } = contact
   const restitution = Math.min(restA, restB)
-
-  // Step 1: Calculate initial total kinetic energy
-  const initialKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB)
 
   // Step 2: Calculate repulsion strength based on overlap
   const overlapForce = Math.max(penetration, 1)
   const repulsionStrength = 1 / overlapForce
+
+  // Handle static-dynamic collision
+  if (isStaticA || isStaticB) {
+    if (isStaticA) {
+      // A is static, B is dynamic - treat A as having infinite mass
+      const initialKE = getKineticEnergy(state, indexB)
+
+      // Apply double repulsion force to dynamic object
+      const newVelB: Vector2D = [
+        velB[0] + normal[0] * repulsionStrength * 2,
+        velB[1] + normal[1] * repulsionStrength * 2,
+      ]
+
+      // Calculate torque on dynamic object
+      const contactPoint: Vector2D = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2]
+      const rBx = contactPoint[0] - posB[0]
+      const rBy = contactPoint[1] - posB[1]
+      const torqueB = rBx * (normal[1] * repulsionStrength * 2) - rBy * (normal[0] * repulsionStrength * 2)
+      const newAngVelB = angVelB + torqueB / inertiaB
+
+      // Apply new velocities temporarily
+      state.velocities[indexB] = newVelB
+      state.angularVelocities[indexB] = newAngVelB
+
+      // Scale to conserve energy with restitution
+      const finalKE = getKineticEnergy(state, indexB)
+      if (finalKE > 0) {
+        const targetKE = initialKE * restitution
+        const scale = Math.sqrt(targetKE / finalKE)
+        state.velocities[indexB] = [newVelB[0] * scale, newVelB[1] * scale]
+        state.angularVelocities[indexB] = newAngVelB * scale
+      }
+
+      // Position correction - only move dynamic object
+      const slop = 0.5
+      const percent = 0.96
+      if (penetration > slop) {
+        const correction = (penetration - slop) * percent
+        state.positions[indexB] = [
+          posB[0] + normal[0] * correction,
+          posB[1] + normal[1] * correction,
+        ]
+      }
+    } else {
+      // B is static, A is dynamic - treat B as having infinite mass
+      const initialKE = getKineticEnergy(state, indexA)
+
+      // Apply double repulsion force to dynamic object
+      const newVelA: Vector2D = [
+        velA[0] - normal[0] * repulsionStrength * 2,
+        velA[1] - normal[1] * repulsionStrength * 2,
+      ]
+
+      // Calculate torque on dynamic object
+      const contactPoint: Vector2D = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2]
+      const rAx = contactPoint[0] - posA[0]
+      const rAy = contactPoint[1] - posA[1]
+      const torqueA = rAx * (-normal[1] * repulsionStrength * 2) - rAy * (-normal[0] * repulsionStrength * 2)
+      const newAngVelA = angVelA + torqueA / inertiaA
+
+      // Apply new velocities temporarily
+      state.velocities[indexA] = newVelA
+      state.angularVelocities[indexA] = newAngVelA
+
+      // Scale to conserve energy with restitution
+      const finalKE = getKineticEnergy(state, indexA)
+      if (finalKE > 0) {
+        const targetKE = initialKE * restitution
+        const scale = Math.sqrt(targetKE / finalKE)
+        state.velocities[indexA] = [newVelA[0] * scale, newVelA[1] * scale]
+        state.angularVelocities[indexA] = newAngVelA * scale
+      }
+
+      // Position correction - only move dynamic object
+      const slop = 0.5
+      const percent = 0.96
+      if (penetration > slop) {
+        const correction = (penetration - slop) * percent
+        state.positions[indexA] = [
+          posA[0] - normal[0] * correction,
+          posA[1] - normal[1] * correction,
+        ]
+      }
+    }
+    return
+  }
+
+  // Both are dynamic - original behavior
+  // Step 1: Calculate initial total kinetic energy
+  const initialKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB)
 
   // Step 3: Apply velocity changes along collision normal
   const newVelA: Vector2D = [

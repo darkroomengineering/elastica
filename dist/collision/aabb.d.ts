@@ -8,6 +8,7 @@ export type AABBState = {
     dimensions: Vector2D[];
     hash: number[];
     gridSize: number;
+    isStatic: boolean[];
 };
 /**
  * Check if two bodies are in neighboring hash cells

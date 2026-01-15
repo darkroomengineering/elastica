@@ -14,6 +14,8 @@ export type InitialConditionParams = {
   masses: number[]
   momentsOfInertia: number[]
   restitutions: number[]
+  // Static elements
+  isStatic: boolean[]
 }
 
 export type UpdateParams = {
@@ -29,6 +31,13 @@ export type UpdateParams = {
   masses: number[]
   momentsOfInertia: number[]
   restitutions: number[]
+  // Spatial hash for efficient neighbor finding
+  hash: number[]
+  gridSize: number
+  // Collision tracking
+  bounced: number[]
+  // Static elements
+  isStatic: boolean[]
 }
 
 export type InitialConditionPreset = (params: InitialConditionParams) => void
@@ -44,8 +53,23 @@ function randominitialCondition({
   positions,
   velocities,
   container,
+  isStatic,
 }: InitialConditionParams): void {
   boxes.forEach((_, index) => {
+    // Skip static elements
+    if (isStatic[index]) {
+      // For static elements, initialize them at their current DOM position
+      const element = boxes[index]
+      if (element?.rect) {
+        positions[index] = [
+          element.rect.left + element.rect.width / 2,
+          element.rect.top + element.rect.height / 2,
+        ]
+      }
+      velocities[index] = [0, 0]
+      return
+    }
+
     positions[index] = [
       Math.random() * container.width,
       Math.random() * container.height,
@@ -64,8 +88,25 @@ function randomOBBInitialCondition({
   container,
   angles,
   angularVelocities,
+  isStatic,
 }: InitialConditionParams): void {
   boxes.forEach((_, index) => {
+    // Skip static elements
+    if (isStatic[index]) {
+      // For static elements, initialize them at their current DOM position
+      const element = boxes[index]
+      if (element?.rect) {
+        positions[index] = [
+          element.rect.left + element.rect.width / 2,
+          element.rect.top + element.rect.height / 2,
+        ]
+      }
+      velocities[index] = [0, 0]
+      angles[index] = 0
+      angularVelocities[index] = 0
+      return
+    }
+
     positions[index] = [
       Math.random() * container.width,
       Math.random() * container.height,
