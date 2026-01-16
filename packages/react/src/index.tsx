@@ -249,6 +249,11 @@ const BoundaryBox = memo(function BoundaryBox({
     const element = elementRef.current
     if (!element || !context) return
 
+    // Initialize element for CSS variable-based positioning
+    // This injects the CSS rule (once) and marks the element with data-elastica
+    // See engine's initializeElement() for why this reduces GC pressure
+    context.elastica.initializeElement(element)
+
     // Create element data object that will be mutated with rect updates
     const elementData: ElementData = {
       element,

@@ -1,5 +1,11 @@
 import type { CollisionRecord, Vector2D } from '../types';
 /**
+ * Sort-and-sweep algorithm for dense buckets
+ * Sorts bodies by X-axis and uses early-exit to reduce pair checks
+ * Returns pairs that potentially overlap on the X-axis
+ */
+export declare function sweepBucket(bucket: number[], positions: Vector2D[], dimensions: Vector2D[]): Array<[number, number]>;
+/**
  * State required for AABB collision detection
  */
 export type AABBState = {
@@ -33,5 +39,6 @@ export declare function resolveAABBCollision(state: AABBState, indexA: number, i
 /**
  * Detect and resolve all AABB collisions
  * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
+ * Dense buckets use sort-and-sweep for additional optimization
  */
 export declare function detectAndResolveAABB(state: AABBState, elementCount: number, onCollision?: (indexA: number, indexB: number) => void): CollisionRecord[];

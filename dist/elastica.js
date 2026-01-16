@@ -87,6 +87,55 @@
     }
 
     /**
+     * Threshold for using sort-and-sweep in dense buckets
+     * Buckets with more elements than this will use sweep algorithm
+     */
+    const DENSE_BUCKET_THRESHOLD$1 = 16;
+    /**
+     * Sort-and-sweep algorithm for dense buckets
+     * Sorts bodies by X-axis and uses early-exit to reduce pair checks
+     * Returns pairs that potentially overlap on the X-axis
+     */
+    function sweepBucket(bucket, positions, dimensions) {
+        if (bucket.length < 2)
+            return [];
+        // Build sortable entries with left edge position
+        const entries = [];
+        for (const idx of bucket) {
+            const pos = positions[idx];
+            const dim = dimensions[idx];
+            if (pos && dim) {
+                entries.push({
+                    idx,
+                    left: pos[0] - dim[0],
+                    right: pos[0] + dim[0],
+                });
+            }
+        }
+        // Sort by left edge
+        entries.sort((a, b) => a.left - b.left);
+        const pairs = [];
+        for (let i = 0; i < entries.length; i++) {
+            const a = entries[i];
+            const rightA = a.right;
+            // Only check subsequent bodies until their left edge is past our right edge
+            for (let j = i + 1; j < entries.length; j++) {
+                const b = entries[j];
+                // Early exit: if b's left edge is past a's right edge, no more overlaps possible
+                if (b.left > rightA)
+                    break;
+                // Ensure consistent pair ordering (lower index first)
+                if (a.idx < b.idx) {
+                    pairs.push([a.idx, b.idx]);
+                }
+                else {
+                    pairs.push([b.idx, a.idx]);
+                }
+            }
+        }
+        return pairs;
+    }
+    /**
      * Get neighbor cell IDs for a given cell (3x3 grid)
      * Returns array of valid cell IDs including the cell itself
      */
@@ -207,13 +256,40 @@
         state.velocities[indexB] = newVelA;
     }
     /**
+     * Process a collision pair - test, record, and resolve
+     */
+    function processCollisionPair(state, indexA, indexB, checkedPairs, collisionsList, onCollision) {
+        const velA = state.velocities[indexA];
+        const velB = state.velocities[indexB];
+        if (!velA || !velB)
+            return;
+        // Create pair key to avoid duplicate checks (bitwise encoding, no allocation)
+        const pairKey = (indexA << 16) | indexB;
+        if (checkedPairs.has(pairKey))
+            return;
+        checkedPairs.add(pairKey);
+        // Test for collision
+        if (!testAABB(state, indexA, indexB))
+            return;
+        // Record collision
+        collisionsList.push({ loop: indexA, inHash: indexB });
+        // Callback for bounce tracking
+        onCollision?.(indexA, indexB);
+        // Resolve collision
+        resolveAABBCollision(state, indexA, indexB);
+    }
+    /**
      * Detect and resolve all AABB collisions
      * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
+     * Dense buckets use sort-and-sweep for additional optimization
      */
     function detectAndResolveAABB(state, elementCount, onCollision) {
         const collisionsList = [];
         // Track checked pairs to avoid duplicate checks
+        // Uses bitwise encoding: (indexA << 16) | indexB for zero-allocation pair keys
         const checkedPairs = new Set();
+        // Track which buckets we've already processed with sweep
+        const sweptBuckets = new Set();
         for (let indexA = 0; indexA < elementCount; indexA++) {
             const velA = state.velocities[indexA];
             if (!velA)
@@ -228,27 +304,24 @@
                 const bucket = state.buckets.get(neighborCellId);
                 if (!bucket)
                     continue;
+                // Dense bucket: use sort-and-sweep algorithm
+                if (bucket.length > DENSE_BUCKET_THRESHOLD$1) {
+                    // Only sweep each dense bucket once
+                    if (sweptBuckets.has(neighborCellId))
+                        continue;
+                    sweptBuckets.add(neighborCellId);
+                    const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions);
+                    for (const [idxA, idxB] of sweepPairs) {
+                        processCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision);
+                    }
+                    continue;
+                }
+                // Sparse bucket: simple iteration
                 for (const indexB of bucket) {
                     // Skip self and ensure we only check each pair once (lower index first)
                     if (indexA >= indexB)
                         continue;
-                    const velB = state.velocities[indexB];
-                    if (!velB)
-                        continue;
-                    // Create pair key to avoid duplicate checks
-                    const pairKey = `${indexA}:${indexB}`;
-                    if (checkedPairs.has(pairKey))
-                        continue;
-                    checkedPairs.add(pairKey);
-                    // Test for collision
-                    if (!testAABB(state, indexA, indexB))
-                        continue;
-                    // Record collision
-                    collisionsList.push({ loop: indexA, inHash: indexB });
-                    // Callback for bounce tracking
-                    onCollision?.(indexA, indexB);
-                    // Resolve collision
-                    resolveAABBCollision(state, indexA, indexB);
+                    processCollisionPair(state, indexA, indexB, checkedPairs, collisionsList, onCollision);
                 }
             }
         }
@@ -498,6 +571,10 @@
     const axesPool = new AxesPool();
 
     /**
+     * Threshold for using sort-and-sweep in dense buckets
+     */
+    const DENSE_BUCKET_THRESHOLD = 16;
+    /**
      * Get the four corners of a rotated rectangle (OBB)
      * Returns corners in order: top-left, top-right, bottom-right, bottom-left
      *
@@ -630,17 +707,16 @@
     /**
      * Check if two OBBs are potentially close enough to collide (broad phase)
      * Used as secondary filter after spatial hash for rotated boxes
+     * Uses cached maxExtents to avoid sqrt calculations every frame
      */
     function isOBBNeighbor(state, indexA, indexB) {
         const posA = state.positions[indexA];
         const posB = state.positions[indexB];
-        const dimA = state.dimensions[indexA];
-        const dimB = state.dimensions[indexB];
-        if (!posA || !posB || !dimA || !dimB)
+        const maxExtentA = state.maxExtents[indexA];
+        const maxExtentB = state.maxExtents[indexB];
+        if (!posA || !posB || maxExtentA === undefined || maxExtentB === undefined)
             return false;
-        // Maximum extent is the diagonal
-        const maxExtentA = Math.sqrt(dimA[0] * dimA[0] + dimA[1] * dimA[1]);
-        const maxExtentB = Math.sqrt(dimB[0] * dimB[0] + dimB[1] * dimB[1]);
+        // Use cached diagonal extents instead of recalculating sqrt each frame
         const maxDist = maxExtentA + maxExtentB;
         const maxDistSquared = maxDist * maxDist;
         return distanceSquared(posA, posB) <= maxDistSquared;
@@ -826,13 +902,42 @@
         }
     }
     /**
+     * Process an OBB collision pair - test, record, and resolve
+     */
+    function processOBBCollisionPair(state, indexA, indexB, checkedPairs, collisionsList, onCollision) {
+        const velA = state.velocities[indexA];
+        const velB = state.velocities[indexB];
+        if (!velA || !velB)
+            return;
+        // Create pair key to avoid duplicate checks (bitwise encoding, no allocation)
+        const pairKey = (indexA << 16) | indexB;
+        if (checkedPairs.has(pairKey))
+            return;
+        checkedPairs.add(pairKey);
+        // Broad phase distance check (for rotated boxes that may span cells)
+        if (!isOBBNeighbor(state, indexA, indexB))
+            return;
+        // Narrow phase SAT test
+        const result = satCollisionTest(state, indexA, indexB);
+        if (!result.collided || !result.contact)
+            return;
+        collisionsList.push({ loop: indexA, inHash: indexB });
+        onCollision?.(indexA, indexB);
+        // Resolve collision
+        resolveOBBCollision(state, indexA, indexB, result.contact);
+    }
+    /**
      * Detect and resolve all OBB collisions
      * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
+     * Dense buckets use sort-and-sweep for additional optimization
      */
     function detectAndResolveOBB(state, elementCount, onCollision) {
         const collisionsList = [];
         // Track checked pairs to avoid duplicate checks
+        // Uses bitwise encoding: (indexA << 16) | indexB for zero-allocation pair keys
         const checkedPairs = new Set();
+        // Track which buckets we've already processed with sweep
+        const sweptBuckets = new Set();
         for (let indexA = 0; indexA < elementCount; indexA++) {
             const velA = state.velocities[indexA];
             if (!velA)
@@ -847,29 +952,24 @@
                 const bucket = state.buckets.get(neighborCellId);
                 if (!bucket)
                     continue;
+                // Dense bucket: use sort-and-sweep algorithm
+                if (bucket.length > DENSE_BUCKET_THRESHOLD) {
+                    // Only sweep each dense bucket once
+                    if (sweptBuckets.has(neighborCellId))
+                        continue;
+                    sweptBuckets.add(neighborCellId);
+                    const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions);
+                    for (const [idxA, idxB] of sweepPairs) {
+                        processOBBCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision);
+                    }
+                    continue;
+                }
+                // Sparse bucket: simple iteration
                 for (const indexB of bucket) {
                     // Skip self and ensure we only check each pair once (lower index first)
                     if (indexA >= indexB)
                         continue;
-                    const velB = state.velocities[indexB];
-                    if (!velB)
-                        continue;
-                    // Create pair key to avoid duplicate checks
-                    const pairKey = `${indexA}:${indexB}`;
-                    if (checkedPairs.has(pairKey))
-                        continue;
-                    checkedPairs.add(pairKey);
-                    // Broad phase distance check (for rotated boxes that may span cells)
-                    if (!isOBBNeighbor(state, indexA, indexB))
-                        continue;
-                    // Narrow phase SAT test
-                    const result = satCollisionTest(state, indexA, indexB);
-                    if (!result.collided || !result.contact)
-                        continue;
-                    collisionsList.push({ loop: indexA, inHash: indexB });
-                    onCollision?.(indexA, indexB);
-                    // Resolve collision
-                    resolveOBBCollision(state, indexA, indexB, result.contact);
+                    processOBBCollisionPair(state, indexA, indexB, checkedPairs, collisionsList, onCollision);
                 }
             }
         }
@@ -918,6 +1018,7 @@
             this.masses = [];
             this.momentsOfInertia = [];
             this.restitutions = [];
+            this.maxExtents = [];
             this.defaultMass = defaultMass;
             this.defaultRestitution = defaultRestitution;
         }
@@ -942,6 +1043,8 @@
                 const height = elementRect.height;
                 this.momentsOfInertia[index] =
                     (this.defaultMass / 12) * (width * width + height * height);
+                // Cache max extent (diagonal) for broad-phase collision checks
+                this.maxExtents[index] = Math.sqrt(halfWidth * halfWidth + halfHeight * halfHeight);
                 return [halfWidth, halfHeight];
             });
             callback(this);
@@ -1032,14 +1135,55 @@
             this.bounced[index] = current + 1;
             return this.bounced[index];
         }
-        // DOM positioning
-        setPosition(element, { x = 0, y = 0, z = 0, angle = 0 }, index) {
+        /**
+         * Lazily injects the CSS rule that enables CSS variable-based transforms.
+         * Called once on first element initialization.
+         *
+         * Why CSS variables instead of cssText:
+         * - cssText creates ~80 char strings every frame (e.g., "transform: translate3d(...)")
+         * - setProperty creates ~10 char strings (e.g., "123.45px")
+         * - Avoids CSS parsing overhead on every frame
+         * - will-change is set once via CSS, not reassigned every frame
+         */
+        injectStyles() {
+            if (Elastica.stylesInjected)
+                return;
+            const style = document.createElement('style');
+            style.id = 'elastica-css';
+            // Using CSS variables --ex (x), --ey (y), --er (rotation) for transform
+            // The [data-elastica] attribute marks elements managed by the engine
+            style.textContent = '[data-elastica]{transform:translate3d(var(--ex,0),var(--ey,0),0)rotate(var(--er,0));will-change:transform}';
+            document.head.appendChild(style);
+            Elastica.stylesInjected = true;
+        }
+        /**
+         * Initializes an element for CSS variable-based positioning.
+         * Should be called once per element when it's added to the simulation.
+         *
+         * This marks the element with data-elastica attribute which:
+         * - Applies the CSS transform rule using variables
+         * - Sets will-change: transform once (not every frame)
+         */
+        initializeElement(element) {
+            this.injectStyles();
+            element.dataset.elastica = '';
+        }
+        /**
+         * Updates element position using CSS custom properties.
+         *
+         * Why setProperty over cssText:
+         * - Shorter strings reduce GC pressure (~10 chars vs ~80 chars per update)
+         * - No CSS parsing - just variable value updates
+         * - Browser batches variable updates efficiently
+         */
+        setPosition(element, { x = 0, y = 0, angle = 0 }, index) {
             if (element && !this.isStatic[index]) {
+                // Update CSS variables - shorter strings than full cssText, no CSS parsing
+                element.style.setProperty('--ex', x + 'px');
+                element.style.setProperty('--ey', y + 'px');
+                // Only set rotation if non-zero to avoid unnecessary updates
                 if (angle !== 0) {
-                    element.style.cssText = `transform: translate3d(${x}px, ${y}px, ${z}px) rotate(${angle}rad); will-change: transform;`;
-                }
-                else {
-                    element.style.cssText = `transform: translate3d(${x}px, ${y}px, ${z}px); will-change: transform;`;
+                    element.style.setProperty('--er', angle + 'rad');
                 }
             }
         }
@@ -1093,6 +1237,7 @@
                 masses: this.masses,
                 momentsOfInertia: this.momentsOfInertia,
                 restitutions: this.restitutions,
+                maxExtents: this.maxExtents,
                 isStatic: this.isStatic,
                 hash: this.hash,
                 gridSize: this.gridSize,
@@ -1168,6 +1313,12 @@
             this.updateSpatialHash(elementCount);
         }
     }
+    /**
+     * Static flag to ensure CSS is injected only once across all Elastica instances.
+     * The CSS rule uses [data-elastica] selector to apply transforms via CSS variables,
+     * which reduces per-frame string allocations compared to setting cssText directly.
+     */
+    Elastica.stylesInjected = false;
 
     exports.add = add;
     exports.calculateSuperposition = calculateSuperposition;
@@ -1200,6 +1351,7 @@
     exports.satCollisionTest = satCollisionTest;
     exports.scale = scale;
     exports.subtract = subtract;
+    exports.sweepBucket = sweepBucket;
     exports.testAABB = testAABB;
     exports.toCartesian = toCartesian;
     exports.toPolar = toPolar;

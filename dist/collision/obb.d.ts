@@ -11,6 +11,7 @@ export type OBBState = {
     masses: number[];
     momentsOfInertia: number[];
     restitutions: number[];
+    maxExtents: number[];
     isStatic: boolean[];
     hash: number[];
     gridSize: number;
@@ -40,6 +41,7 @@ export declare function satCollisionTest(state: OBBState, indexA: number, indexB
 /**
  * Check if two OBBs are potentially close enough to collide (broad phase)
  * Used as secondary filter after spatial hash for rotated boxes
+ * Uses cached maxExtents to avoid sqrt calculations every frame
  */
 export declare function isOBBNeighbor(state: OBBState, indexA: number, indexB: number): boolean;
 /**
@@ -56,6 +58,7 @@ export declare function resolveOBBCollision(state: OBBState, indexA: number, ind
 /**
  * Detect and resolve all OBB collisions
  * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
+ * Dense buckets use sort-and-sweep for additional optimization
  */
 export declare function detectAndResolveOBB(state: OBBState, elementCount: number, onCollision?: (indexA: number, indexB: number) => void): CollisionRecord[];
 /**

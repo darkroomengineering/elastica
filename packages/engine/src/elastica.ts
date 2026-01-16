@@ -14,6 +14,13 @@ import type {
 } from './types'
 
 export default class Elastica {
+  /**
+   * Static flag to ensure CSS is injected only once across all Elastica instances.
+   * The CSS rule uses [data-elastica] selector to apply transforms via CSS variables,
+   * which reduces per-frame string allocations compared to setting cssText directly.
+   */
+  private static stylesInjected = false
+
   // Core properties
   calculatecCollisions: boolean
   calculateBorders: BorderType
@@ -43,6 +50,7 @@ export default class Elastica {
   masses: number[]
   momentsOfInertia: number[]
   restitutions: number[]
+  maxExtents: number[] // Cached diagonal extent: sqrt(halfWidth² + halfHeight²)
   defaultMass: number
   defaultRestitution: number
 
@@ -85,6 +93,7 @@ export default class Elastica {
     this.masses = []
     this.momentsOfInertia = []
     this.restitutions = []
+    this.maxExtents = []
     this.defaultMass = defaultMass
     this.defaultRestitution = defaultRestitution
   }
@@ -119,6 +128,9 @@ export default class Elastica {
       const height = elementRect.height
       this.momentsOfInertia[index] =
         (this.defaultMass / 12) * (width * width + height * height)
+
+      // Cache max extent (diagonal) for broad-phase collision checks
+      this.maxExtents[index] = Math.sqrt(halfWidth * halfWidth + halfHeight * halfHeight)
 
       return [halfWidth, halfHeight] as Vector2D
     })
@@ -227,17 +239,61 @@ export default class Elastica {
     return this.bounced[index]!
   }
 
-  // DOM positioning
+  /**
+   * Lazily injects the CSS rule that enables CSS variable-based transforms.
+   * Called once on first element initialization.
+   *
+   * Why CSS variables instead of cssText:
+   * - cssText creates ~80 char strings every frame (e.g., "transform: translate3d(...)") 
+   * - setProperty creates ~10 char strings (e.g., "123.45px")
+   * - Avoids CSS parsing overhead on every frame
+   * - will-change is set once via CSS, not reassigned every frame
+   */
+  private injectStyles(): void {
+    if (Elastica.stylesInjected) return
+
+    const style = document.createElement('style')
+    style.id = 'elastica-css'
+    // Using CSS variables --ex (x), --ey (y), --er (rotation) for transform
+    // The [data-elastica] attribute marks elements managed by the engine
+    style.textContent = '[data-elastica]{transform:translate3d(var(--ex,0),var(--ey,0),0)rotate(var(--er,0));will-change:transform}'
+    document.head.appendChild(style)
+    Elastica.stylesInjected = true
+  }
+
+  /**
+   * Initializes an element for CSS variable-based positioning.
+   * Should be called once per element when it's added to the simulation.
+   *
+   * This marks the element with data-elastica attribute which:
+   * - Applies the CSS transform rule using variables
+   * - Sets will-change: transform once (not every frame)
+   */
+  initializeElement(element: HTMLElement): void {
+    this.injectStyles()
+    element.dataset.elastica = ''
+  }
+
+  /**
+   * Updates element position using CSS custom properties.
+   * 
+   * Why setProperty over cssText:
+   * - Shorter strings reduce GC pressure (~10 chars vs ~80 chars per update)
+   * - No CSS parsing - just variable value updates
+   * - Browser batches variable updates efficiently
+   */
   setPosition(
     element: HTMLElement | null | undefined,
-    { x = 0, y = 0, z = 0, angle = 0 }: { x?: number; y?: number; z?: number; angle?: number },
+    { x = 0, y = 0, angle = 0 }: { x?: number; y?: number; angle?: number },
     index: number
   ): void {
     if (element && !this.isStatic[index]) {
+      // Update CSS variables - shorter strings than full cssText, no CSS parsing
+      element.style.setProperty('--ex', x + 'px')
+      element.style.setProperty('--ey', y + 'px')
+      // Only set rotation if non-zero to avoid unnecessary updates
       if (angle !== 0) {
-        element.style.cssText = `transform: translate3d(${x}px, ${y}px, ${z}px) rotate(${angle}rad); will-change: transform;`
-      } else {
-        element.style.cssText = `transform: translate3d(${x}px, ${y}px, ${z}px); will-change: transform;`
+        element.style.setProperty('--er', angle + 'rad')
       }
     }
   }
@@ -298,6 +354,7 @@ export default class Elastica {
       masses: this.masses,
       momentsOfInertia: this.momentsOfInertia,
       restitutions: this.restitutions,
+      maxExtents: this.maxExtents,
       isStatic: this.isStatic,
       hash: this.hash,
       gridSize: this.gridSize,

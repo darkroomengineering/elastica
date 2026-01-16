@@ -98,6 +98,223 @@ axesPool.release(axes)  // Return for reuse
 
 ---
 
+### Use Bitwise Encoding for Pair Keys
+
+**The Problem:**
+```typescript
+// ❌ WRONG: String allocation for every pair check
+const checkedPairs = new Set<string>()
+
+for (const [indexA, indexB] of pairs) {
+  const pairKey = `${indexA}:${indexB}`  // Creates 3 strings per iteration!
+  if (checkedPairs.has(pairKey)) continue
+  checkedPairs.add(pairKey)
+}
+```
+
+**The Solution:**
+```typescript
+// ✅ RIGHT: Bitwise encoding - zero allocation
+const checkedPairs = new Set<number>()
+
+for (const [indexA, indexB] of pairs) {
+  // Pack two 16-bit indices into one 32-bit number
+  const pairKey = (indexA << 16) | indexB
+  if (checkedPairs.has(pairKey)) continue
+  checkedPairs.add(pairKey)
+}
+
+// To decode (if needed):
+// const decodedA = pairKey >> 16
+// const decodedB = pairKey & 0xFFFF
+```
+
+**Why It Matters:**
+- Template literals create 3 string objects per pair
+- Numbers are primitives - no heap allocation, no GC
+- Bitwise operations are single CPU instructions (~1 cycle vs ~100 for strings)
+- At 60fps with 500 pair checks: 90,000 fewer string allocations per second
+
+**When to Use:**
+- Tracking pairs, edges, coordinates in hot loops
+- Any case where two small integers need to form a unique key
+- Works for indices up to 65,535 (16 bits each)
+
+---
+
+### Sort-and-Sweep for Dense Buckets
+
+**The Problem:**
+```typescript
+// ❌ WRONG: O(n²) pair checks in crowded spatial hash cells
+for (let i = 0; i < bucket.length; i++) {
+  for (let j = i + 1; j < bucket.length; j++) {
+    checkCollision(bucket[i], bucket[j])  // 80 bodies = 3,160 checks!
+  }
+}
+```
+
+**The Solution:**
+```typescript
+// ✅ RIGHT: Sort by X-axis, early-exit when no overlap possible
+function sweepBucket(bucket: number[], positions: Vector2D[], dimensions: Vector2D[]) {
+  // Build sortable entries with left/right edges
+  const entries = bucket.map(idx => ({
+    idx,
+    left: positions[idx][0] - dimensions[idx][0],
+    right: positions[idx][0] + dimensions[idx][0],
+  }))
+  
+  // Sort by left edge
+  entries.sort((a, b) => a.left - b.left)
+  
+  const pairs: [number, number][] = []
+  
+  for (let i = 0; i < entries.length; i++) {
+    const a = entries[i]
+    
+    for (let j = i + 1; j < entries.length; j++) {
+      const b = entries[j]
+      
+      // Early exit: no more overlaps possible on X-axis
+      if (b.left > a.right) break
+      
+      pairs.push([a.idx, b.idx])
+    }
+  }
+  
+  return pairs
+}
+
+// Use selectively for dense buckets
+if (bucket.length > DENSE_THRESHOLD) {
+  const pairs = sweepBucket(bucket, positions, dimensions)
+  // Process pairs...
+} else {
+  // Simple nested loop for sparse buckets
+}
+```
+
+**Why It Matters:**
+- Transforms O(n²) to O(n log n + k) where k = actual overlapping pairs
+- 80 clustered bodies: 3,160 checks → ~200 checks (94% reduction)
+- The `break` statement is key - it exits as soon as no more overlaps are possible
+
+---
+
+### Cache Derived Values at Initialization
+
+**The Problem:**
+```typescript
+// ❌ WRONG: Recalculating sqrt every frame for every pair
+function isOBBNeighbor(state, indexA, indexB) {
+  const dimA = state.dimensions[indexA]
+  const dimB = state.dimensions[indexB]
+  
+  // sqrt is expensive - called potentially thousands of times per frame
+  const maxExtentA = Math.sqrt(dimA[0] * dimA[0] + dimA[1] * dimA[1])
+  const maxExtentB = Math.sqrt(dimB[0] * dimB[0] + dimB[1] * dimB[1])
+  
+  // ...
+}
+```
+
+**The Solution:**
+```typescript
+// ✅ RIGHT: Pre-calculate at initialization, reuse every frame
+class Elastica {
+  maxExtents: number[] = []
+  
+  initialCondition(elements) {
+    for (let i = 0; i < elements.length; i++) {
+      const halfWidth = elements[i].width / 2
+      const halfHeight = elements[i].height / 2
+      
+      // Calculate once
+      this.maxExtents[i] = Math.sqrt(halfWidth * halfWidth + halfHeight * halfHeight)
+    }
+  }
+}
+
+function isOBBNeighbor(state, indexA, indexB) {
+  // Just read the cached values - O(1), no computation
+  const maxExtentA = state.maxExtents[indexA]
+  const maxExtentB = state.maxExtents[indexB]
+  // ...
+}
+```
+
+**Why It Matters:**
+- `Math.sqrt` is ~20-50x slower than basic arithmetic
+- 200 bodies × 500 pair checks × 2 sqrts = 200,000 sqrt calls per frame
+- After caching: 0 sqrt calls per frame (only at init)
+- Dimensions rarely change - calculate on mutation, not every frame
+
+**What to Cache:**
+- Diagonal extents (`sqrt(w² + h²)`)
+- Inverse masses (`1 / mass`)
+- Precomputed sin/cos for static angles
+- Any value derived from properties that don't change per-frame
+
+---
+
+### Use CSS Variables for DOM Updates
+
+**The Problem:**
+```typescript
+// ❌ WRONG: Long string template every frame for every element
+setPosition(element, { x, y, angle }) {
+  // Creates ~80 character string per element per frame
+  // At 25 elements × 60fps = 1,500 string allocations per second
+  element.style.cssText = `transform: translate3d(${x}px, ${y}px, 0) rotate(${angle}rad); will-change: transform;`
+}
+```
+
+**The Solution:**
+```typescript
+// ✅ RIGHT: CSS variables with static transform rule
+
+// 1. Inject CSS once (lazy, on first element)
+private injectStyles(): void {
+  if (Elastica.stylesInjected) return
+  
+  const style = document.createElement('style')
+  style.id = 'elastica-css'
+  // Static rule references CSS variables
+  style.textContent = '[data-elastica]{transform:translate3d(var(--ex,0),var(--ey,0),0)rotate(var(--er,0));will-change:transform}'
+  document.head.appendChild(style)
+  Elastica.stylesInjected = true
+}
+
+// 2. Mark elements on init
+initializeElement(element: HTMLElement): void {
+  this.injectStyles()
+  element.dataset.elastica = ''  // Applies the CSS rule
+}
+
+// 3. Update only variable values per frame
+setPosition(element, { x, y, angle }) {
+  // ~10 char strings instead of ~80 chars
+  element.style.setProperty('--ex', x + 'px')
+  element.style.setProperty('--ey', y + 'px')
+  if (angle !== 0) {
+    element.style.setProperty('--er', angle + 'rad')
+  }
+}
+```
+
+**Why It Matters:**
+- Shorter strings reduce GC pressure (~10 chars vs ~80 chars per property)
+- No CSS parsing on each update - just variable value changes
+- `will-change: transform` set once via CSS, not reassigned every frame
+- Browser can batch CSS variable updates more efficiently
+
+**When to Use:**
+- Animating DOM elements every frame (physics, scroll effects)
+- Any situation where you're setting `style.cssText` or `style.transform` repeatedly
+
+---
+
 ## React: Preventing Unnecessary Re-renders
 
 ### Object Props Must Be Memoized
@@ -263,6 +480,10 @@ function Component() {
 | Pattern | Avoid | Prefer |
 |---------|-------|--------|
 | Collision detection | O(n²) with early exit | Bucket-based O(n×k) |
+| Pair tracking | String keys `` `${a}:${b}` `` | Bitwise `(a << 16) \| b` |
+| Dense buckets | Nested loops O(n²) | Sort-and-sweep O(n log n) |
+| Derived values | `sqrt()` every frame | Cache at initialization |
+| DOM transforms | `style.cssText` per frame | CSS variables + `setProperty` |
 | Temporary vectors | `[x, y]` in loops | Object pooling |
 | Array operations | `.map()`, `[...arr]` | `for` loops, mutation |
 | Object props | Inline `{}` | `useMemo` with primitives |

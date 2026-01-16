@@ -1,6 +1,66 @@
 import type { CollisionRecord, Vector2D } from '../types'
 
 /**
+ * Threshold for using sort-and-sweep in dense buckets
+ * Buckets with more elements than this will use sweep algorithm
+ */
+const DENSE_BUCKET_THRESHOLD = 16
+
+/**
+ * Sort-and-sweep algorithm for dense buckets
+ * Sorts bodies by X-axis and uses early-exit to reduce pair checks
+ * Returns pairs that potentially overlap on the X-axis
+ */
+export function sweepBucket(
+  bucket: number[],
+  positions: Vector2D[],
+  dimensions: Vector2D[]
+): Array<[number, number]> {
+  if (bucket.length < 2) return []
+
+  // Build sortable entries with left edge position
+  const entries: Array<{ idx: number; left: number; right: number }> = []
+  for (const idx of bucket) {
+    const pos = positions[idx]
+    const dim = dimensions[idx]
+    if (pos && dim) {
+      entries.push({
+        idx,
+        left: pos[0] - dim[0],
+        right: pos[0] + dim[0],
+      })
+    }
+  }
+
+  // Sort by left edge
+  entries.sort((a, b) => a.left - b.left)
+
+  const pairs: Array<[number, number]> = []
+
+  for (let i = 0; i < entries.length; i++) {
+    const a = entries[i]!
+    const rightA = a.right
+
+    // Only check subsequent bodies until their left edge is past our right edge
+    for (let j = i + 1; j < entries.length; j++) {
+      const b = entries[j]!
+
+      // Early exit: if b's left edge is past a's right edge, no more overlaps possible
+      if (b.left > rightA) break
+
+      // Ensure consistent pair ordering (lower index first)
+      if (a.idx < b.idx) {
+        pairs.push([a.idx, b.idx])
+      } else {
+        pairs.push([b.idx, a.idx])
+      }
+    }
+  }
+
+  return pairs
+}
+
+/**
  * State required for AABB collision detection
  */
 export type AABBState = {
@@ -173,8 +233,42 @@ export function resolveAABBCollision(
 }
 
 /**
+ * Process a collision pair - test, record, and resolve
+ */
+function processCollisionPair(
+  state: AABBState,
+  indexA: number,
+  indexB: number,
+  checkedPairs: Set<number>,
+  collisionsList: CollisionRecord[],
+  onCollision?: (indexA: number, indexB: number) => void
+): void {
+  const velA = state.velocities[indexA]
+  const velB = state.velocities[indexB]
+  if (!velA || !velB) return
+
+  // Create pair key to avoid duplicate checks (bitwise encoding, no allocation)
+  const pairKey = (indexA << 16) | indexB
+  if (checkedPairs.has(pairKey)) return
+  checkedPairs.add(pairKey)
+
+  // Test for collision
+  if (!testAABB(state, indexA, indexB)) return
+
+  // Record collision
+  collisionsList.push({ loop: indexA, inHash: indexB })
+
+  // Callback for bounce tracking
+  onCollision?.(indexA, indexB)
+
+  // Resolve collision
+  resolveAABBCollision(state, indexA, indexB)
+}
+
+/**
  * Detect and resolve all AABB collisions
  * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
+ * Dense buckets use sort-and-sweep for additional optimization
  */
 export function detectAndResolveAABB(
   state: AABBState,
@@ -183,7 +277,11 @@ export function detectAndResolveAABB(
 ): CollisionRecord[] {
   const collisionsList: CollisionRecord[] = []
   // Track checked pairs to avoid duplicate checks
-  const checkedPairs = new Set<string>()
+  // Uses bitwise encoding: (indexA << 16) | indexB for zero-allocation pair keys
+  const checkedPairs = new Set<number>()
+
+  // Track which buckets we've already processed with sweep
+  const sweptBuckets = new Set<number>()
 
   for (let indexA = 0; indexA < elementCount; indexA++) {
     const velA = state.velocities[indexA]
@@ -200,29 +298,25 @@ export function detectAndResolveAABB(
       const bucket = state.buckets.get(neighborCellId)
       if (!bucket) continue
 
+      // Dense bucket: use sort-and-sweep algorithm
+      if (bucket.length > DENSE_BUCKET_THRESHOLD) {
+        // Only sweep each dense bucket once
+        if (sweptBuckets.has(neighborCellId)) continue
+        sweptBuckets.add(neighborCellId)
+
+        const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions)
+        for (const [idxA, idxB] of sweepPairs) {
+          processCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision)
+        }
+        continue
+      }
+
+      // Sparse bucket: simple iteration
       for (const indexB of bucket) {
         // Skip self and ensure we only check each pair once (lower index first)
         if (indexA >= indexB) continue
 
-        const velB = state.velocities[indexB]
-        if (!velB) continue
-
-        // Create pair key to avoid duplicate checks
-        const pairKey = `${indexA}:${indexB}`
-        if (checkedPairs.has(pairKey)) continue
-        checkedPairs.add(pairKey)
-
-        // Test for collision
-        if (!testAABB(state, indexA, indexB)) continue
-
-        // Record collision
-        collisionsList.push({ loop: indexA, inHash: indexB })
-
-        // Callback for bounce tracking
-        onCollision?.(indexA, indexB)
-
-        // Resolve collision
-        resolveAABBCollision(state, indexA, indexB)
+        processCollisionPair(state, indexA, indexB, checkedPairs, collisionsList, onCollision)
       }
     }
   }

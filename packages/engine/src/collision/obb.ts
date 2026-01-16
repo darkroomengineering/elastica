@@ -1,7 +1,12 @@
 import { distanceSquared } from '../math'
 import { axesPool, cornersPool, vectorPool } from '../pool'
 import type { CollisionRecord, CollisionResult, ContactPoint, Vector2D } from '../types'
-import { getNeighborCellIds } from './aabb'
+import { getNeighborCellIds, sweepBucket } from './aabb'
+
+/**
+ * Threshold for using sort-and-sweep in dense buckets
+ */
+const DENSE_BUCKET_THRESHOLD = 16
 
 /**
  * State required for OBB collision detection
@@ -15,6 +20,7 @@ export type OBBState = {
   masses: number[]
   momentsOfInertia: number[]
   restitutions: number[]
+  maxExtents: number[] // Cached diagonal extent for broad-phase checks
   isStatic: boolean[]
   // Spatial hash for broad phase
   hash: number[]
@@ -195,6 +201,7 @@ export function satCollisionTest(
 /**
  * Check if two OBBs are potentially close enough to collide (broad phase)
  * Used as secondary filter after spatial hash for rotated boxes
+ * Uses cached maxExtents to avoid sqrt calculations every frame
  */
 export function isOBBNeighbor(
   state: OBBState,
@@ -203,15 +210,12 @@ export function isOBBNeighbor(
 ): boolean {
   const posA = state.positions[indexA]
   const posB = state.positions[indexB]
-  const dimA = state.dimensions[indexA]
-  const dimB = state.dimensions[indexB]
+  const maxExtentA = state.maxExtents[indexA]
+  const maxExtentB = state.maxExtents[indexB]
 
-  if (!posA || !posB || !dimA || !dimB) return false
+  if (!posA || !posB || maxExtentA === undefined || maxExtentB === undefined) return false
 
-  // Maximum extent is the diagonal
-  const maxExtentA = Math.sqrt(dimA[0] * dimA[0] + dimA[1] * dimA[1])
-  const maxExtentB = Math.sqrt(dimB[0] * dimB[0] + dimB[1] * dimB[1])
-
+  // Use cached diagonal extents instead of recalculating sqrt each frame
   const maxDist = maxExtentA + maxExtentB
   const maxDistSquared = maxDist * maxDist
 
@@ -438,8 +442,44 @@ export function resolveOBBCollision(
 }
 
 /**
+ * Process an OBB collision pair - test, record, and resolve
+ */
+function processOBBCollisionPair(
+  state: OBBState,
+  indexA: number,
+  indexB: number,
+  checkedPairs: Set<number>,
+  collisionsList: CollisionRecord[],
+  onCollision?: (indexA: number, indexB: number) => void
+): void {
+  const velA = state.velocities[indexA]
+  const velB = state.velocities[indexB]
+  if (!velA || !velB) return
+
+  // Create pair key to avoid duplicate checks (bitwise encoding, no allocation)
+  const pairKey = (indexA << 16) | indexB
+  if (checkedPairs.has(pairKey)) return
+  checkedPairs.add(pairKey)
+
+  // Broad phase distance check (for rotated boxes that may span cells)
+  if (!isOBBNeighbor(state, indexA, indexB)) return
+
+  // Narrow phase SAT test
+  const result = satCollisionTest(state, indexA, indexB)
+
+  if (!result.collided || !result.contact) return
+
+  collisionsList.push({ loop: indexA, inHash: indexB })
+  onCollision?.(indexA, indexB)
+
+  // Resolve collision
+  resolveOBBCollision(state, indexA, indexB, result.contact)
+}
+
+/**
  * Detect and resolve all OBB collisions
  * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)
+ * Dense buckets use sort-and-sweep for additional optimization
  */
 export function detectAndResolveOBB(
   state: OBBState,
@@ -448,7 +488,11 @@ export function detectAndResolveOBB(
 ): CollisionRecord[] {
   const collisionsList: CollisionRecord[] = []
   // Track checked pairs to avoid duplicate checks
-  const checkedPairs = new Set<string>()
+  // Uses bitwise encoding: (indexA << 16) | indexB for zero-allocation pair keys
+  const checkedPairs = new Set<number>()
+
+  // Track which buckets we've already processed with sweep
+  const sweptBuckets = new Set<number>()
 
   for (let indexA = 0; indexA < elementCount; indexA++) {
     const velA = state.velocities[indexA]
@@ -465,31 +509,25 @@ export function detectAndResolveOBB(
       const bucket = state.buckets.get(neighborCellId)
       if (!bucket) continue
 
+      // Dense bucket: use sort-and-sweep algorithm
+      if (bucket.length > DENSE_BUCKET_THRESHOLD) {
+        // Only sweep each dense bucket once
+        if (sweptBuckets.has(neighborCellId)) continue
+        sweptBuckets.add(neighborCellId)
+
+        const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions)
+        for (const [idxA, idxB] of sweepPairs) {
+          processOBBCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision)
+        }
+        continue
+      }
+
+      // Sparse bucket: simple iteration
       for (const indexB of bucket) {
         // Skip self and ensure we only check each pair once (lower index first)
         if (indexA >= indexB) continue
 
-        const velB = state.velocities[indexB]
-        if (!velB) continue
-
-        // Create pair key to avoid duplicate checks
-        const pairKey = `${indexA}:${indexB}`
-        if (checkedPairs.has(pairKey)) continue
-        checkedPairs.add(pairKey)
-
-        // Broad phase distance check (for rotated boxes that may span cells)
-        if (!isOBBNeighbor(state, indexA, indexB)) continue
-
-        // Narrow phase SAT test
-        const result = satCollisionTest(state, indexA, indexB)
-
-        if (!result.collided || !result.contact) continue
-
-        collisionsList.push({ loop: indexA, inHash: indexB })
-        onCollision?.(indexA, indexB)
-
-        // Resolve collision
-        resolveOBBCollision(state, indexA, indexB, result.contact)
+        processOBBCollisionPair(state, indexA, indexB, checkedPairs, collisionsList, onCollision)
       }
     }
   }
