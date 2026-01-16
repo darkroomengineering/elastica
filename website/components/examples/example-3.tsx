@@ -32,7 +32,7 @@ const initialParams: Example3Params = {
   useOBB: true,
   thrustPower: 0.3,
   steeringSpeed: 0.05,
-  noiseStrength: 0.1,
+  noiseStrength: 0.01,
   play: true,
 }
 

@@ -20,6 +20,7 @@ interface Example4Params {
   useOBB: boolean
   thrustPower: number
   noiseStrength: number
+  noiseSmoothing: number
   interactionRadius: number
   play: boolean
 }
@@ -31,7 +32,8 @@ const initialParams: Example4Params = {
   useOBB: true,
   thrustPower: 0.3,
   noiseStrength: 0.05,
-  interactionRadius: 150,
+  noiseSmoothing: 0.05,
+  interactionRadius: 60,
   play: true,
 }
 
@@ -44,7 +46,7 @@ function paragraphInitialCondition({
   angularVelocities,
   container,
 }: InitialConditionParams): void {
-  const padding = 100
+  const padding = 200
   const lineHeight = 20
   const wordGap = 16
 
@@ -91,6 +93,7 @@ export function Example4(_props: Example4Props) {
   const elasticaRef = useRef<ReactElasticaRef>(null)
   const isFlockingRef = useRef(false)
   const hasInitializedAnglesRef = useRef(false)
+  const smoothedNoiseRef = useRef<number[]>([])
   const params = useTweakpane(initialParams, (value) => {
     if (value) {
       elasticaRef.current?.play()
@@ -142,6 +145,12 @@ export function Example4(_props: Example4Props) {
           const newAngles = angles.map((currentAngle, index) => {
             if (currentAngle === undefined) return 0
             
+            // Calculate smoothed noise using exponential filter (low-pass)
+            const targetNoise = (Math.random() - 0.5) * 2 * params.noiseStrength
+            const prevNoise = smoothedNoiseRef.current[index] ?? 0
+            const smoothedNoise = prevNoise + (targetNoise - prevNoise) * params.noiseSmoothing
+            smoothedNoiseRef.current[index] = smoothedNoise
+            
             // Find neighbors within interaction radius using spatial hash
             const neighbors = findNeighborsInRadius(
               index,
@@ -152,9 +161,8 @@ export function Example4(_props: Example4Props) {
             )
             
             if (neighbors.length === 0) {
-              // No neighbors: just add noise to current angle
-              const noise = (Math.random() - 0.5) * 2 * params.noiseStrength
-              return currentAngle + noise
+              // No neighbors: just add smoothed noise to current angle
+              return currentAngle + smoothedNoise
             }
             
             // Calculate average angle using circular mean
@@ -173,10 +181,8 @@ export function Example4(_props: Example4Props) {
             // Average angle (including self)
             const avgAngle = Math.atan2(sumSin, sumCos)
             
-            // Add noise (Vicsek model)
-            const noise = (Math.random() - 0.5) * 2 * params.noiseStrength
-            
-            return avgAngle + noise
+            // Add smoothed noise (Vicsek model with low-pass filter)
+            return avgAngle + smoothedNoise
           })
           
           // Second pass: Apply new angles and update positions
@@ -333,6 +339,20 @@ function useTweakpane(
         setParams((prev) => ({
           ...prev,
           noiseStrength: ev.value,
+        }))
+      })
+
+    pane
+      .addBinding(localParams, 'noiseSmoothing', {
+        label: 'Noise Smoothing',
+        min: 0.01,
+        max: 0.3,
+        step: 0.01,
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          noiseSmoothing: ev.value,
         }))
       })
 

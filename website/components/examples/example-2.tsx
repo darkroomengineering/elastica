@@ -33,7 +33,7 @@ const initialParams: Example2Params = {
   useOBB: true,
   velocity: {
     x: 0,
-    y: 0.25,
+    y: 1,
   },
   dumpingFactor: 0.001,
   play: true,
