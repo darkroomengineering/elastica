@@ -6,7 +6,15 @@ import ReactElastica, {
   type ReactElasticaRef,
   type UpdateParams,
 } from '@elastica'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react'
 import { Pane } from 'tweakpane'
 
 interface Example4Props {
@@ -37,63 +45,52 @@ const initialParams: Example4Params = {
   play: true,
 }
 
-// Custom initial condition that arranges elements in a paragraph-like layout
-function paragraphInitialCondition({
-  boxes,
-  positions,
-  velocities,
-  angles,
-  angularVelocities,
-  container,
-}: InitialConditionParams): void {
-  const padding = 200
-  const lineHeight = 20
-  const wordGap = 16
+interface TextPosition {
+  x: number
+  y: number
+  width: number
+  height: number
+}
 
-  let currentX = padding
-  let currentY = padding + lineHeight / 2
-  const maxWidth = container.width - padding * 2
+// Hook to measure text positions once using browser's native text rendering
+function useTextPositions(
+  containerRef: RefObject<HTMLElement | null>,
+  relativeToRef: RefObject<HTMLElement | null>
+): TextPosition[] {
+  const [positions, setPositions] = useState<TextPosition[]>([])
 
-  boxes.forEach((box, index) => {
-    if (!box?.rect) {
-      positions[index] = [padding, currentY]
-      velocities[index] = [0, 0]
-      angles[index] = 0
-      angularVelocities[index] = 0
-      return
-    }
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    const relativeTo = relativeToRef.current
+    if (!container || !relativeTo) return
 
-    const wordWidth = box.rect.width
+    const spans = container.querySelectorAll('span')
+    const relativeRect = relativeTo.getBoundingClientRect()
 
-    // Check if word fits on current line
-    if (currentX + wordWidth > maxWidth && currentX > padding) {
-      // Wrap to next line
-      currentX = padding
-      currentY += lineHeight
-    }
+    const measured = Array.from(spans).map((span) => {
+      const rect = span.getBoundingClientRect()
+      return {
+        x: rect.left - relativeRect.left + rect.width / 2,
+        y: rect.top - relativeRect.top + rect.height / 2,
+        width: rect.width,
+        height: rect.height,
+      }
+    })
 
-    // Set position (center of word)
-    positions[index] = [
-      currentX + wordWidth / 2,
-      currentY,
-    ]
+    setPositions(measured)
+  }, [])
 
-    // Move cursor for next word
-    currentX += wordWidth + wordGap
-
-    // Initialize physics properties (stationary, no rotation)
-    // Angles will be randomized on first flocking frame
-    velocities[index] = [0, 0]
-    angles[index] = 0
-    angularVelocities[index] = 0
-  })
+  return positions
 }
 
 export function Example4(_props: Example4Props) {
   const elasticaRef = useRef<ReactElasticaRef>(null)
+  const sectionRef = useRef<HTMLElement>(null)
+  const textContainerRef = useRef<HTMLParagraphElement>(null)
   const isFlockingRef = useRef(false)
   const hasInitializedAnglesRef = useRef(false)
   const smoothedNoiseRef = useRef<number[]>([])
+  const warmupRef = useRef(0) // Ramps from 0 to 1 for smooth start
   const params = useTweakpane(initialParams, (value) => {
     if (value) {
       elasticaRef.current?.play()
@@ -103,9 +100,25 @@ export function Example4(_props: Example4Props) {
   })
 
   const words = useMemo(() => {
-    const paragraph = `The quick brown fox jumps over the lazy dog. Physics simulations bring text to life through elegant mathematical models. Each word becomes a particle dancing in harmony with its neighbors. Flocking behavior emerges from simple rules creating mesmerizing patterns.`
+    const paragraph = `Elastica is a lightweight physics engine for the web. It enables real-time collision detection and response using spatial hashing for optimal performance. Build interactive experiences with elastic collisions, boundary constraints, and smooth animations. Perfect for creative coding, data visualization, and playful interfaces.`
     return paragraph.split(/\s+/).map((word) => ({ name: word }))
   }, [])
+
+  // Get measured positions from the hidden text layer, relative to the section
+  const measuredPositions = useTextPositions(textContainerRef, sectionRef)
+
+  // Create initial condition callback using measured positions
+  const initialCondition = useCallback(
+    ({ positions, velocities, angles, angularVelocities }: InitialConditionParams) => {
+      measuredPositions.forEach((pos, index) => {
+        positions[index] = [pos.x, pos.y]
+        velocities[index] = [0, 0]
+        angles[index] = 0
+        angularVelocities[index] = 0
+      })
+    },
+    [measuredPositions]
+  )
 
   const handleStartFlocking = useCallback(() => {
     isFlockingRef.current = true
@@ -113,12 +126,27 @@ export function Example4(_props: Example4Props) {
 
   return (
     <section
-      className='fixed inset-0 w-full h-full cursor-pointer'
+      ref={sectionRef}
+      className='fixed inset-0 w-full h-full cursor-pointer grid grid-cols-[1fr]'
       onClick={handleStartFlocking}
     >
+      {/* Text layer for measuring actual browser text positions (always hidden) */}
+      <div className='row-start-1 col-start-1 w-full h-full flex items-center justify-center invisible'>
+        <p
+          ref={textContainerRef}
+          className='text-contrast dr-text-24 dr-p-96'
+        >
+          {words.flatMap(({ name }, index) => [
+            <span key={index}>{name}</span>,
+            index < words.length - 1 ? ' ' : null,
+          ])}
+        </p>
+      </div>
       <ReactElastica
+        ref={elasticaRef}
+        className='row-start-1 col-start-1 w-full h-full'
         config={params}
-        initialCondition={paragraphInitialCondition}
+        initialCondition={initialCondition}
         update={({
           boxes,
           positions,
@@ -132,11 +160,17 @@ export function Example4(_props: Example4Props) {
           // Skip flocking logic until user triggers it
           if (!isFlockingRef.current) return
 
-          // On first flocking frame, randomize angles to break symmetry
+          // Smoothly ramp up physics over ~1 second
+          const warmupSpeed = 0.01 // How fast to ramp up (per ms)
+          warmupRef.current = Math.min(1, warmupRef.current + warmupSpeed * deltaTime)
+          const warmup = warmupRef.current * warmupRef.current // Ease-in curve
+
+          // On first flocking frame, add tiny random angles to break symmetry
           if (!hasInitializedAnglesRef.current) {
             hasInitializedAnglesRef.current = true
             angles.forEach((_, index) => {
-              angles[index] = Math.random() * Math.PI * 2
+              // Small random offset, not full randomization - enough for Vicsek to differentiate
+              angles[index] = (Math.random() - 0.5) * 0.01
             })
           }
 
@@ -160,29 +194,30 @@ export function Example4(_props: Example4Props) {
               params.interactionRadius
             )
             
+            let vicsekAngle: number
             if (neighbors.length === 0) {
               // No neighbors: just add smoothed noise to current angle
-              return currentAngle + smoothedNoise
+              vicsekAngle = currentAngle + smoothedNoise
+            } else {
+              // Calculate average angle using circular mean
+              // This is important for angles to avoid discontinuity at 0/2π
+              let sumSin = Math.sin(currentAngle)
+              let sumCos = Math.cos(currentAngle)
+              
+              neighbors.forEach((neighborIndex) => {
+                const neighborAngle = angles[neighborIndex]
+                if (neighborAngle !== undefined) {
+                  sumSin += Math.sin(neighborAngle)
+                  sumCos += Math.cos(neighborAngle)
+                }
+              })
+              
+              // Average angle (including self) + noise
+              vicsekAngle = Math.atan2(sumSin, sumCos) + smoothedNoise
             }
             
-            // Calculate average angle using circular mean
-            // This is important for angles to avoid discontinuity at 0/2π
-            let sumSin = Math.sin(currentAngle)
-            let sumCos = Math.cos(currentAngle)
-            
-            neighbors.forEach((neighborIndex) => {
-              const neighborAngle = angles[neighborIndex]
-              if (neighborAngle !== undefined) {
-                sumSin += Math.sin(neighborAngle)
-                sumCos += Math.cos(neighborAngle)
-              }
-            })
-            
-            // Average angle (including self)
-            const avgAngle = Math.atan2(sumSin, sumCos)
-            
-            // Add smoothed noise (Vicsek model with low-pass filter)
-            return avgAngle + smoothedNoise
+            // Smoothly blend toward Vicsek angle using warmup
+            return currentAngle + (vicsekAngle - currentAngle) * warmup
           })
           
           // Second pass: Apply new angles and update positions
@@ -194,10 +229,10 @@ export function Example4(_props: Example4Props) {
             // Update angle to Vicsek-averaged angle
             angles[index] = newAngle
 
-            // Self-propulsion displacement
+            // Self-propulsion displacement (scaled by warmup for smooth start)
             const thrust: [number, number] = [
-              Math.cos(newAngle) * params.thrustPower * deltaTime,
-              Math.sin(newAngle) * params.thrustPower * deltaTime,
+              Math.cos(newAngle) * params.thrustPower * deltaTime * warmup,
+              Math.sin(newAngle) * params.thrustPower * deltaTime * warmup,
             ]
 
             // Update position
@@ -227,7 +262,6 @@ export function Example4(_props: Example4Props) {
             }
           })
         }}
-        ref={elasticaRef}
       >
         {words.map(({ name }, index) => (
           <BoundaryBox
