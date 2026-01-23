@@ -571,6 +571,278 @@
     const axesPool = new AxesPool();
 
     /**
+     * Circle vs Circle collision detection
+     * Uses squared distance comparison to avoid sqrt in the common (non-colliding) case
+     *
+     * @returns CollisionResult with contact point on circle A's surface toward B
+     */
+    function circleVsCircle(state, indexA, indexB) {
+        const posA = state.positions[indexA];
+        const posB = state.positions[indexB];
+        const dimA = state.dimensions[indexA];
+        const dimB = state.dimensions[indexB];
+        if (!posA || !posB || !dimA || !dimB) {
+            return { collided: false };
+        }
+        // For circles, dimensions[0] stores the radius
+        const radiusA = dimA[0];
+        const radiusB = dimB[0];
+        const radiusSum = radiusA + radiusB;
+        const radiusSumSq = radiusSum * radiusSum;
+        const distSq = distanceSquared(posA, posB);
+        // No collision if distance squared is greater than combined radii squared
+        if (distSq > radiusSumSq) {
+            return { collided: false };
+        }
+        // Calculate actual distance only when collision detected
+        const dist = Math.sqrt(distSq);
+        // Handle degenerate case: circles at same position
+        if (dist < 0.0001) {
+            // Use arbitrary direction (positive X) when centers coincide
+            const normal = [1, 0];
+            const contactPoint = [posA[0] + radiusA, posA[1]];
+            const penetration = radiusSum;
+            const contact = {
+                point: contactPoint,
+                normal: normal,
+                penetration: penetration,
+            };
+            return { collided: true, contact };
+        }
+        // Normal pointing from A to B
+        const nx = (posB[0] - posA[0]) / dist;
+        const ny = (posB[1] - posA[1]) / dist;
+        const normal = [nx, ny];
+        // Contact point on circle A's surface (toward B)
+        const contactPoint = [
+            posA[0] + nx * radiusA,
+            posA[1] + ny * radiusA,
+        ];
+        // Penetration depth
+        const penetration = radiusSum - dist;
+        const contact = {
+            point: contactPoint,
+            normal: normal,
+            penetration: penetration,
+        };
+        return { collided: true, contact };
+    }
+    /**
+     * Circle vs AABB (Axis-Aligned Bounding Box) collision detection
+     * Used when the rectangle has no rotation (angle === 0)
+     *
+     * Algorithm:
+     * 1. Find closest point on AABB to circle center
+     * 2. Check if distance from closest point to center is less than radius
+     *
+     * @returns CollisionResult with contact point and normal
+     */
+    function circleVsAABB(state, circleIndex, rectIndex) {
+        const circlePos = state.positions[circleIndex];
+        const rectPos = state.positions[rectIndex];
+        const circleDim = state.dimensions[circleIndex];
+        const rectDim = state.dimensions[rectIndex];
+        if (!circlePos || !rectPos || !circleDim || !rectDim) {
+            return { collided: false };
+        }
+        const radius = circleDim[0];
+        const halfWidth = rectDim[0];
+        const halfHeight = rectDim[1];
+        // AABB bounds
+        const rectLeft = rectPos[0] - halfWidth;
+        const rectRight = rectPos[0] + halfWidth;
+        const rectTop = rectPos[1] - halfHeight;
+        const rectBottom = rectPos[1] + halfHeight;
+        // Find closest point on AABB to circle center (clamp circle center to AABB bounds)
+        const closestX = Math.max(rectLeft, Math.min(circlePos[0], rectRight));
+        const closestY = Math.max(rectTop, Math.min(circlePos[1], rectBottom));
+        // Calculate distance from closest point to circle center
+        const dx = circlePos[0] - closestX;
+        const dy = circlePos[1] - closestY;
+        const distSq = dx * dx + dy * dy;
+        const radiusSq = radius * radius;
+        // Check if circle center is inside AABB
+        const centerInside = circlePos[0] >= rectLeft &&
+            circlePos[0] <= rectRight &&
+            circlePos[1] >= rectTop &&
+            circlePos[1] <= rectBottom;
+        // No collision if distance is greater than radius and center is outside
+        if (distSq > radiusSq && !centerInside) {
+            return { collided: false };
+        }
+        let normal;
+        let penetration;
+        let contactPoint;
+        if (centerInside) {
+            // Circle center is inside AABB - find closest edge
+            const distToLeft = circlePos[0] - rectLeft;
+            const distToRight = rectRight - circlePos[0];
+            const distToTop = circlePos[1] - rectTop;
+            const distToBottom = rectBottom - circlePos[1];
+            const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom);
+            if (minDist === distToLeft) {
+                normal = [-1, 0];
+                penetration = radius + distToLeft;
+                contactPoint = [rectLeft, circlePos[1]];
+            }
+            else if (minDist === distToRight) {
+                normal = [1, 0];
+                penetration = radius + distToRight;
+                contactPoint = [rectRight, circlePos[1]];
+            }
+            else if (minDist === distToTop) {
+                normal = [0, -1];
+                penetration = radius + distToTop;
+                contactPoint = [circlePos[0], rectTop];
+            }
+            else {
+                normal = [0, 1];
+                penetration = radius + distToBottom;
+                contactPoint = [circlePos[0], rectBottom];
+            }
+        }
+        else {
+            // Circle center is outside AABB
+            const dist = Math.sqrt(distSq);
+            // Handle edge case: closest point is exactly at circle center
+            if (dist < 0.0001) {
+                normal = [1, 0];
+                penetration = radius;
+                contactPoint = [closestX, closestY];
+            }
+            else {
+                // Normal points from closest point to circle center (outward from rect)
+                normal = [dx / dist, dy / dist];
+                penetration = radius - dist;
+                contactPoint = [closestX, closestY];
+            }
+        }
+        const contact = {
+            point: contactPoint,
+            normal: normal,
+            penetration: penetration,
+        };
+        return { collided: true, contact };
+    }
+    /**
+     * Circle vs OBB (Oriented Bounding Box) collision detection
+     * Handles rotated rectangles by transforming to local space
+     *
+     * Algorithm:
+     * 1. Transform circle center to OBB's local coordinate space (rotate by -angle)
+     * 2. Perform AABB check in local space
+     * 3. Transform contact normal back to world space
+     *
+     * @returns CollisionResult with contact point and normal in world space
+     */
+    function circleVsOBB(state, circleIndex, rectIndex) {
+        const circlePos = state.positions[circleIndex];
+        const rectPos = state.positions[rectIndex];
+        const circleDim = state.dimensions[circleIndex];
+        const rectDim = state.dimensions[rectIndex];
+        const rectAngle = state.angles[rectIndex];
+        if (!circlePos || !rectPos || !circleDim || !rectDim || rectAngle === undefined) {
+            return { collided: false };
+        }
+        // If no rotation, use simpler AABB check
+        if (rectAngle === 0) {
+            return circleVsAABB(state, circleIndex, rectIndex);
+        }
+        const radius = circleDim[0];
+        const halfWidth = rectDim[0];
+        const halfHeight = rectDim[1];
+        // Transform circle center to OBB local space
+        // Translate to OBB center, then rotate by -angle
+        const relX = circlePos[0] - rectPos[0];
+        const relY = circlePos[1] - rectPos[1];
+        const cos = Math.cos(-rectAngle);
+        const sin = Math.sin(-rectAngle);
+        // Circle center in local space (OBB is now axis-aligned)
+        const localX = relX * cos - relY * sin;
+        const localY = relX * sin + relY * cos;
+        // Find closest point on local AABB to local circle center
+        const closestX = Math.max(-halfWidth, Math.min(localX, halfWidth));
+        const closestY = Math.max(-halfHeight, Math.min(localY, halfHeight));
+        // Calculate distance from closest point to circle center in local space
+        const dx = localX - closestX;
+        const dy = localY - closestY;
+        const distSq = dx * dx + dy * dy;
+        const radiusSq = radius * radius;
+        // Check if circle center is inside local AABB
+        const centerInside = localX >= -halfWidth &&
+            localX <= halfWidth &&
+            localY >= -halfHeight &&
+            localY <= halfHeight;
+        // No collision if distance is greater than radius and center is outside
+        if (distSq > radiusSq && !centerInside) {
+            return { collided: false };
+        }
+        let localNormal;
+        let penetration;
+        let localContact;
+        if (centerInside) {
+            // Circle center is inside OBB - find closest edge in local space
+            const distToLeft = localX - (-halfWidth);
+            const distToRight = halfWidth - localX;
+            const distToTop = localY - (-halfHeight);
+            const distToBottom = halfHeight - localY;
+            const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom);
+            if (minDist === distToLeft) {
+                localNormal = [-1, 0];
+                penetration = radius + distToLeft;
+                localContact = [-halfWidth, localY];
+            }
+            else if (minDist === distToRight) {
+                localNormal = [1, 0];
+                penetration = radius + distToRight;
+                localContact = [halfWidth, localY];
+            }
+            else if (minDist === distToTop) {
+                localNormal = [0, -1];
+                penetration = radius + distToTop;
+                localContact = [localX, -halfHeight];
+            }
+            else {
+                localNormal = [0, 1];
+                penetration = radius + distToBottom;
+                localContact = [localX, halfHeight];
+            }
+        }
+        else {
+            // Circle center is outside local AABB
+            const dist = Math.sqrt(distSq);
+            if (dist < 0.0001) {
+                localNormal = [1, 0];
+                penetration = radius;
+                localContact = [closestX, closestY];
+            }
+            else {
+                localNormal = [dx / dist, dy / dist];
+                penetration = radius - dist;
+                localContact = [closestX, closestY];
+            }
+        }
+        // Transform normal back to world space (rotate by +angle)
+        const cosWorld = Math.cos(rectAngle);
+        const sinWorld = Math.sin(rectAngle);
+        const worldNormal = [
+            localNormal[0] * cosWorld - localNormal[1] * sinWorld,
+            localNormal[0] * sinWorld + localNormal[1] * cosWorld,
+        ];
+        // Transform contact point back to world space
+        const worldContact = [
+            rectPos[0] + localContact[0] * cosWorld - localContact[1] * sinWorld,
+            rectPos[1] + localContact[0] * sinWorld + localContact[1] * cosWorld,
+        ];
+        const contact = {
+            point: worldContact,
+            normal: worldNormal,
+            penetration: penetration,
+        };
+        return { collided: true, contact };
+    }
+
+    /**
      * Threshold for using sort-and-sweep in dense buckets
      */
     const DENSE_BUCKET_THRESHOLD = 16;
@@ -902,6 +1174,33 @@
         }
     }
     /**
+     * Perform narrow-phase collision test based on shape types
+     * Dispatches to appropriate collision function for each shape combination
+     */
+    function shapeCollisionTest(state, indexA, indexB) {
+        const shapeA = state.shapeTypes[indexA] ?? 'rectangle';
+        const shapeB = state.shapeTypes[indexB] ?? 'rectangle';
+        // Circle vs Circle
+        if (shapeA === 'circle' && shapeB === 'circle') {
+            return circleVsCircle(state, indexA, indexB);
+        }
+        // Circle vs Rectangle (OBB)
+        if (shapeA === 'circle' && shapeB === 'rectangle') {
+            return circleVsOBB(state, indexA, indexB);
+        }
+        // Rectangle vs Circle - swap and flip normal
+        if (shapeA === 'rectangle' && shapeB === 'circle') {
+            const result = circleVsOBB(state, indexB, indexA);
+            if (result.collided && result.contact) {
+                // Flip normal to point from A to B
+                result.contact.normal = [-result.contact.normal[0], -result.contact.normal[1]];
+            }
+            return result;
+        }
+        // Rectangle vs Rectangle - use SAT
+        return satCollisionTest(state, indexA, indexB);
+    }
+    /**
      * Process an OBB collision pair - test, record, and resolve
      */
     function processOBBCollisionPair(state, indexA, indexB, checkedPairs, collisionsList, onCollision) {
@@ -917,8 +1216,8 @@
         // Broad phase distance check (for rotated boxes that may span cells)
         if (!isOBBNeighbor(state, indexA, indexB))
             return;
-        // Narrow phase SAT test
-        const result = satCollisionTest(state, indexA, indexB);
+        // Narrow phase collision test (dispatches based on shape types)
+        const result = shapeCollisionTest(state, indexA, indexB);
         if (!result.collided || !result.contact)
             return;
         collisionsList.push({ loop: indexA, inHash: indexB });
@@ -990,6 +1289,7 @@
 
     class Elastica {
         constructor({ gridSize = 4, containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 }, collisions = true, borders = 'rigid', useOBB = true, defaultMass = 1, defaultRestitution = 0.8, } = {}) {
+            this.displayScaleWarningShown = false;
             this.calculatecCollisions = collisions;
             this.calculateBorders = borders;
             this.gridSize = gridSize;
@@ -1010,6 +1310,7 @@
             this.hash = [];
             this.isStatic = [];
             this.staticPositions = [];
+            this.displayScales = [];
             this.buckets = new Map();
             // OBB rigid body properties
             this.useOBB = useOBB;
@@ -1019,6 +1320,7 @@
             this.momentsOfInertia = [];
             this.restitutions = [];
             this.maxExtents = [];
+            this.shapeTypes = [];
             this.defaultMass = defaultMass;
             this.defaultRestitution = defaultRestitution;
         }
@@ -1027,15 +1329,33 @@
             this.dimensions = elements.map((element, index) => {
                 if (!element)
                     return [0, 0];
-                this.isStatic[index] = element.element?.dataset.state === 'static';
+                // Check for static state - handle both DOM and canvas modes
+                this.isStatic[index] = element.element?.dataset?.state === 'static';
+                // Pre-allocate positions and velocities so callback can use .length
+                this.positions[index] = [0, 0];
+                this.velocities[index] = [0, 0];
                 this.externalForces[index] = [0, 0];
                 this.bounced[index] = 0;
+                this.displayScales[index] = 1;
                 // Initialize OBB rigid body properties
                 this.angles[index] = 0;
                 this.angularVelocities[index] = 0;
                 this.masses[index] = this.defaultMass;
                 this.restitutions[index] = this.defaultRestitution;
                 const { rect: elementRect } = element;
+                const shapeType = element.shape ?? 'rectangle';
+                this.shapeTypes[index] = shapeType;
+                if (shapeType === 'circle') {
+                    // For circles: use the smaller dimension as diameter, store radius in both slots
+                    const radius = Math.min(elementRect.width, elementRect.height) / 2;
+                    // Moment of inertia for circle: I = 0.5 * m * r²
+                    this.momentsOfInertia[index] = 0.5 * this.defaultMass * radius * radius;
+                    // For circles, maxExtent is just the radius
+                    this.maxExtents[index] = radius;
+                    // Store [radius, radius] for compatibility with existing code
+                    return [radius, radius];
+                }
+                // Rectangle handling (default)
                 const halfWidth = elementRect.width / 2;
                 const halfHeight = elementRect.height / 2;
                 // Calculate moment of inertia for rectangle: I = (m/12) * (w² + h²)
@@ -1152,7 +1472,7 @@
             style.id = 'elastica-css';
             // Using CSS variables --ex (x), --ey (y), --er (rotation) for transform
             // The [data-elastica] attribute marks elements managed by the engine
-            style.textContent = '[data-elastica]{transform:translate3d(var(--ex,0),var(--ey,0),0)rotate(var(--er,0));will-change:transform}';
+            style.textContent = '[data-elastica]{transform:translate3d(var(--ex,0),var(--ey,0),0)rotate(var(--er,0))scale(var(--eds,1));will-change:transform}';
             document.head.appendChild(style);
             Elastica.stylesInjected = true;
         }
@@ -1163,8 +1483,12 @@
          * This marks the element with data-elastica attribute which:
          * - Applies the CSS transform rule using variables
          * - Sets will-change: transform once (not every frame)
+         *
+         * For canvas mode, this is a no-op when element is null/undefined.
          */
         initializeElement(element) {
+            if (!element)
+                return; // No-op for canvas mode
             this.injectStyles();
             element.dataset.elastica = '';
         }
@@ -1185,6 +1509,15 @@
                 if (angle !== 0) {
                     element.style.setProperty('--er', angle + 'rad');
                 }
+                // Apply visual scale (does not affect collision bounds)
+                const scale = this.displayScales[index];
+                if (scale !== undefined && scale !== 1) {
+                    if (this.calculatecCollisions && !this.displayScaleWarningShown) {
+                        console.warn('[Elastica] displayScale is visual-only, collision bounds unchanged');
+                        this.displayScaleWarningShown = true;
+                    }
+                    element.style.setProperty('--eds', String(scale));
+                }
             }
         }
         // Property setters
@@ -1201,12 +1534,21 @@
         setMass(index, mass) {
             if (index >= 0 && index < this.masses.length) {
                 this.masses[index] = mass;
-                // Recalculate moment of inertia
+                // Recalculate moment of inertia based on shape type
                 const dimension = this.dimensions[index];
+                const shapeType = this.shapeTypes[index] ?? 'rectangle';
                 if (dimension) {
-                    const width = dimension[0] * 2;
-                    const height = dimension[1] * 2;
-                    this.momentsOfInertia[index] = (mass / 12) * (width * width + height * height);
+                    if (shapeType === 'circle') {
+                        // Circle: I = 0.5 * m * r²
+                        const radius = dimension[0];
+                        this.momentsOfInertia[index] = 0.5 * mass * radius * radius;
+                    }
+                    else {
+                        // Rectangle: I = (m/12) * (w² + h²)
+                        const width = dimension[0] * 2;
+                        const height = dimension[1] * 2;
+                        this.momentsOfInertia[index] = (mass / 12) * (width * width + height * height);
+                    }
                 }
             }
         }
@@ -1239,6 +1581,7 @@
                 restitutions: this.restitutions,
                 maxExtents: this.maxExtents,
                 isStatic: this.isStatic,
+                shapeTypes: this.shapeTypes,
                 hash: this.hash,
                 gridSize: this.gridSize,
                 buckets: this.buckets,
@@ -1322,6 +1665,9 @@
 
     exports.add = add;
     exports.calculateSuperposition = calculateSuperposition;
+    exports.circleVsAABB = circleVsAABB;
+    exports.circleVsCircle = circleVsCircle;
+    exports.circleVsOBB = circleVsOBB;
     exports.cross = cross;
     exports.default = Elastica;
     exports.detectAndResolveAABB = detectAndResolveAABB;

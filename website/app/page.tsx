@@ -3,17 +3,19 @@
 import cn from 'clsx'
 import { useState } from 'react'
 import { Example1 } from '~/components/examples/example-1'
-import { Example2 } from '~/components/examples/example-2'
 import { Example3 } from '~/components/examples/example-3'
 import { Example4 } from '~/components/examples/example-4'
+import { Example6 } from '~/components/examples/example-6'
 import { Wrapper } from '~/components/layout/wrapper'
 import s from './page.module.css'
 
 const examples = [
   { name: 'Basics', component: 'Example1' },
-  { name: 'Gravity', component: 'Example2' },
+  // { name: 'Gravity', component: 'Example2' },
   { name: 'Follow', component: 'Example3' },
   { name: 'Flocking', component: 'Example4' },
+  // { name: 'Text', component: 'Example5' },
+  { name: 'Canvas', component: 'Example6' },
 ] as const
 
 const data = [
@@ -23,7 +25,6 @@ const data = [
   { name: 'Elastica' },
   { name: 'Elastica' },
   { name: 'Elastica' },
-  
 ]
 
 type Example = (typeof examples)[number]
@@ -35,12 +36,16 @@ export default function Home() {
     switch (example.component) {
       case 'Example1':
         return <Example1 data={data} />
-      case 'Example2':
-        return <Example2 data={data} />
+      // case 'Example2':
+      //   return <Example2 data={data} />
       case 'Example3':
         return <Example3 data={data} />
       case 'Example4':
         return <Example4 data={data} />
+      // case 'Example5':
+      //   return <Example5 data={data} />
+      case 'Example6':
+        return <Example6 />
       default:
         return null
     }

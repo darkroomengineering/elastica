@@ -1,4 +1,4 @@
-import type { CollisionRecord, CollisionResult, ContactPoint, Vector2D } from '../types';
+import type { CollisionRecord, CollisionResult, ContactPoint, ShapeType, Vector2D } from '../types';
 /**
  * State required for OBB collision detection
  */
@@ -13,6 +13,7 @@ export type OBBState = {
     restitutions: number[];
     maxExtents: number[];
     isStatic: boolean[];
+    shapeTypes: ShapeType[];
     hash: number[];
     gridSize: number;
     buckets: Map<number, number[]>;

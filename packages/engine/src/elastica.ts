@@ -10,6 +10,7 @@ import type {
   ElasticaConfigOBB,
   ElementData,
   PolarCoordinates,
+  ShapeType,
   Vector2D,
 } from './types'
 
@@ -20,6 +21,7 @@ export default class Elastica {
    * which reduces per-frame string allocations compared to setting cssText directly.
    */
   private static stylesInjected = false
+  private displayScaleWarningShown = false
 
   // Core properties
   calculatecCollisions: boolean
@@ -38,6 +40,7 @@ export default class Elastica {
   hash: number[]
   isStatic: boolean[]
   staticPositions: Vector2D[] // Cached positions for static elements
+  displayScales: number[] // Visual-only scale (does not affect collision bounds)
 
   // Spatial hash buckets: cellId → element indices
   // This enables O(n×k) collision detection instead of O(n²)
@@ -51,6 +54,7 @@ export default class Elastica {
   momentsOfInertia: number[]
   restitutions: number[]
   maxExtents: number[] // Cached diagonal extent: sqrt(halfWidth² + halfHeight²)
+  shapeTypes: ShapeType[] // Shape type for each element ('rectangle' or 'circle')
   defaultMass: number
   defaultRestitution: number
 
@@ -84,6 +88,7 @@ export default class Elastica {
     this.hash = []
     this.isStatic = []
     this.staticPositions = []
+    this.displayScales = []
     this.buckets = new Map()
 
     // OBB rigid body properties
@@ -94,6 +99,7 @@ export default class Elastica {
     this.momentsOfInertia = []
     this.restitutions = []
     this.maxExtents = []
+    this.shapeTypes = []
     this.defaultMass = defaultMass
     this.defaultRestitution = defaultRestitution
   }
@@ -108,10 +114,15 @@ export default class Elastica {
     this.dimensions = elements.map((element, index) => {
       if (!element) return [0, 0] as Vector2D
 
-      this.isStatic[index] = element.element?.dataset.state === 'static'
+      // Check for static state - handle both DOM and canvas modes
+      this.isStatic[index] = element.element?.dataset?.state === 'static'
 
+      // Pre-allocate positions and velocities so callback can use .length
+      this.positions[index] = [0, 0]
+      this.velocities[index] = [0, 0]
       this.externalForces[index] = [0, 0]
       this.bounced[index] = 0
+      this.displayScales[index] = 1
 
       // Initialize OBB rigid body properties
       this.angles[index] = 0
@@ -120,6 +131,24 @@ export default class Elastica {
       this.restitutions[index] = this.defaultRestitution
 
       const { rect: elementRect } = element
+      const shapeType = element.shape ?? 'rectangle'
+      this.shapeTypes[index] = shapeType
+
+      if (shapeType === 'circle') {
+        // For circles: use the smaller dimension as diameter, store radius in both slots
+        const radius = Math.min(elementRect.width, elementRect.height) / 2
+
+        // Moment of inertia for circle: I = 0.5 * m * r²
+        this.momentsOfInertia[index] = 0.5 * this.defaultMass * radius * radius
+
+        // For circles, maxExtent is just the radius
+        this.maxExtents[index] = radius
+
+        // Store [radius, radius] for compatibility with existing code
+        return [radius, radius] as Vector2D
+      }
+
+      // Rectangle handling (default)
       const halfWidth = elementRect.width / 2
       const halfHeight = elementRect.height / 2
 
@@ -256,7 +285,7 @@ export default class Elastica {
     style.id = 'elastica-css'
     // Using CSS variables --ex (x), --ey (y), --er (rotation) for transform
     // The [data-elastica] attribute marks elements managed by the engine
-    style.textContent = '[data-elastica]{transform:translate3d(var(--ex,0),var(--ey,0),0)rotate(var(--er,0));will-change:transform}'
+    style.textContent = '[data-elastica]{transform:translate3d(var(--ex,0),var(--ey,0),0)rotate(var(--er,0))scale(var(--eds,1));will-change:transform}'
     document.head.appendChild(style)
     Elastica.stylesInjected = true
   }
@@ -268,8 +297,11 @@ export default class Elastica {
    * This marks the element with data-elastica attribute which:
    * - Applies the CSS transform rule using variables
    * - Sets will-change: transform once (not every frame)
+   *
+   * For canvas mode, this is a no-op when element is null/undefined.
    */
-  initializeElement(element: HTMLElement): void {
+  initializeElement(element: HTMLElement | null | undefined): void {
+    if (!element) return  // No-op for canvas mode
     this.injectStyles()
     element.dataset.elastica = ''
   }
@@ -295,6 +327,15 @@ export default class Elastica {
       if (angle !== 0) {
         element.style.setProperty('--er', angle + 'rad')
       }
+      // Apply visual scale (does not affect collision bounds)
+      const scale = this.displayScales[index]
+      if (scale !== undefined && scale !== 1) {
+        if (this.calculatecCollisions && !this.displayScaleWarningShown) {
+          console.warn('[Elastica] displayScale is visual-only, collision bounds unchanged')
+          this.displayScaleWarningShown = true
+        }
+        element.style.setProperty('--eds', String(scale))
+      }
     }
   }
 
@@ -315,12 +356,21 @@ export default class Elastica {
     if (index >= 0 && index < this.masses.length) {
       this.masses[index] = mass
 
-      // Recalculate moment of inertia
+      // Recalculate moment of inertia based on shape type
       const dimension = this.dimensions[index]
+      const shapeType = this.shapeTypes[index] ?? 'rectangle'
+
       if (dimension) {
-        const width = dimension[0] * 2
-        const height = dimension[1] * 2
-        this.momentsOfInertia[index] = (mass / 12) * (width * width + height * height)
+        if (shapeType === 'circle') {
+          // Circle: I = 0.5 * m * r²
+          const radius = dimension[0]
+          this.momentsOfInertia[index] = 0.5 * mass * radius * radius
+        } else {
+          // Rectangle: I = (m/12) * (w² + h²)
+          const width = dimension[0] * 2
+          const height = dimension[1] * 2
+          this.momentsOfInertia[index] = (mass / 12) * (width * width + height * height)
+        }
       }
     }
   }
@@ -356,6 +406,7 @@ export default class Elastica {
       restitutions: this.restitutions,
       maxExtents: this.maxExtents,
       isStatic: this.isStatic,
+      shapeTypes: this.shapeTypes,
       hash: this.hash,
       gridSize: this.gridSize,
       buckets: this.buckets,

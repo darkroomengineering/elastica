@@ -13,6 +13,7 @@ docs/dist
 .DS_Store
 *.pem
 .tldr/*
+docs/plans/
 
 # debug
 *.log

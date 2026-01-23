@@ -1,7 +1,8 @@
 import { distanceSquared } from '../math'
 import { axesPool, cornersPool, vectorPool } from '../pool'
-import type { CollisionRecord, CollisionResult, ContactPoint, Vector2D } from '../types'
+import type { CollisionRecord, CollisionResult, ContactPoint, ShapeType, Vector2D } from '../types'
 import { getNeighborCellIds, sweepBucket } from './aabb'
+import { circleVsCircle, circleVsOBB } from './circle'
 
 /**
  * Threshold for using sort-and-sweep in dense buckets
@@ -22,6 +23,7 @@ export type OBBState = {
   restitutions: number[]
   maxExtents: number[] // Cached diagonal extent for broad-phase checks
   isStatic: boolean[]
+  shapeTypes: ShapeType[] // Shape type for each element ('rectangle' or 'circle')
   // Spatial hash for broad phase
   hash: number[]
   gridSize: number
@@ -442,6 +444,42 @@ export function resolveOBBCollision(
 }
 
 /**
+ * Perform narrow-phase collision test based on shape types
+ * Dispatches to appropriate collision function for each shape combination
+ */
+function shapeCollisionTest(
+  state: OBBState,
+  indexA: number,
+  indexB: number
+): CollisionResult {
+  const shapeA = state.shapeTypes[indexA] ?? 'rectangle'
+  const shapeB = state.shapeTypes[indexB] ?? 'rectangle'
+
+  // Circle vs Circle
+  if (shapeA === 'circle' && shapeB === 'circle') {
+    return circleVsCircle(state, indexA, indexB)
+  }
+
+  // Circle vs Rectangle (OBB)
+  if (shapeA === 'circle' && shapeB === 'rectangle') {
+    return circleVsOBB(state, indexA, indexB)
+  }
+
+  // Rectangle vs Circle - swap and flip normal
+  if (shapeA === 'rectangle' && shapeB === 'circle') {
+    const result = circleVsOBB(state, indexB, indexA)
+    if (result.collided && result.contact) {
+      // Flip normal to point from A to B
+      result.contact.normal = [-result.contact.normal[0], -result.contact.normal[1]]
+    }
+    return result
+  }
+
+  // Rectangle vs Rectangle - use SAT
+  return satCollisionTest(state, indexA, indexB)
+}
+
+/**
  * Process an OBB collision pair - test, record, and resolve
  */
 function processOBBCollisionPair(
@@ -464,8 +502,8 @@ function processOBBCollisionPair(
   // Broad phase distance check (for rotated boxes that may span cells)
   if (!isOBBNeighbor(state, indexA, indexB)) return
 
-  // Narrow phase SAT test
-  const result = satCollisionTest(state, indexA, indexB)
+  // Narrow phase collision test (dispatches based on shape types)
+  const result = shapeCollisionTest(state, indexA, indexB)
 
   if (!result.collided || !result.contact) return
 

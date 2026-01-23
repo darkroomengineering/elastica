@@ -1,4 +1,5 @@
 export type Vector2D = [number, number];
+export type ShapeType = 'rectangle' | 'circle';
 export type BorderType = 'rigid' | 'periodic' | false;
 export type ContainerOffsets = {
     top: number;
@@ -11,8 +12,14 @@ export type Container = {
     height: number;
 };
 export type ElementData = {
-    element: HTMLElement;
-    rect: DOMRect;
+    element?: HTMLElement | null;
+    rect: {
+        width: number;
+        height: number;
+        left?: number;
+        top?: number;
+    };
+    shape?: ShapeType;
 };
 export type ElasticaConfig = {
     gridSize?: number;

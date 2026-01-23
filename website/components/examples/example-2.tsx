@@ -1,9 +1,10 @@
 'use client'
 
-import ReactElastica, {
+import {
   BoundaryBox,
+  DomElastica,
   initalConditionsPresets,
-  type ReactElasticaRef,
+  type DomElasticaRef,
   type UpdateParams,
 } from '@elastica'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -42,7 +43,7 @@ const initialParams: Example2Params = {
 }
 
 export function Example2({ data }: Example2Props) {
-  const elasticaRef = useRef<ReactElasticaRef>(null)
+  const elasticaRef = useRef<DomElasticaRef>(null)
   const containerRef = useRef<HTMLElement>(null)
   const [items] = useState(() => adjustArrayLength(data, 32))
   const mousePos = useRef<{ x: number; y: number } | null>(null)
@@ -74,7 +75,7 @@ export function Example2({ data }: Example2Props) {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      <ReactElastica
+      <DomElastica
         ref={elasticaRef}
         config={{
           ...params,
@@ -149,7 +150,7 @@ export function Example2({ data }: Example2Props) {
           </div>
          </BoundaryBox>
         ))}
-      </ReactElastica>
+      </DomElastica>
     </section>
   )
 }

@@ -1,10 +1,11 @@
 'use client'
 
-import ReactElastica, {
+import {
   BoundaryBox,
+  DomElastica,
   initalConditionsPresets,
   useElastica,
-  type ReactElasticaRef,
+  type DomElasticaRef,
   type UpdateParams,
 } from '@elastica'
 import { useDrag } from '@use-gesture/react'
@@ -47,7 +48,7 @@ const initialParams: Example1Params = {
 const dampingFactor = 0.9
 
 export function Example1({ data }: Example1Props) {
-  const elasticaRef = useRef<ReactElasticaRef>(null)
+  const elasticaRef = useRef<DomElasticaRef>(null)
   const [items] = useState(() => adjustArrayLength(data, 24))
   const hoveredItems = useRef(items.map(() => false))
   const params = useTweakpane(initialParams, (value) => {
@@ -64,7 +65,7 @@ export function Example1({ data }: Example1Props) {
 
   return (
     <section className='fixed inset-0 w-full h-full'>
-      <ReactElastica
+      <DomElastica
         showHashGrid={params.showHashGrid}
         config={params}
         initialCondition={initalConditionsPresets.random}
@@ -119,7 +120,7 @@ export function Example1({ data }: Example1Props) {
             onHoverChange={handleHoverChange}
           />
         ))}
-      </ReactElastica>
+      </DomElastica>
     </section>
   )
 }

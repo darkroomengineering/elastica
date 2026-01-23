@@ -1,5 +1,7 @@
 export type Vector2D = [number, number]
 
+export type ShapeType = 'rectangle' | 'circle'
+
 export type BorderType = 'rigid' | 'periodic' | false
 
 export type ContainerOffsets = {
@@ -15,8 +17,9 @@ export type Container = {
 }
 
 export type ElementData = {
-  element: HTMLElement
-  rect: DOMRect
+  element?: HTMLElement | null  // Optional for canvas mode
+  rect: { width: number; height: number; left?: number; top?: number }  // left/top optional for presets
+  shape?: ShapeType  // Optional shape type ('rectangle' or 'circle'), defaults to 'rectangle'
 }
 
 export type ElasticaConfig = {

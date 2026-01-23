@@ -1,9 +1,10 @@
 'use client'
 
-import ReactElastica, {
+import {
   BoundaryBox,
+  DomElastica,
   initalConditionsPresets,
-  type ReactElasticaRef,
+  type DomElasticaRef,
   type UpdateParams,
 } from '@elastica'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -52,7 +53,7 @@ function Item({ name }: ItemProps) {
 }
 
 export function Example3({ data }: Example3Props) {
-  const elasticaRef = useRef<ReactElasticaRef>(null)
+  const elasticaRef = useRef<DomElasticaRef>(null)
   const [cursorPosition, setCursorPosition] = useState<[number, number]>([0, 0])
   
   const params = useTweakpane(initialParams, (value) => {
@@ -74,7 +75,7 @@ export function Example3({ data }: Example3Props) {
 
   return (
     <section className="fixed h-full w-full">
-      <ReactElastica
+      <DomElastica
         ref={elasticaRef}
         config={params}
         initialCondition={initalConditionsPresets.randomOBB}
@@ -164,7 +165,7 @@ export function Example3({ data }: Example3Props) {
         {adjustArrayLength(data, 24).map(({ name }, index) => (
           <Item key={index} name={name} index={index} />
         ))}
-      </ReactElastica>
+      </DomElastica>
     </section>
   )
 }

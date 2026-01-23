@@ -1,0 +1,626 @@
+{
+  "edges": [
+    {
+      "from_file": "lib/hooks/use-transform.tsx",
+      "from_func": "TransformProvider",
+      "to_file": "lib/hooks/use-transform.tsx",
+      "to_func": "update"
+    },
+    {
+      "from_file": "lib/scripts/generate-component.ts",
+      "from_func": "updateBarrelExport",
+      "to_file": "lib/scripts/generate-component.ts",
+      "to_func": "toPascalCase"
+    },
+    {
+      "from_file": "lib/scripts/generate-component.ts",
+      "from_func": "generateComponentContent",
+      "to_file": "lib/scripts/generate-component.ts",
+      "to_func": "toCamelCase"
+    },
+    {
+      "from_file": "lib/dev/theatre/hooks/use-theatre.ts",
+      "from_func": "useTheatre",
+      "to_file": "lib/dev/theatre/hooks/use-theatre.ts",
+      "to_func": "set"
+    },
+    {
+      "from_file": "components/ui/real-viewport/index.tsx",
+      "from_func": "RealViewport",
+      "to_file": "components/ui/real-viewport/index.tsx",
+      "to_func": "debounce"
+    },
+    {
+      "from_file": "components/examples/example-5.tsx",
+      "from_func": "Example5",
+      "to_file": "components/examples/example-5.tsx",
+      "to_func": "calculateTotalCycleDuration"
+    },
+    {
+      "from_file": "components/examples/example-2.tsx",
+      "from_func": "Example2",
+      "to_file": "components/examples/example-2.tsx",
+      "to_func": "useTweakpane"
+    },
+    {
+      "from_file": "lib/utils/performance.ts",
+      "from_func": "reportWebVitals",
+      "to_file": "lib/utils/performance.ts",
+      "to_func": "getLCP"
+    },
+    {
+      "from_file": "components/examples/example-5.tsx",
+      "from_func": "sampleMultipleTexts",
+      "to_file": "components/examples/example-5.tsx",
+      "to_func": "sampleTextPositions"
+    },
+    {
+      "from_file": "lib/webgl/components/raf/index.ts",
+      "from_func": "RAF",
+      "to_file": "lib/webgl/components/raf/index.ts",
+      "to_func": "advance"
+    },
+    {
+      "from_file": "components/ui/form/hook.ts",
+      "from_func": "useForm",
+      "to_file": "components/ui/form/hook.ts",
+      "to_func": "setToActiveInput"
+    },
+    {
+      "from_file": "lib/utils/raf.ts",
+      "from_func": "batch",
+      "to_file": "lib/utils/raf.ts",
+      "to_func": "mutate"
+    },
+    {
+      "from_file": "lib/utils/performance.ts",
+      "from_func": "reportWebVitals",
+      "to_file": "lib/utils/performance.ts",
+      "to_func": "getCLS"
+    },
+    {
+      "from_file": "components/examples/example-5.tsx",
+      "from_func": "Example5",
+      "to_file": "components/examples/example-5.tsx",
+      "to_func": "sampleMultipleTexts"
+    },
+    {
+      "from_file": "components/ui/image/index.tsx",
+      "from_func": "generateBlurDataURL",
+      "to_file": "components/ui/image/index.tsx",
+      "to_func": "toBase64"
+    },
+    {
+      "from_file": "lib/webgl/utils/fluid/index.tsx",
+      "from_func": "useFluidSim",
+      "to_file": "lib/webgl/utils/fluid/index.tsx",
+      "to_func": "updateMouse"
+    },
+    {
+      "from_file": "lib/webgl/utils/flowmaps/index.tsx",
+      "from_func": "useFlowmapSim",
+      "to_file": "lib/dev/theatre/hooks/use-theatre.ts",
+      "to_func": "useTheatre"
+    },
+    {
+      "from_file": "lib/utils/animation.ts",
+      "from_func": "fromTo",
+      "to_file": "lib/utils/math.ts",
+      "to_func": "mapRange"
+    },
+    {
+      "from_file": "lib/scripts/generate-component.ts",
+      "from_func": "generateComponentContent",
+      "to_file": "lib/scripts/generate-component.ts",
+      "to_func": "toPascalCase"
+    },
+    {
+      "from_file": "components/ui/image/index.tsx",
+      "from_func": "generateBlurDataURL",
+      "to_file": "components/ui/image/index.tsx",
+      "to_func": "generateShimmer"
+    },
+    {
+      "from_file": "lib/utils/raf.ts",
+      "from_func": "batch",
+      "to_file": "lib/utils/raf.ts",
+      "to_func": "measure"
+    },
+    {
+      "from_file": "lib/hooks/use-scroll-trigger.ts",
+      "from_func": "useMarker",
+      "to_file": "lib/hooks/use-scroll-trigger.ts",
+      "to_func": "setElementRef"
+    },
+    {
+      "from_file": "lib/utils/performance.ts",
+      "from_func": "reportWebVitals",
+      "to_file": "lib/utils/performance.ts",
+      "to_func": "getTTFB"
+    },
+    {
+      "from_file": "lib/webgl/utils/fluid/index.tsx",
+      "from_func": "useFluidSim",
+      "to_file": "lib/dev/theatre/hooks/use-theatre.ts",
+      "to_func": "useTheatre"
+    },
+    {
+      "from_file": "components/effects/animated-gradient/index.tsx",
+      "from_func": "AnimatedGradient",
+      "to_file": "lib/webgl/hooks/use-webgl-element.ts",
+      "to_func": "useWebGLElement"
+    },
+    {
+      "from_file": "lib/webgl/utils/fluid/index.tsx",
+      "from_func": "handleMouseMove",
+      "to_file": "lib/webgl/utils/fluid/index.tsx",
+      "to_func": "updateMouse"
+    },
+    {
+      "from_file": "lib/utils/performance.ts",
+      "from_func": "reportWebVitals",
+      "to_file": "lib/utils/performance.ts",
+      "to_func": "getFCP"
+    },
+    {
+      "from_file": "components/examples/example-5.tsx",
+      "from_func": "animate",
+      "to_file": "components/examples/example-5.tsx",
+      "to_func": "calculateTotalCycleDuration"
+    },
+    {
+      "from_file": "components/examples/example-5.tsx",
+      "from_func": "Example5",
+      "to_file": "components/examples/example-5.tsx",
+      "to_func": "calculateWordState"
+    },
+    {
+      "from_file": "components/effects/split-text/index.tsx",
+      "from_func": "SplitText",
+      "to_file": "components/effects/split-text/index.tsx",
+      "to_func": "findDeepestElement"
+    },
+    {
+      "from_file": "lib/hooks/use-transform.tsx",
+      "from_func": "TransformProvider",
+      "to_file": "lib/hooks/use-transform.tsx",
+      "to_func": "getTransform"
+    },
+    {
+      "from_file": "lib/webgl/hooks/use-webgl-rect.ts",
+      "from_func": "useWebGLRect",
+      "to_file": "lib/webgl/hooks/use-webgl-rect.ts",
+      "to_func": "handleUpdate"
+    },
+    {
+      "from_file": "components/examples/example-5.tsx",
+      "from_func": "Example5",
+      "to_file": "components/examples/example-5.tsx",
+      "to_func": "handleResize"
+    },
+    {
+      "from_file": "lib/styles/scripts/generate-scale.ts",
+      "from_func": "generateScale",
+      "to_file": "lib/styles/scripts/generate-scale.ts",
+      "to_func": "scaleUtility"
+    },
+    {
+      "from_file": "lib/scripts/generate-component.ts",
+      "from_func": "createComponent",
+      "to_file": "lib/scripts/generate-component.ts",
+      "to_func": "generateCssContent"
+    },
+    {
+      "from_file": "lib/hooks/use-scroll-trigger.ts",
+      "from_func": "useScrollTrigger",
+      "to_file": "lib/hooks/use-scroll-trigger.ts",
+      "to_func": "isNumber"
+    },
+    {
+      "from_file": "lib/webgl/utils/fluid/fluid-sim.ts",
+      "from_func": "Fluid.constructor",
+      "to_file": "lib/webgl/utils/fluid/fluid-sim.ts",
+      "to_func": "getDoubleRenderTarget"
+    },
+    {
+      "from_file": "lib/hooks/use-scroll-trigger.ts",
+      "from_func": "useScrollTrigger",
+      "to_file": "lib/hooks/use-scroll-trigger.ts",
+      "to_func": "useMarker"
+    },
+    {
+      "from_file": "components/ui/real-viewport/index.tsx",
+      "from_func": "RealViewport",
+      "to_file": "components/ui/real-viewport/index.tsx",
+      "to_func": "onWindowResize"
+    },
+    {
+      "from_file": "lib/scripts/utils.ts",
+      "from_func": "removeDir",
+      "to_file": "lib/scripts/utils.ts",
+      "to_func": "pathExists"
+    },
+    {
+      "from_file": "lib/utils/animation.ts",
+      "from_func": "stagger",
+      "to_file": "lib/utils/math.ts",
+      "to_func": "clamp"
+    },
+    {
+      "from_file": "lib/scripts/generate-component.ts",
+      "from_func": "generateCssContent",
+      "to_file": "lib/scripts/generate-component.ts",
+      "to_func": "toCamelCase"
+    },
+    {
+      "from_file": "components/examples/example-5.tsx",
+      "from_func": "animate",
+      "to_file": "components/examples/example-5.tsx",
+      "to_func": "calculateWordState"
+    },
+    {
+      "from_file": "lib/webgl/components/image/index.tsx",
+      "from_func": "Image",
+      "to_file": "lib/webgl/hooks/use-webgl-element.ts",
+      "to_func": "useWebGLElement"
+    },
+    {
+      "from_file": "lib/webgl/utils/fluid/index.tsx",
+      "from_func": "handleTouchMove",
+      "to_file": "lib/webgl/utils/fluid/index.tsx",
+      "to_func": "updateMouse"
+    },
+    {
+      "from_file": "components/examples/example-5.tsx",
+      "from_func": "Example5",
+      "to_file": "components/examples/example-5.tsx",
+      "to_func": "easeInCubic"
+    },
+    {
+      "from_file": "lib/utils/strings.ts",
+      "from_func": "mergeRefs",
+      "to_file": "lib/utils/strings.ts",
+      "to_func": "cleanup"
+    },
+    {
+      "from_file": "lib/dev/theatre/r3f.tsx",
+      "from_func": "Group",
+      "to_file": "lib/dev/theatre/hooks/use-theatre.ts",
+      "to_func": "useTheatre"
+    },
+    {
+      "from_file": "lib/hooks/use-scroll-trigger.ts",
+      "from_func": "useScrollTrigger",
+      "to_file": "lib/hooks/use-transform.tsx",
+      "to_func": "useTransform"
+    },
+    {
+      "from_file": "lib/utils/strings.ts",
+      "from_func": "shortenObjectKeys",
+      "to_file": "lib/utils/strings.ts",
+      "to_func": "convertToCamelCase"
+    },
+    {
+      "from_file": "components/examples/example-2.tsx",
+      "from_func": "Example2",
+      "to_file": "lib/utils/array.ts",
+      "to_func": "adjustArrayLength"
+    },
+    {
+      "from_file": "lib/hooks/use-scroll-trigger.ts",
+      "from_func": "useScrollTrigger",
+      "to_file": "lib/hooks/use-scroll-trigger.ts",
+      "to_func": "handleProgress"
+    },
+    {
+      "from_file": "lib/dev/theatre/index.tsx",
+      "from_func": "useSheet",
+      "to_file": "lib/dev/theatre/index.tsx",
+      "to_func": "useCurrentProject"
+    },
+    {
+      "from_file": "lib/scripts/generate-component.ts",
+      "from_func": "createComponent",
+      "to_file": "lib/scripts/generate-component.ts",
+      "to_func": "generateComponentContent"
+    },
+    {
+      "from_file": "components/ui/form/hook.ts",
+      "from_func": "useForm",
+      "to_file": "components/ui/form/hook.ts",
+      "to_func": "validator"
+    },
+    {
+      "from_file": "lib/dev/theatre/hooks/use-studio.ts",
+      "from_func": "useStudioCurrentObject",
+      "to_file": "lib/dev/theatre/hooks/use-studio.ts",
+      "to_func": "useStudio"
+    },
+    {
+      "from_file": "components/examples/example-5.tsx",
+      "from_func": "animate",
+      "to_file": "components/examples/example-5.tsx",
+      "to_func": "easeInCubic"
+    },
+    {
+      "from_file": "lib/utils/animation.ts",
+      "from_func": "fromTo",
+      "to_file": "lib/utils/animation.ts",
+      "to_func": "toPreValue"
+    },
+    {
+      "from_file": "lib/webgl/hooks/use-webgl-rect.ts",
+      "from_func": "useWebGLRect",
+      "to_file": "lib/hooks/use-transform.tsx",
+      "to_func": "useTransform"
+    },
+    {
+      "from_file": "lib/styles/scripts/generate-scale.ts",
+      "from_func": "generateScale",
+      "to_file": "lib/styles/scripts/generate-scale.ts",
+      "to_func": "columnScaleUtility"
+    },
+    {
+      "from_file": "lib/styles/scripts/generate-tailwind.ts",
+      "from_func": "generateTailwind",
+      "to_file": "lib/styles/scripts/utils.ts",
+      "to_func": "formatObject"
+    },
+    {
+      "from_file": "lib/dev/theatre/hooks/use-theatre.ts",
+      "from_func": "useTheatre",
+      "to_file": "lib/dev/theatre/hooks/use-theatre.ts",
+      "to_func": "useTheatreObject"
+    },
+    {
+      "from_file": "components/layout/lenis/scroll-trigger.tsx",
+      "from_func": "LenisScrollTriggerSync",
+      "to_file": "components/layout/lenis/scroll-trigger.tsx",
+      "to_func": "handleRefresh"
+    },
+    {
+      "from_file": "lib/utils/fetch.ts",
+      "from_func": "fetchJSON",
+      "to_file": "lib/utils/fetch.ts",
+      "to_func": "fetchWithTimeout"
+    },
+    {
+      "from_file": "lib/hooks/use-scroll-trigger.ts",
+      "from_func": "useScrollTrigger",
+      "to_file": "lib/hooks/use-scroll-trigger.ts",
+      "to_func": "handleEnter"
+    },
+    {
+      "from_file": "lib/utils/animation.ts",
+      "from_func": "stagger",
+      "to_file": "lib/utils/math.ts",
+      "to_func": "mapRange"
+    },
+    {
+      "from_file": "components/ui/real-viewport/index.tsx",
+      "from_func": "RealViewport",
+      "to_file": "components/ui/real-viewport/index.tsx",
+      "to_func": "createOnWindowResize"
+    },
+    {
+      "from_file": "components/ui/form/hook.ts",
+      "from_func": "useForm",
+      "to_file": "components/ui/form/hook.ts",
+      "to_func": "initializeInput"
+    },
+    {
+      "from_file": "lib/utils/math.ts",
+      "from_func": "mapRange",
+      "to_file": "lib/utils/math.ts",
+      "to_func": "clamp"
+    },
+    {
+      "from_file": "lib/hooks/use-transform.tsx",
+      "from_func": "TransformProvider",
+      "to_file": "lib/hooks/use-transform.tsx",
+      "to_func": "useTransform"
+    },
+    {
+      "from_file": "lib/webgl/components/image/webgl.tsx",
+      "from_func": "WebGLImage",
+      "to_file": "lib/webgl/components/image/webgl.tsx",
+      "to_func": "isRectValid"
+    },
+    {
+      "from_file": "lib/utils/animation.ts",
+      "from_func": "fromTo",
+      "to_file": "lib/utils/animation.ts",
+      "to_func": "stagger"
+    },
+    {
+      "from_file": "lib/utils/animation.ts",
+      "from_func": "fromTo",
+      "to_file": "lib/utils/animation.ts",
+      "to_func": "ease"
+    },
+    {
+      "from_file": "lib/styles/scripts/generate-tailwind.ts",
+      "from_func": "generateTailwind",
+      "to_file": "lib/styles/scripts/utils.ts",
+      "to_func": "scalingCalc"
+    },
+    {
+      "from_file": "lib/scripts/generate-component.ts",
+      "from_func": "createComponent",
+      "to_file": "lib/scripts/generate-component.ts",
+      "to_func": "updateBarrelExport"
+    },
+    {
+      "from_file": "lib/webgl/components/image/webgl.tsx",
+      "from_func": "WebGLImage",
+      "to_file": "lib/webgl/hooks/use-webgl-rect.ts",
+      "to_func": "useWebGLRect"
+    },
+    {
+      "from_file": "lib/scripts/generate-component.ts",
+      "from_func": "createComponent",
+      "to_file": "lib/scripts/utils.ts",
+      "to_func": "createDir"
+    },
+    {
+      "from_file": "components/examples/example-5.tsx",
+      "from_func": "Example5",
+      "to_file": "components/examples/example-5.tsx",
+      "to_func": "easeOutCubic"
+    },
+    {
+      "from_file": "components/effects/split-text/index.tsx",
+      "from_func": "findDeepestElement",
+      "to_file": "components/effects/split-text/index.tsx",
+      "to_func": "findDeepestElement"
+    },
+    {
+      "from_file": "lib/scripts/generate-component.ts",
+      "from_func": "createComponent",
+      "to_file": "lib/scripts/generate-component.ts",
+      "to_func": "toPascalCase"
+    },
+    {
+      "from_file": "lib/hooks/use-transform.tsx",
+      "from_func": "useTransform",
+      "to_file": "lib/hooks/use-transform.tsx",
+      "to_func": "removeCallback"
+    },
+    {
+      "from_file": "lib/hooks/use-scroll-trigger.ts",
+      "from_func": "useScrollTrigger",
+      "to_file": "lib/hooks/use-scroll-trigger.ts",
+      "to_func": "update"
+    },
+    {
+      "from_file": "lib/utils/animation.ts",
+      "from_func": "fromTo",
+      "to_file": "lib/utils/animation.ts",
+      "to_func": "fromPreValue"
+    },
+    {
+      "from_file": "lib/webgl/hooks/use-webgl-rect.ts",
+      "from_func": "useWebGLRect",
+      "to_file": "lib/webgl/hooks/use-webgl-rect.ts",
+      "to_func": "getTransform"
+    },
+    {
+      "from_file": "lib/scripts/utils.ts",
+      "from_func": "removeFile",
+      "to_file": "lib/scripts/utils.ts",
+      "to_func": "resolvePath"
+    },
+    {
+      "from_file": "lib/hooks/use-transform.tsx",
+      "from_func": "useTransform",
+      "to_file": "lib/hooks/use-transform.tsx",
+      "to_func": "addCallback"
+    },
+    {
+      "from_file": "lib/scripts/utils.ts",
+      "from_func": "removeDir",
+      "to_file": "lib/scripts/utils.ts",
+      "to_func": "resolvePath"
+    },
+    {
+      "from_file": "components/examples/example-5.tsx",
+      "from_func": "animate",
+      "to_file": "components/examples/example-5.tsx",
+      "to_func": "easeOutCubic"
+    },
+    {
+      "from_file": "lib/styles/scripts/generate-root.ts",
+      "from_func": "generateRoot",
+      "to_file": "lib/styles/scripts/utils.ts",
+      "to_func": "scalingCalc"
+    },
+    {
+      "from_file": "lib/dev/theatre/hooks/use-theatre.ts",
+      "from_func": "useTheatre",
+      "to_file": "lib/dev/theatre/hooks/use-studio.ts",
+      "to_func": "useStudio"
+    },
+    {
+      "from_file": "components/effects/animated-gradient/webgl.tsx",
+      "from_func": "WebGLAnimatedGradient",
+      "to_file": "lib/webgl/hooks/use-webgl-rect.ts",
+      "to_func": "useWebGLRect"
+    },
+    {
+      "from_file": "components/effects/animated-gradient/webgl.tsx",
+      "from_func": "WebGLAnimatedGradient",
+      "to_file": "components/effects/animated-gradient/webgl.tsx",
+      "to_func": "useGradient"
+    },
+    {
+      "from_file": "components/ui/form/hook.ts",
+      "from_func": "useForm",
+      "to_file": "components/ui/form/hook.ts",
+      "to_func": "validate"
+    },
+    {
+      "from_file": "lib/webgl/utils/fluid/fluid-sim.ts",
+      "from_func": "Fluid.constructor",
+      "to_file": "lib/webgl/utils/fluid/fluid-sim.ts",
+      "to_func": "getFullscreenTriangle"
+    },
+    {
+      "from_file": "components/ui/real-viewport/index.tsx",
+      "from_func": "createOnWindowResize",
+      "to_file": "components/ui/real-viewport/index.tsx",
+      "to_func": "getScrollbarWidth"
+    },
+    {
+      "from_file": "lib/hooks/use-scroll-trigger.ts",
+      "from_func": "useScrollTrigger",
+      "to_file": "lib/hooks/use-scroll-trigger.ts",
+      "to_func": "getTransform"
+    },
+    {
+      "from_file": "lib/utils/performance.ts",
+      "from_func": "reportWebVitals",
+      "to_file": "lib/utils/performance.ts",
+      "to_func": "getFID"
+    },
+    {
+      "from_file": "lib/dev/theatre/index.tsx",
+      "from_func": "SheetProvider",
+      "to_file": "lib/dev/theatre/index.tsx",
+      "to_func": "useSheet"
+    },
+    {
+      "from_file": "lib/scripts/utils.ts",
+      "from_func": "createDir",
+      "to_file": "lib/scripts/utils.ts",
+      "to_func": "resolvePath"
+    },
+    {
+      "from_file": "lib/hooks/use-scroll-trigger.ts",
+      "from_func": "useScrollTrigger",
+      "to_file": "lib/hooks/use-scroll-trigger.ts",
+      "to_func": "handleLeave"
+    },
+    {
+      "from_file": "lib/webgl/components/postprocessing/index.ts",
+      "from_func": "PostProcessing",
+      "to_file": "lib/webgl/components/postprocessing/index.ts",
+      "to_func": "setDpr"
+    },
+    {
+      "from_file": "lib/webgl/components/preload/index.ts",
+      "from_func": "Preload",
+      "to_file": "lib/webgl/components/preload/index.ts",
+      "to_func": "load"
+    },
+    {
+      "from_file": "lib/styles/scripts/generate-root.ts",
+      "from_func": "generateRoot",
+      "to_file": "lib/styles/scripts/utils.ts",
+      "to_func": "formatObject"
+    }
+  ],
+  "languages": [
+    "typescript"
+  ],
+  "timestamp": 1769187925.155288
+}

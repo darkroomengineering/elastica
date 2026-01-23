@@ -1,57 +1,29 @@
 declare module '@elastica' {
   import type { HTMLAttributes, ReactNode, RefAttributes } from 'react'
 
-  export interface ReactElasticaRef {
-    play: () => void
-    pause: () => void
-  }
+  // =============================================================================
+  // Core Types
+  // =============================================================================
 
   export type Vector2D = [number, number]
 
+  export interface Container {
+    width: number
+    height: number
+  }
+
   export interface ElementData {
-    element: HTMLElement
-    rect: DOMRect | null
-  }
-
-  export interface UpdateParams {
-    boxes: ElementData[]
-    positions: Vector2D[]
-    velocities: Vector2D[]
-    externalForces: Vector2D[]
-    dimensions: Vector2D[]
-    angles: number[]
-    angularVelocities: number[]
-    masses: number[]
-    momentsOfInertia: number[]
-    restitutions: number[]
-    deltaTime: number
-    bounced: number[]
-    hash: number[]
-    gridSize: number
-    useOBB: boolean
-    isStatic: boolean[]
-    setPosition: (
-      element: HTMLElement | null | undefined,
-      pos: { x: number; y: number; angle: number },
-      index: number
-    ) => void
-  }
-
-  export interface InitialConditionParams {
-    boxes: ElementData[]
-    positions: Vector2D[]
-    velocities: Vector2D[]
-    container: { width: number; height: number }
-    angles: number[]
-    angularVelocities: number[]
-    isStatic: boolean[]
+    element?: HTMLElement | null
+    rect: { width: number; height: number; left?: number; top?: number }
   }
 
   export interface ElasticaConfigOBB {
     gridSize?: number
     collisions?: boolean
-    borders?: 'rigid' | 'periodic'
+    borders?: 'rigid' | 'periodic' | false
     useOBB?: boolean
+    defaultMass?: number
+    defaultRestitution?: number
     containerOffsets?: {
       top?: number
       bottom?: number
@@ -60,14 +32,159 @@ declare module '@elastica' {
     }
   }
 
-  export interface ReactElasticaProps {
+  // =============================================================================
+  // Callback Parameter Types
+  // =============================================================================
+
+  export interface InitialConditionParams {
+    boxes: ElementData[]
+    positions: Vector2D[]
+    velocities: Vector2D[]
+    container: Container
+    useOBB: boolean
+    angles: number[]
+    angularVelocities: number[]
+    masses: number[]
+    momentsOfInertia: number[]
+    restitutions: number[]
+    isStatic: boolean[]
+    displayScales: number[]
+  }
+
+  export interface UpdateParams extends InitialConditionParams {
+    externalForces: Vector2D[]
+    deltaTime: number
+    hash: number[]
+    gridSize: number
+    bounced: number[]
+  }
+
+  // =============================================================================
+  // DomElastica (formerly ReactElastica)
+  // =============================================================================
+
+  export interface DomElasticaRef {
+    play: () => void
+    pause: () => void
+  }
+
+  export interface DomElasticaProps {
     children?: ReactNode
     className?: string
     config?: ElasticaConfigOBB
     initialCondition?: (params: InitialConditionParams) => void
     update?: (params: UpdateParams) => void
     showHashGrid?: boolean
+    ref?: React.Ref<DomElasticaRef>
   }
+
+  export function DomElastica(props: DomElasticaProps): JSX.Element
+
+  export type BoundaryBoxProps = HTMLAttributes<HTMLDivElement>
+
+  export function BoundaryBox(props: BoundaryBoxProps): JSX.Element
+
+  // =============================================================================
+  // CanvasElastica
+  // =============================================================================
+
+  export type CanvasShape = 'rect' | 'circle'
+
+  export interface CanvasElasticaProps {
+    children?: ReactNode
+    className?: string
+    style?: React.CSSProperties
+    config?: ElasticaConfigOBB
+    initialCondition?: (params: InitialConditionParams) => void
+    update?: (params: UpdateParams) => void
+    dpr?: number
+    showHashGrid?: boolean
+  }
+
+  export function CanvasElastica(props: CanvasElasticaProps): JSX.Element
+
+  export interface CanvasBoxProps {
+    width: number
+    height: number
+    shape?: CanvasShape
+    fill?: string
+    stroke?: string
+    strokeWidth?: number
+    mass?: number
+    restitution?: number
+    static?: boolean
+  }
+
+  export function CanvasBox(props: CanvasBoxProps): null
+
+  // =============================================================================
+  // Context and Hooks
+  // =============================================================================
+
+  interface Elastica {
+    gridSize: number
+    positions: Vector2D[]
+    velocities: Vector2D[]
+    externalForces: Vector2D[]
+    angles: number[]
+    angularVelocities: number[]
+    masses: number[]
+    restitutions: number[]
+    isStatic: boolean[]
+    bounced: number[]
+    initialCondition: (
+      elements: ElementData[],
+      rect: Container,
+      callback: (params: InitialConditionParams) => void
+    ) => void
+    update: (
+      elements: ElementData[],
+      callback: (params: UpdateParams) => void
+    ) => void
+    initializeElement: (element: HTMLElement | null | undefined) => void
+    setMass: (index: number, mass: number) => void
+    setRestitution: (index: number, restitution: number) => void
+  }
+
+  export interface ElasticaContextValue {
+    elastica: Elastica
+    container: Container | null
+    mode: 'dom' | 'canvas'
+  }
+
+  export interface DomElasticaContextValue extends ElasticaContextValue {
+    mode: 'dom'
+    addBox: (element: HTMLElement, data: ElementData) => void
+    removeBox: (element: HTMLElement) => void
+  }
+
+  export interface CanvasElasticaContextValue extends ElasticaContextValue {
+    mode: 'canvas'
+    registerParticle: (data: Omit<CanvasParticleData, 'index'>) => number
+    unregisterParticle: (index: number) => void
+    updateParticle: (index: number, data: Partial<CanvasParticleData>) => void
+  }
+
+  export interface CanvasParticleData {
+    index: number
+    width: number
+    height: number
+    shape: CanvasShape
+    fill: string
+    stroke?: string
+    strokeWidth?: number
+    mass?: number
+    restitution?: number
+    isStatic?: boolean
+  }
+
+  export function useElastica(): ElasticaContextValue
+  export function useDomElastica(): DomElasticaContextValue
+  export function useCanvasElastica(): CanvasElasticaContextValue
+
+  // =============================================================================
+  // Presets
+  // =============================================================================
 
   export const initalConditionsPresets: {
     random: (params: InitialConditionParams) => void
@@ -89,37 +206,25 @@ declare module '@elastica' {
     ) => void
   }
 
-  interface Elastica {
-    gridSize: number
-    externalForces: Vector2D[]
-    initialCondition: (
-      elements: ElementData[],
-      rect: DOMRect | null,
-      callback: (params: InitialConditionParams) => void
-    ) => void
-    update: (
-      elements: ElementData[],
-      callback: (params: UpdateParams) => void
-    ) => void
-  }
+  // =============================================================================
+  // Deprecated Aliases
+  // =============================================================================
 
-  export interface ElasticaContextValue {
-    addBox: (element: HTMLElement, data: ElementData) => void
-    removeBox: (element: HTMLElement) => void
-    elastica: Elastica
-  }
+  /** @deprecated Use DomElasticaRef instead */
+  export type ReactElasticaRef = DomElasticaRef
 
-  export function useElastica(): ElasticaContextValue
+  /** @deprecated Use DomElasticaProps instead */
+  export type ReactElasticaProps = DomElasticaProps
 
-  export type BoundaryBoxProps = HTMLAttributes<HTMLDivElement>
+  /** @deprecated Use DomElastica instead */
+  export const ReactElastica: typeof DomElastica
 
-  export function BoundaryBox(
-    props: BoundaryBoxProps
-  ): JSX.Element
+  /** @deprecated Use BoundaryBoxProps instead */
+  export type AxisAlignedBoundaryBoxProps = BoundaryBoxProps
 
-  const ReactElastica: React.ForwardRefExoticComponent<
-    ReactElasticaProps & RefAttributes<ReactElasticaRef>
-  >
+  /** @deprecated Use BoundaryBox instead */
+  export const AxisAlignedBoundaryBox: typeof BoundaryBox
 
-  export default ReactElastica
+  // Default export
+  export default DomElastica
 }

@@ -1,9 +1,10 @@
 'use client'
 
-import type { InitialConditionParams } from '@elastica'
-import ReactElastica, {
+import {
   BoundaryBox,
-  type ReactElasticaRef,
+  DomElastica,
+  type DomElasticaRef,
+  type InitialConditionParams,
   type UpdateParams,
 } from '@elastica'
 import {
@@ -84,7 +85,7 @@ function useTextPositions(
 }
 
 export function Example4(_props: Example4Props) {
-  const elasticaRef = useRef<ReactElasticaRef>(null)
+  const elasticaRef = useRef<DomElasticaRef>(null)
   const sectionRef = useRef<HTMLElement>(null)
   const textContainerRef = useRef<HTMLParagraphElement>(null)
   const isFlockingRef = useRef(false)
@@ -142,7 +143,7 @@ export function Example4(_props: Example4Props) {
           ])}
         </p>
       </div>
-      <ReactElastica
+      <DomElastica
         ref={elasticaRef}
         className='row-start-1 col-start-1 w-full h-full'
         config={params}
@@ -271,7 +272,7 @@ export function Example4(_props: Example4Props) {
             {name}
           </BoundaryBox>
         ))}
-      </ReactElastica>
+      </DomElastica>
     </section>
   )
 }

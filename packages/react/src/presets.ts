@@ -16,6 +16,8 @@ export type InitialConditionParams = {
   restitutions: number[]
   // Static elements
   isStatic: boolean[]
+  // Visual scale (does not affect collision bounds)
+  displayScales: number[]
 }
 
 export type UpdateParams = {
@@ -38,6 +40,8 @@ export type UpdateParams = {
   bounced: number[]
   // Static elements
   isStatic: boolean[]
+  // Visual scale (does not affect collision bounds)
+  displayScales: number[]
 }
 
 export type InitialConditionPreset = (params: InitialConditionParams) => void
@@ -62,8 +66,8 @@ function randominitialCondition({
       const element = boxes[index]
       if (element?.rect) {
         positions[index] = [
-          element.rect.left + element.rect.width / 2,
-          element.rect.top + element.rect.height / 2,
+          (element.rect.left ?? 0) + element.rect.width / 2,
+          (element.rect.top ?? 0) + element.rect.height / 2,
         ]
       }
       velocities[index] = [0, 0]
@@ -97,8 +101,8 @@ function randomOBBInitialCondition({
       const element = boxes[index]
       if (element?.rect) {
         positions[index] = [
-          element.rect.left + element.rect.width / 2,
-          element.rect.top + element.rect.height / 2,
+          (element.rect.left ?? 0) + element.rect.width / 2,
+          (element.rect.top ?? 0) + element.rect.height / 2,
         ]
       }
       velocities[index] = [0, 0]

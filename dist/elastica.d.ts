@@ -1,4 +1,4 @@
-import type { BorderType, CollisionRecord, Container, ContainerOffsets, ElasticaConfigOBB, ElementData, PolarCoordinates, Vector2D } from './types';
+import type { BorderType, CollisionRecord, Container, ContainerOffsets, ElasticaConfigOBB, ElementData, PolarCoordinates, ShapeType, Vector2D } from './types';
 export default class Elastica {
     /**
      * Static flag to ensure CSS is injected only once across all Elastica instances.
@@ -6,6 +6,7 @@ export default class Elastica {
      * which reduces per-frame string allocations compared to setting cssText directly.
      */
     private static stylesInjected;
+    private displayScaleWarningShown;
     calculatecCollisions: boolean;
     calculateBorders: BorderType;
     gridSize: number;
@@ -20,6 +21,7 @@ export default class Elastica {
     hash: number[];
     isStatic: boolean[];
     staticPositions: Vector2D[];
+    displayScales: number[];
     buckets: Map<number, number[]>;
     useOBB: boolean;
     angles: number[];
@@ -28,6 +30,7 @@ export default class Elastica {
     momentsOfInertia: number[];
     restitutions: number[];
     maxExtents: number[];
+    shapeTypes: ShapeType[];
     defaultMass: number;
     defaultRestitution: number;
     constructor({ gridSize, containerOffsets, collisions, borders, useOBB, defaultMass, defaultRestitution, }?: ElasticaConfigOBB);
@@ -56,8 +59,10 @@ export default class Elastica {
      * This marks the element with data-elastica attribute which:
      * - Applies the CSS transform rule using variables
      * - Sets will-change: transform once (not every frame)
+     *
+     * For canvas mode, this is a no-op when element is null/undefined.
      */
-    initializeElement(element: HTMLElement): void;
+    initializeElement(element: HTMLElement | null | undefined): void;
     /**
      * Updates element position using CSS custom properties.
      *
