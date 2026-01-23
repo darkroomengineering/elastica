@@ -10,7 +10,7 @@ const PARTICLE_COUNT = 200
 const initialParams = {
   repulsionRadius: 250,
   repulsionStrength: 0.13,
-  gravity: 0.0125,
+  gravity: 0.0035,
 }
 
 /**
@@ -76,7 +76,7 @@ export function Example6() {
       .addBinding(localParams, 'gravity', {
         label: 'Gravity',
         min: 0,
-        max: 0.002,
+        max: 0.005,
         step: 0.0001,
       })
       .on('change', (ev) => {
