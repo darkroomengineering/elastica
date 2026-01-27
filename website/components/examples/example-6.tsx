@@ -4,13 +4,13 @@ import { CanvasBox, CanvasElastica } from '@elastica'
 import { useEffect, useRef, useState } from 'react'
 import { Pane } from 'tweakpane'
 
-const PARTICLE_COUNT = 200
+const PARTICLE_COUNT = 250
 
 // Default cursor repulsion settings
 const initialParams = {
   repulsionRadius: 250,
-  repulsionStrength: 0.13,
-  gravity: 0.0035,
+  repulsionStrength: 0.025,
+  gravity: 0.005,
 }
 
 /**
@@ -83,6 +83,7 @@ export function Example6() {
         paramsRef.current.gravity = ev.value
       })
 
+
     pane
       .addBinding({ showHashGrid: false }, 'showHashGrid', { label: 'Show Hash Grid' })
       .on('change', (ev) => {
@@ -101,7 +102,11 @@ export function Example6() {
           borders: 'rigid',
           gridSize: 8,
           useOBB: true,
-          defaultRestitution: 0.8,
+          solver: {
+            slop: 0,
+            percent: 0.8,
+            fixedDeltaTime: 16,
+          }
         }}
         initialCondition={({ positions, velocities, container }) => {
           for (let i = 0; i < positions.length; i++) {
@@ -159,23 +164,13 @@ export function Example6() {
           }
         }}
       >
-        {/* {Array.from({ length: PARTICLE_COUNT }, (_, i) => (
-          <CanvasBox
-            key={`white-${i}`}
-            width={12 + Math.random() * 8}
-            height={12 + Math.random() * 8}
-            shape="rect"
-            fill="#ffffff"
-          />
-        ))} */}
         {Array.from({ length: PARTICLE_COUNT }, (_, i) => (
           <CanvasBox
             key={`blue-${i}`}
-            width={40 + Math.random() * 15}
-            height={40 + Math.random() * 15}
+            radius={20 + Math.random() * 7.5}
             shape="circle"
-            fill="#4444ff"
-            mass={5}
+            fill="#000"
+            mass={250}
           />
         ))}
       </CanvasElastica>

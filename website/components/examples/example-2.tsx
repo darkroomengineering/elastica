@@ -25,6 +25,11 @@ interface Example2Params {
   play: boolean
   influenceRadius: number
   forceStrength: number
+  solver: {
+    slop: number
+    percent: number
+    fixedDeltaTime: number
+  }
 }
 
 const initialParams: Example2Params = {
@@ -40,6 +45,11 @@ const initialParams: Example2Params = {
   play: true,
   influenceRadius: 200,
   forceStrength: 2.0,
+  solver:{
+    slop: 0.5,
+    percent: 0.8,
+    fixedDeltaTime: 16.67,
+  }
 }
 
 export function Example2({ data }: Example2Props) {

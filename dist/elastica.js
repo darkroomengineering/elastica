@@ -1041,29 +1041,25 @@
             return;
         const { normal, penetration } = contact;
         const restitution = Math.min(restA, restB);
-        // Step 2: Calculate repulsion strength based on overlap
         const overlapForce = Math.max(penetration, 1);
         const repulsionStrength = 1 / overlapForce;
+        const { slop, percent } = state;
         // Handle static-dynamic collision
         if (isStaticA || isStaticB) {
             if (isStaticA) {
-                // A is static, B is dynamic - treat A as having infinite mass
+                // A is static, B is dynamic
                 const initialKE = getKineticEnergy(state, indexB);
-                // Apply double repulsion force to dynamic object
                 const newVelB = [
                     velB[0] + normal[0] * repulsionStrength * 2,
                     velB[1] + normal[1] * repulsionStrength * 2,
                 ];
-                // Calculate torque on dynamic object
                 const contactPoint = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2];
                 const rBx = contactPoint[0] - posB[0];
                 const rBy = contactPoint[1] - posB[1];
                 const torqueB = rBx * (normal[1] * repulsionStrength * 2) - rBy * (normal[0] * repulsionStrength * 2);
                 const newAngVelB = angVelB + torqueB / inertiaB;
-                // Apply new velocities temporarily
                 state.velocities[indexB] = newVelB;
                 state.angularVelocities[indexB] = newAngVelB;
-                // Scale to conserve energy with restitution
                 const finalKE = getKineticEnergy(state, indexB);
                 if (finalKE > 0) {
                     const targetKE = initialKE * restitution;
@@ -1071,9 +1067,7 @@
                     state.velocities[indexB] = [newVelB[0] * scale, newVelB[1] * scale];
                     state.angularVelocities[indexB] = newAngVelB * scale;
                 }
-                // Position correction - only move dynamic object
-                const slop = 0.5;
-                const percent = 0.96;
+                // Position correction
                 if (penetration > slop) {
                     const correction = (penetration - slop) * percent;
                     state.positions[indexB] = [
@@ -1083,23 +1077,19 @@
                 }
             }
             else {
-                // B is static, A is dynamic - treat B as having infinite mass
+                // B is static, A is dynamic
                 const initialKE = getKineticEnergy(state, indexA);
-                // Apply double repulsion force to dynamic object
                 const newVelA = [
                     velA[0] - normal[0] * repulsionStrength * 2,
                     velA[1] - normal[1] * repulsionStrength * 2,
                 ];
-                // Calculate torque on dynamic object
                 const contactPoint = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2];
                 const rAx = contactPoint[0] - posA[0];
                 const rAy = contactPoint[1] - posA[1];
                 const torqueA = rAx * (-normal[1] * repulsionStrength * 2) - rAy * (-normal[0] * repulsionStrength * 2);
                 const newAngVelA = angVelA + torqueA / inertiaA;
-                // Apply new velocities temporarily
                 state.velocities[indexA] = newVelA;
                 state.angularVelocities[indexA] = newAngVelA;
-                // Scale to conserve energy with restitution
                 const finalKE = getKineticEnergy(state, indexA);
                 if (finalKE > 0) {
                     const targetKE = initialKE * restitution;
@@ -1107,9 +1097,7 @@
                     state.velocities[indexA] = [newVelA[0] * scale, newVelA[1] * scale];
                     state.angularVelocities[indexA] = newAngVelA * scale;
                 }
-                // Position correction - only move dynamic object
-                const slop = 0.5;
-                const percent = 0.96;
+                // Position correction
                 if (penetration > slop) {
                     const correction = (penetration - slop) * percent;
                     state.positions[indexA] = [
@@ -1120,10 +1108,8 @@
             }
             return;
         }
-        // Both are dynamic - original behavior
-        // Step 1: Calculate initial total kinetic energy
+        // Both are dynamic
         const initialKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB);
-        // Step 3: Apply velocity changes along collision normal
         const newVelA = [
             velA[0] - normal[0] * repulsionStrength,
             velA[1] - normal[1] * repulsionStrength,
@@ -1132,7 +1118,6 @@
             velB[0] + normal[0] * repulsionStrength,
             velB[1] + normal[1] * repulsionStrength,
         ];
-        // Step 4: Apply angular velocity changes from torque
         const contactPoint = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2];
         const rAx = contactPoint[0] - posA[0];
         const rAy = contactPoint[1] - posA[1];
@@ -1142,12 +1127,10 @@
         const torqueB = rBx * (normal[1] * repulsionStrength) - rBy * (normal[0] * repulsionStrength);
         const newAngVelA = angVelA + torqueA / inertiaA;
         const newAngVelB = angVelB + torqueB / inertiaB;
-        // Step 5: Apply new velocities temporarily
         state.velocities[indexA] = newVelA;
         state.velocities[indexB] = newVelB;
         state.angularVelocities[indexA] = newAngVelA;
         state.angularVelocities[indexB] = newAngVelB;
-        // Step 6: Calculate final kinetic energy and scale to conserve
         const finalKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB);
         if (finalKE > 0) {
             const targetKE = initialKE * restitution;
@@ -1157,9 +1140,7 @@
             state.angularVelocities[indexA] = newAngVelA * scale;
             state.angularVelocities[indexB] = newAngVelB * scale;
         }
-        // Step 7: Position correction
-        const slop = 0.5;
-        const percent = 0.96;
+        // Position correction
         if (penetration > slop) {
             const correction = (penetration - slop) * percent;
             const totalMass = massA + massB;
@@ -1288,7 +1269,7 @@
     }
 
     class Elastica {
-        constructor({ gridSize = 4, containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 }, collisions = true, borders = 'rigid', useOBB = true, defaultMass = 1, defaultRestitution = 0.8, } = {}) {
+        constructor({ gridSize = 4, containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 }, collisions = true, borders = 'rigid', useOBB = true, defaultMass = 1, defaultRestitution = 0.8, solver, } = {}) {
             this.displayScaleWarningShown = false;
             this.calculatecCollisions = collisions;
             this.calculateBorders = borders;
@@ -1323,6 +1304,10 @@
             this.shapeTypes = [];
             this.defaultMass = defaultMass;
             this.defaultRestitution = defaultRestitution;
+            // Solver config
+            this.solverSlop = solver?.slop ?? 0.5;
+            this.solverPercent = solver?.percent ?? 0.8;
+            this.fixedDeltaTime = Math.max(1, solver?.fixedDeltaTime ?? 16.67);
         }
         initialCondition(elements, rect, callback = () => { }) {
             this.container = rect;
@@ -1585,6 +1570,8 @@
                 hash: this.hash,
                 gridSize: this.gridSize,
                 buckets: this.buckets,
+                slop: this.solverSlop,
+                percent: this.solverPercent,
             };
         }
         // Main update loop

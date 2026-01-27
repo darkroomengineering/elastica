@@ -26,6 +26,7 @@ export interface CanvasParticleData {
     index: number;
     width: number;
     height: number;
+    radius?: number;
     shape: CanvasShape;
     fill: string;
     stroke?: string;

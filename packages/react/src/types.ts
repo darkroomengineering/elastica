@@ -39,6 +39,7 @@ export interface CanvasParticleData {
   index: number
   width: number
   height: number
+  radius?: number  // For circles - takes precedence over width/height
   shape: CanvasShape
   fill: string
   stroke?: string

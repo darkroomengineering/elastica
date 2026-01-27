@@ -4,6 +4,7 @@ import Script from 'next/script'
 import { type PropsWithChildren } from 'react'
 import { ReactTempus } from 'tempus/react'
 import { RealViewport } from '~/components/ui/real-viewport'
+import { OptionalFeatures } from '~/lib/features'
 import { TransformProvider } from '~/hooks/use-transform'
 import AppData from '~/package.json'
 import { fontsVariable, themes } from '~/styles'
@@ -84,6 +85,7 @@ export default function Layout({ children }: PropsWithChildren) {
           <TransformProvider>{children}</TransformProvider>
         </RealViewport>
         <ReactTempus patch />
+        <OptionalFeatures />
       </body>
     </html>
   )

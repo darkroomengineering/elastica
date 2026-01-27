@@ -58,8 +58,18 @@ export type CollisionResult = {
   contact?: ContactPoint
 }
 
+export type SolverConfig = {
+  /** Allowed penetration before correction (default: 0.5) */
+  slop?: number
+  /** Position correction strength 0-1 (default: 0.8) */
+  percent?: number
+  /** Fixed timestep in ms (default: 16.67) */
+  fixedDeltaTime?: number
+}
+
 export type ElasticaConfigOBB = ElasticaConfig & {
   useOBB?: boolean
   defaultMass?: number
   defaultRestitution?: number
+  solver?: SolverConfig
 }

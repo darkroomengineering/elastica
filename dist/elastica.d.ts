@@ -33,7 +33,10 @@ export default class Elastica {
     shapeTypes: ShapeType[];
     defaultMass: number;
     defaultRestitution: number;
-    constructor({ gridSize, containerOffsets, collisions, borders, useOBB, defaultMass, defaultRestitution, }?: ElasticaConfigOBB);
+    solverSlop: number;
+    solverPercent: number;
+    fixedDeltaTime: number;
+    constructor({ gridSize, containerOffsets, collisions, borders, useOBB, defaultMass, defaultRestitution, solver, }?: ElasticaConfigOBB);
     initialCondition(elements: (ElementData | null | undefined)[], rect: Container, callback?: (elastica: Elastica) => void): void;
     private computeCellId;
     updateSpatialHash(elementCount: number): void;

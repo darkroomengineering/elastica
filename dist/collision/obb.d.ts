@@ -17,6 +17,8 @@ export type OBBState = {
     hash: number[];
     gridSize: number;
     buckets: Map<number, number[]>;
+    slop: number;
+    percent: number;
 };
 /**
  * Get the four corners of a rotated rectangle (OBB)

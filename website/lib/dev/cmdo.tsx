@@ -9,8 +9,11 @@ export function Cmdo() {
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
+    console.log('[Orchestra] Cmdo mounted, listening for cmd+o')
+
     const down = (e: KeyboardEvent) => {
       if (e.key === 'o' && (e.metaKey || e.ctrlKey)) {
+        console.log('[Orchestra] cmd+o pressed')
         e.preventDefault()
         setOpen((open) => !open)
       }

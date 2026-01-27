@@ -82,9 +82,10 @@ export function renderBatched(
       if (particle.shape === 'rect') {
         ctx.rect(-halfW, -halfH, particle.width, particle.height)
       } else if (particle.shape === 'circle') {
-        // For circles, use width as diameter
-        ctx.moveTo(halfW, 0)
-        ctx.arc(0, 0, halfW, 0, Math.PI * 2)
+        // Use radius prop if provided, otherwise derive from dimensions
+        const r = particle.radius ?? Math.min(particle.width, particle.height) / 2
+        ctx.moveTo(r, 0)
+        ctx.arc(0, 0, r, 0, Math.PI * 2)
       }
 
       ctx.restore()

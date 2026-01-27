@@ -10,7 +10,7 @@ type OrchestraState = Record<string, boolean>
 const storageKey = 'orchestra'
 const Orchestra = createStore<OrchestraState>()(
   persist(
-    subscribeWithSelector(() => ({}) as OrchestraState),
+    subscribeWithSelector(() => ({ stats: true }) as OrchestraState),
     {
       name: storageKey,
       storage: createJSONStorage(() => localStorage),

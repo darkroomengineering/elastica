@@ -1,9 +1,11 @@
 import type { CanvasShape } from '../types';
 export interface CanvasBoxProps {
-    /** Width in pixels */
-    width: number;
-    /** Height in pixels */
-    height: number;
+    /** Width in pixels (required for 'rect', ignored for 'circle' if radius is set) */
+    width?: number;
+    /** Height in pixels (required for 'rect', ignored for 'circle' if radius is set) */
+    height?: number;
+    /** Radius in pixels (for 'circle' shape only) */
+    radius?: number;
     /** Shape to render (default: 'rect') */
     shape?: CanvasShape;
     /** Fill color (default: '#ffffff') */
@@ -31,4 +33,4 @@ export interface CanvasBoxProps {
  * </CanvasElastica>
  * ```
  */
-export declare function CanvasBox({ width, height, shape, fill, stroke, strokeWidth, mass, restitution, static: isStatic, }: CanvasBoxProps): null;
+export declare function CanvasBox({ width, height, radius, shape, fill, stroke, strokeWidth, mass, restitution, static: isStatic, }: CanvasBoxProps): null;

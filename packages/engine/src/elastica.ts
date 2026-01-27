@@ -11,6 +11,7 @@ import type {
   ElementData,
   PolarCoordinates,
   ShapeType,
+  SolverConfig,
   Vector2D,
 } from './types'
 
@@ -57,6 +58,9 @@ export default class Elastica {
   shapeTypes: ShapeType[] // Shape type for each element ('rectangle' or 'circle')
   defaultMass: number
   defaultRestitution: number
+  solverSlop: number
+  solverPercent: number
+  fixedDeltaTime: number
 
   constructor({
     gridSize = 4,
@@ -66,6 +70,7 @@ export default class Elastica {
     useOBB = true,
     defaultMass = 1,
     defaultRestitution = 0.8,
+    solver,
   }: ElasticaConfigOBB = {}) {
     this.calculatecCollisions = collisions
     this.calculateBorders = borders
@@ -102,6 +107,11 @@ export default class Elastica {
     this.shapeTypes = []
     this.defaultMass = defaultMass
     this.defaultRestitution = defaultRestitution
+
+    // Solver config
+    this.solverSlop = solver?.slop ?? 0.5
+    this.solverPercent = solver?.percent ?? 0.8
+    this.fixedDeltaTime = Math.max(1, solver?.fixedDeltaTime ?? 16.67)
   }
 
   initialCondition(
@@ -410,6 +420,8 @@ export default class Elastica {
       hash: this.hash,
       gridSize: this.gridSize,
       buckets: this.buckets,
+      slop: this.solverSlop,
+      percent: this.solverPercent,
     }
   }
 

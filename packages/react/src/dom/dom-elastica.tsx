@@ -45,6 +45,11 @@ const DEFAULT_CONFIG: ElasticaConfigOBB = {
     left: 0,
     right: 0,
   },
+  solver: {
+    slop: 0.5,
+    percent: 0.8,
+    fixedDeltaTime: 16.67,
+  },
 }
 
 /**
@@ -100,6 +105,11 @@ export function DomElastica({
         },
         defaultMass: config?.defaultMass,
         defaultRestitution: config?.defaultRestitution,
+        solver: {
+          slop: config?.solver?.slop ?? DEFAULT_CONFIG.solver?.slop,
+          percent: config?.solver?.percent ?? DEFAULT_CONFIG.solver?.percent,
+          fixedDeltaTime: config?.solver?.fixedDeltaTime ?? DEFAULT_CONFIG.solver?.fixedDeltaTime,
+        },
       }),
       [
         config?.gridSize,
@@ -112,6 +122,9 @@ export function DomElastica({
         config?.containerOffsets?.right,
         config?.defaultMass,
         config?.defaultRestitution,
+        config?.solver?.slop,
+        config?.solver?.percent,
+        config?.solver?.fixedDeltaTime,
       ]
     )
 
@@ -170,14 +183,13 @@ export function DomElastica({
       }
 
       const boxes = [...boxesRefs.current.values()]
-      const deltaTime = Math.min(time - timeRef.current, 100)
       timeRef.current = time
 
       elastica.update(boxes, (instance) => {
         updateRef.current({
           boxes,
           ...instance,
-          deltaTime,
+          deltaTime: instance.fixedDeltaTime,
           hash: instance.hash,
           gridSize: instance.gridSize,
           bounced: instance.bounced,

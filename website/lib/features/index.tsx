@@ -12,7 +12,6 @@ import { useEffect, useMemo, useState } from 'react'
 
 // Feature detection
 const hasWebGL = Boolean(process.env.NEXT_PUBLIC_ENABLE_WEBGL !== 'false')
-const isDevelopment = process.env.NODE_ENV === 'development'
 
 // Lazy imports to avoid loading unused features
 const LazyGlobalCanvas = dynamic(
@@ -59,10 +58,8 @@ export function OptionalFeatures() {
       components.push(<LazyGlobalCanvas key="webgl" />)
     }
 
-    // Development tools - only in development
-    if (isDevelopment) {
-      components.push(<OrchestraTools key="orchestra" />)
-    }
+    // Development tools
+    components.push(<OrchestraTools key="orchestra" />)
 
     return components
   }, [isClient])

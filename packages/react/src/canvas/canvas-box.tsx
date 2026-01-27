@@ -5,10 +5,12 @@ import { useCanvasElastica } from '../context'
 import type { CanvasShape } from '../types'
 
 export interface CanvasBoxProps {
-  /** Width in pixels */
-  width: number
-  /** Height in pixels */
-  height: number
+  /** Width in pixels (required for 'rect', ignored for 'circle' if radius is set) */
+  width?: number
+  /** Height in pixels (required for 'rect', ignored for 'circle' if radius is set) */
+  height?: number
+  /** Radius in pixels (for 'circle' shape only) */
+  radius?: number
   /** Shape to render (default: 'rect') */
   shape?: CanvasShape
   /** Fill color (default: '#ffffff') */
@@ -40,6 +42,7 @@ export interface CanvasBoxProps {
 export function CanvasBox({
   width,
   height,
+  radius,
   shape = 'rect',
   fill = '#ffffff',
   stroke,
@@ -52,13 +55,18 @@ export function CanvasBox({
   const indexRef = useRef<number>(-1)
   const registeredRef = useRef(false)
 
+  // For circles with radius, derive width/height from radius
+  const effectiveWidth = shape === 'circle' && radius !== undefined ? radius * 2 : (width ?? 0)
+  const effectiveHeight = shape === 'circle' && radius !== undefined ? radius * 2 : (height ?? 0)
+
   // Register particle on mount
   useEffect(() => {
     if (registeredRef.current) return
 
     indexRef.current = registerParticle({
-      width,
-      height,
+      width: effectiveWidth,
+      height: effectiveHeight,
+      radius,
       shape,
       fill,
       stroke,
@@ -81,8 +89,9 @@ export function CanvasBox({
   useEffect(() => {
     if (indexRef.current >= 0 && registeredRef.current) {
       updateParticle(indexRef.current, {
-        width,
-        height,
+        width: effectiveWidth,
+        height: effectiveHeight,
+        radius,
         shape,
         fill,
         stroke,
@@ -92,7 +101,7 @@ export function CanvasBox({
         isStatic,
       })
     }
-  }, [width, height, shape, fill, stroke, strokeWidth, mass, restitution, isStatic, updateParticle])
+  }, [effectiveWidth, effectiveHeight, radius, shape, fill, stroke, strokeWidth, mass, restitution, isStatic, updateParticle])
 
   // Virtual component - renders nothing
   return null

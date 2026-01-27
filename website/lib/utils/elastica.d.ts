@@ -17,6 +17,15 @@ declare module '@elastica' {
     rect: { width: number; height: number; left?: number; top?: number }
   }
 
+  export interface SolverConfig {
+    /** Allowed penetration before correction (default: 0.5) */
+    slop?: number
+    /** Position correction strength 0-1 (default: 0.8) */
+    percent?: number
+    /** Fixed timestep in ms (default: 16.67) */
+    fixedDeltaTime?: number
+  }
+
   export interface ElasticaConfigOBB {
     gridSize?: number
     collisions?: boolean
@@ -24,6 +33,7 @@ declare module '@elastica' {
     useOBB?: boolean
     defaultMass?: number
     defaultRestitution?: number
+    solver?: SolverConfig
     containerOffsets?: {
       top?: number
       bottom?: number
@@ -104,8 +114,12 @@ declare module '@elastica' {
   export function CanvasElastica(props: CanvasElasticaProps): JSX.Element
 
   export interface CanvasBoxProps {
-    width: number
-    height: number
+    /** Width in pixels (required for 'rect', ignored for 'circle' if radius is set) */
+    width?: number
+    /** Height in pixels (required for 'rect', ignored for 'circle' if radius is set) */
+    height?: number
+    /** Radius in pixels (for 'circle' shape only) */
+    radius?: number
     shape?: CanvasShape
     fill?: string
     stroke?: string
@@ -169,6 +183,7 @@ declare module '@elastica' {
     index: number
     width: number
     height: number
+    radius?: number
     shape: CanvasShape
     fill: string
     stroke?: string

@@ -95,6 +95,9 @@ export function CanvasElastica({
       config?.containerOffsets?.bottom,
       config?.containerOffsets?.left,
       config?.containerOffsets?.right,
+      config?.solver?.slop,
+      config?.solver?.percent,
+      config?.solver?.fixedDeltaTime,
     ]
   )
 
@@ -133,6 +136,8 @@ export function CanvasElastica({
     return particles.map((p) => ({
       element: undefined, // Canvas mode - no DOM element
       rect: { width: p.width, height: p.height },
+      // Map CanvasShape ('rect'|'circle') to ShapeType ('rectangle'|'circle')
+      shape: p.shape === 'rect' ? 'rectangle' : p.shape,
     }))
   }, [])
 
@@ -201,9 +206,6 @@ export function CanvasElastica({
       initializedRef.current = true
     }
 
-    // Cap delta time to prevent physics explosion
-    const cappedDeltaTime = Math.min(deltaTime, 100)
-
     // Run physics update
     elastica.update(elements, () => {
       updateRef.current?.({
@@ -220,7 +222,7 @@ export function CanvasElastica({
         restitutions: elastica.restitutions,
         isStatic: elastica.isStatic,
         displayScales: elastica.displayScales,
-        deltaTime: cappedDeltaTime,
+        deltaTime: elastica.fixedDeltaTime,
         hash: elastica.hash,
         gridSize: elastica.gridSize,
         bounced: elastica.bounced,
