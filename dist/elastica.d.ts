@@ -36,6 +36,7 @@ export default class Elastica {
     solverSlop: number;
     solverPercent: number;
     fixedDeltaTime: number;
+    substeps: number;
     constructor({ gridSize, containerOffsets, collisions, borders, useOBB, defaultMass, defaultRestitution, solver, }?: ElasticaConfigOBB);
     initialCondition(elements: (ElementData | null | undefined)[], rect: Container, callback?: (elastica: Elastica) => void): void;
     private computeCellId;

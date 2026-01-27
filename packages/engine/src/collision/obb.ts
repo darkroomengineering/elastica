@@ -31,6 +31,7 @@ export type OBBState = {
   // Solver parameters
   slop: number
   percent: number
+  deltaTime: number
 }
 
 /**
@@ -189,6 +190,7 @@ export function satCollisionTest(
     ? [-savedAxisX, -savedAxisY]
     : [savedAxisX, savedAxisY]
 
+  // Contact point at midpoint between centers
   const contactPoint: Vector2D = [
     (posA[0] + posB[0]) / 2,
     (posA[1] + posB[1]) / 2,
@@ -310,7 +312,8 @@ export function resolveOBBCollision(
       const rBx = contactPoint[0] - posB[0]
       const rBy = contactPoint[1] - posB[1]
       const torqueB = rBx * (normal[1] * repulsionStrength * 2) - rBy * (normal[0] * repulsionStrength * 2)
-      const newAngVelB = angVelB + torqueB / inertiaB
+      const dt = state.deltaTime
+      const newAngVelB = angVelB + (torqueB / inertiaB) / dt
 
       state.velocities[indexB] = newVelB
       state.angularVelocities[indexB] = newAngVelB
@@ -344,7 +347,8 @@ export function resolveOBBCollision(
       const rAx = contactPoint[0] - posA[0]
       const rAy = contactPoint[1] - posA[1]
       const torqueA = rAx * (-normal[1] * repulsionStrength * 2) - rAy * (-normal[0] * repulsionStrength * 2)
-      const newAngVelA = angVelA + torqueA / inertiaA
+      const dt = state.deltaTime
+      const newAngVelA = angVelA + (torqueA / inertiaA) / dt
 
       state.velocities[indexA] = newVelA
       state.angularVelocities[indexA] = newAngVelA
@@ -391,8 +395,10 @@ export function resolveOBBCollision(
   const torqueA = rAx * (-normal[1] * repulsionStrength) - rAy * (-normal[0] * repulsionStrength)
   const torqueB = rBx * (normal[1] * repulsionStrength) - rBy * (normal[0] * repulsionStrength)
 
-  const newAngVelA = angVelA + torqueA / inertiaA
-  const newAngVelB = angVelB + torqueB / inertiaB
+  // Divide by dt to convert impulse units: integration multiplies by dt, so this cancels out
+  const dt = state.deltaTime
+  const newAngVelA = angVelA + (torqueA / inertiaA) / dt
+  const newAngVelB = angVelB + (torqueB / inertiaB) / dt
 
   state.velocities[indexA] = newVelA
   state.velocities[indexB] = newVelB
@@ -445,18 +451,20 @@ function shapeCollisionTest(
   }
 
   // Circle vs Rectangle (OBB)
+  // circleVsOBB returns normal pointing from rect toward circle
+  // Here: A=circle, B=rect, so normal points B→A, need to flip to A→B
   if (shapeA === 'circle' && shapeB === 'rectangle') {
-    return circleVsOBB(state, indexA, indexB)
-  }
-
-  // Rectangle vs Circle - swap and flip normal
-  if (shapeA === 'rectangle' && shapeB === 'circle') {
-    const result = circleVsOBB(state, indexB, indexA)
+    const result = circleVsOBB(state, indexA, indexB)
     if (result.collided && result.contact) {
-      // Flip normal to point from A to B
       result.contact.normal = [-result.contact.normal[0], -result.contact.normal[1]]
     }
     return result
+  }
+
+  // Rectangle vs Circle
+  // Here: A=rect, B=circle, so circleVsOBB(B, A) gives normal from A→B, which is correct
+  if (shapeA === 'rectangle' && shapeB === 'circle') {
+    return circleVsOBB(state, indexB, indexA)
   }
 
   // Rectangle vs Rectangle - use SAT
@@ -561,12 +569,13 @@ export function detectAndResolveOBB(
  * Integrate angular motion (update angles from angular velocities)
  */
 export function integrateAngularMotion(state: OBBState): void {
+  const dt = state.deltaTime
   for (let i = 0; i < state.angles.length; i++) {
     const angle = state.angles[i]
     const angularVelocity = state.angularVelocities[i]
 
     if (angle !== undefined && angularVelocity !== undefined) {
-      state.angles[i] = angle + angularVelocity
+      state.angles[i] = angle + angularVelocity * dt
     }
   }
 }

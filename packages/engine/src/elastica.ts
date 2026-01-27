@@ -61,6 +61,7 @@ export default class Elastica {
   solverSlop: number
   solverPercent: number
   fixedDeltaTime: number
+  substeps: number
 
   constructor({
     gridSize = 4,
@@ -112,6 +113,7 @@ export default class Elastica {
     this.solverSlop = solver?.slop ?? 0.5
     this.solverPercent = solver?.percent ?? 0.8
     this.fixedDeltaTime = Math.max(1, solver?.fixedDeltaTime ?? 16.67)
+    this.substeps = Math.max(1, Math.floor(solver?.substeps ?? 1))
   }
 
   initialCondition(
@@ -404,7 +406,7 @@ export default class Elastica {
     }
   }
 
-  private getOBBState(): OBBState {
+  private getOBBState(deltaTime: number): OBBState {
     return {
       positions: this.positions,
       velocities: this.velocities,
@@ -422,76 +424,91 @@ export default class Elastica {
       buckets: this.buckets,
       slop: this.solverSlop,
       percent: this.solverPercent,
+      deltaTime,
     }
   }
 
-  // Main update loop
+  // Main update loop with substepping support
   update(
     elements: (ElementData | null | undefined)[],
     callback: (elastica: Elastica) => void
   ): void {
     const elementCount = elements.length
 
-    // User callback runs first (allows modification of velocities/positions)
-    callback(this)
+    // Cache original deltaTime and compute substep deltaTime
+    const originalDeltaTime = this.fixedDeltaTime
+    const substepDeltaTime = originalDeltaTime / this.substeps
 
-    // Reset static elements after user callback (single pass, minimal overhead)
-    for (let index = 0; index < elementCount; index++) {
-      if (this.isStatic[index]) {
-        const cachedPos = this.staticPositions[index]
-        if (cachedPos) {
-          // Restore position from cache (in case user modified it)
-          this.positions[index] = cachedPos
+    // Substep loop: smaller integration steps with collision checks between each
+    for (let step = 0; step < this.substeps; step++) {
+      // Set scaled deltaTime for this substep (user callback reads this)
+      this.fixedDeltaTime = substepDeltaTime
+
+      // User callback (applies forces, integrates positions with scaled dt)
+      callback(this)
+
+      // Reset static elements after user callback
+      for (let index = 0; index < elementCount; index++) {
+        if (this.isStatic[index]) {
+          const cachedPos = this.staticPositions[index]
+          if (cachedPos) {
+            this.positions[index] = cachedPos
+          }
+          this.velocities[index] = [0, 0]
+          this.angularVelocities[index] = 0
         }
-        // Reset velocities to zero (static elements don't move)
-        this.velocities[index] = [0, 0]
-        this.angularVelocities[index] = 0
       }
-    }
 
-    const borderState = {
-      positions: this.positions,
-      velocities: this.velocities,
-      dimensions: this.dimensions,
-      container: this.container,
-      containerOffsets: this.containerOffsets,
-      isStatic: this.isStatic,
-    }
-
-    // Handle borders
-    if (this.calculateBorders === 'rigid') {
-      handleRigidBorders(borderState, elementCount, (index) => this.hasBounced(index))
-    } else if (this.calculateBorders === 'periodic') {
-      handlePeriodicBorders(borderState, elementCount)
-    }
-
-    // Handle collisions
-    if (this.calculatecCollisions) {
-      if (this.useOBB) {
-        const obbState = this.getOBBState()
-        this.collisionsList = detectAndResolveOBB(
-          obbState,
-          elementCount,
-          (indexA, indexB) => {
-            this.hasBounced(indexA)
-            this.hasBounced(indexB)
-          }
-        )
-        integrateAngularMotion(obbState)
-      } else {
-        const aabbState = this.getAABBState()
-        this.collisionsList = detectAndResolveAABB(
-          aabbState,
-          elementCount,
-          (indexA, indexB) => {
-            this.hasBounced(indexA)
-            this.hasBounced(indexB)
-          }
-        )
+      const borderState = {
+        positions: this.positions,
+        velocities: this.velocities,
+        dimensions: this.dimensions,
+        container: this.container,
+        containerOffsets: this.containerOffsets,
+        isStatic: this.isStatic,
       }
+
+      // Handle borders
+      if (this.calculateBorders === 'rigid') {
+        handleRigidBorders(borderState, elementCount, (index) => this.hasBounced(index))
+      } else if (this.calculateBorders === 'periodic') {
+        handlePeriodicBorders(borderState, elementCount)
+      }
+
+      // Handle collisions
+      if (this.calculatecCollisions) {
+        if (this.useOBB) {
+          const obbState = this.getOBBState(substepDeltaTime)
+          this.collisionsList = detectAndResolveOBB(
+            obbState,
+            elementCount,
+            (indexA, indexB) => {
+              this.hasBounced(indexA)
+              this.hasBounced(indexB)
+            }
+          )
+          integrateAngularMotion(obbState)
+        } else {
+          const aabbState = this.getAABBState()
+          this.collisionsList = detectAndResolveAABB(
+            aabbState,
+            elementCount,
+            (indexA, indexB) => {
+              this.hasBounced(indexA)
+              this.hasBounced(indexB)
+            }
+          )
+        }
+      }
+
+      // Update spatial hash for next substep's collision detection
+      this.updateSpatialHash(elementCount)
     }
 
-    // Update DOM positions
+    // Restore original deltaTime
+    this.fixedDeltaTime = originalDeltaTime
+
+    // Update DOM positions once at end (not per substep)
     for (let index = 0; index < elementCount; index++) {
       const element = elements[index]
       const position = this.positions[index]
@@ -506,8 +523,5 @@ export default class Elastica {
         }, index)
       }
     }
-
-    // Update spatial hash with buckets for next frame
-    this.updateSpatialHash(elementCount)
   }
 }

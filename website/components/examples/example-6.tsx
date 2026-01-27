@@ -4,13 +4,14 @@ import { CanvasBox, CanvasElastica } from '@elastica'
 import { useEffect, useRef, useState } from 'react'
 import { Pane } from 'tweakpane'
 
-const PARTICLE_COUNT = 250
+const CIRCLE_COUNT = 100
+const RECT_COUNT = 100
 
 // Default cursor repulsion settings
 const initialParams = {
-  repulsionRadius: 250,
-  repulsionStrength: 0.025,
-  gravity: 0.005,
+  repulsionRadius: 350,
+  repulsionStrength: 0.3,
+  gravity: 0.01,
 }
 
 /**
@@ -105,7 +106,8 @@ export function Example6() {
           solver: {
             slop: 0,
             percent: 0.8,
-            fixedDeltaTime: 16,
+            fixedDeltaTime: 12,
+            substeps: 4,
           }
         }}
         initialCondition={({ positions, velocities, container }) => {
@@ -164,13 +166,23 @@ export function Example6() {
           }
         }}
       >
-        {Array.from({ length: PARTICLE_COUNT }, (_, i) => (
+        {Array.from({ length: CIRCLE_COUNT }, (_, i) => (
           <CanvasBox
-            key={`blue-${i}`}
+            key={`circle-${i}`}
             radius={20 + Math.random() * 7.5}
             shape="circle"
             fill="#000"
-            mass={250}
+            mass={0.1}
+          />
+        ))}
+        {Array.from({ length: RECT_COUNT }, (_, i) => (
+          <CanvasBox
+            key={`rect-${i}`}
+            width={40 + Math.random() * 30}
+            height={25 + Math.random() * 20}
+            shape="rect"
+               fill="#000"
+            mass={0.1}
           />
         ))}
       </CanvasElastica>

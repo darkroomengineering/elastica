@@ -29,6 +29,7 @@ interface Example2Params {
     slop: number
     percent: number
     fixedDeltaTime: number
+    substeps: number
   }
 }
 
@@ -46,9 +47,10 @@ const initialParams: Example2Params = {
   influenceRadius: 200,
   forceStrength: 2.0,
   solver:{
-    slop: 0.5,
+    slop: 0,
     percent: 0.8,
     fixedDeltaTime: 16.67,
+    substeps: 4,
   }
 }
 

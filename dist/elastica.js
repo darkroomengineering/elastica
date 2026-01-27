@@ -675,28 +675,30 @@
         let contactPoint;
         if (centerInside) {
             // Circle center is inside AABB - find closest edge
+            // Normal should point from rect toward circle (consistent with outside case)
+            // Since center is inside, normal points from closest edge toward center
             const distToLeft = circlePos[0] - rectLeft;
             const distToRight = rectRight - circlePos[0];
             const distToTop = circlePos[1] - rectTop;
             const distToBottom = rectBottom - circlePos[1];
             const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom);
             if (minDist === distToLeft) {
-                normal = [-1, 0];
+                normal = [1, 0]; // Point RIGHT (toward circle center from left edge)
                 penetration = radius + distToLeft;
                 contactPoint = [rectLeft, circlePos[1]];
             }
             else if (minDist === distToRight) {
-                normal = [1, 0];
+                normal = [-1, 0]; // Point LEFT (toward circle center from right edge)
                 penetration = radius + distToRight;
                 contactPoint = [rectRight, circlePos[1]];
             }
             else if (minDist === distToTop) {
-                normal = [0, -1];
+                normal = [0, 1]; // Point DOWN (toward circle center from top edge)
                 penetration = radius + distToTop;
                 contactPoint = [circlePos[0], rectTop];
             }
             else {
-                normal = [0, 1];
+                normal = [0, -1]; // Point UP (toward circle center from bottom edge)
                 penetration = radius + distToBottom;
                 contactPoint = [circlePos[0], rectBottom];
             }
@@ -782,28 +784,30 @@
         let localContact;
         if (centerInside) {
             // Circle center is inside OBB - find closest edge in local space
+            // Normal should point from rect toward circle (consistent with outside case)
+            // Since center is inside, normal points from closest edge toward center
             const distToLeft = localX - (-halfWidth);
             const distToRight = halfWidth - localX;
             const distToTop = localY - (-halfHeight);
             const distToBottom = halfHeight - localY;
             const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom);
             if (minDist === distToLeft) {
-                localNormal = [-1, 0];
+                localNormal = [1, 0]; // Point RIGHT (toward circle center from left edge)
                 penetration = radius + distToLeft;
                 localContact = [-halfWidth, localY];
             }
             else if (minDist === distToRight) {
-                localNormal = [1, 0];
+                localNormal = [-1, 0]; // Point LEFT (toward circle center from right edge)
                 penetration = radius + distToRight;
                 localContact = [halfWidth, localY];
             }
             else if (minDist === distToTop) {
-                localNormal = [0, -1];
+                localNormal = [0, 1]; // Point DOWN (toward circle center from top edge)
                 penetration = radius + distToTop;
                 localContact = [localX, -halfHeight];
             }
             else {
-                localNormal = [0, 1];
+                localNormal = [0, -1]; // Point UP (toward circle center from bottom edge)
                 penetration = radius + distToBottom;
                 localContact = [localX, halfHeight];
             }
@@ -965,6 +969,7 @@
         const normal = dot < 0
             ? [-savedAxisX, -savedAxisY]
             : [savedAxisX, savedAxisY];
+        // Contact point at midpoint between centers
         const contactPoint = [
             (posA[0] + posB[0]) / 2,
             (posA[1] + posB[1]) / 2,
@@ -1057,7 +1062,8 @@
                 const rBx = contactPoint[0] - posB[0];
                 const rBy = contactPoint[1] - posB[1];
                 const torqueB = rBx * (normal[1] * repulsionStrength * 2) - rBy * (normal[0] * repulsionStrength * 2);
-                const newAngVelB = angVelB + torqueB / inertiaB;
+                const dt = state.deltaTime;
+                const newAngVelB = angVelB + (torqueB / inertiaB) / dt;
                 state.velocities[indexB] = newVelB;
                 state.angularVelocities[indexB] = newAngVelB;
                 const finalKE = getKineticEnergy(state, indexB);
@@ -1087,7 +1093,8 @@
                 const rAx = contactPoint[0] - posA[0];
                 const rAy = contactPoint[1] - posA[1];
                 const torqueA = rAx * (-normal[1] * repulsionStrength * 2) - rAy * (-normal[0] * repulsionStrength * 2);
-                const newAngVelA = angVelA + torqueA / inertiaA;
+                const dt = state.deltaTime;
+                const newAngVelA = angVelA + (torqueA / inertiaA) / dt;
                 state.velocities[indexA] = newVelA;
                 state.angularVelocities[indexA] = newAngVelA;
                 const finalKE = getKineticEnergy(state, indexA);
@@ -1125,8 +1132,10 @@
         const rBy = contactPoint[1] - posB[1];
         const torqueA = rAx * (-normal[1] * repulsionStrength) - rAy * (-normal[0] * repulsionStrength);
         const torqueB = rBx * (normal[1] * repulsionStrength) - rBy * (normal[0] * repulsionStrength);
-        const newAngVelA = angVelA + torqueA / inertiaA;
-        const newAngVelB = angVelB + torqueB / inertiaB;
+        // Divide by dt to convert impulse units: integration multiplies by dt, so this cancels out
+        const dt = state.deltaTime;
+        const newAngVelA = angVelA + (torqueA / inertiaA) / dt;
+        const newAngVelB = angVelB + (torqueB / inertiaB) / dt;
         state.velocities[indexA] = newVelA;
         state.velocities[indexB] = newVelB;
         state.angularVelocities[indexA] = newAngVelA;
@@ -1166,17 +1175,19 @@
             return circleVsCircle(state, indexA, indexB);
         }
         // Circle vs Rectangle (OBB)
+        // circleVsOBB returns normal pointing from rect toward circle
+        // Here: A=circle, B=rect, so normal points B→A, need to flip to A→B
         if (shapeA === 'circle' && shapeB === 'rectangle') {
-            return circleVsOBB(state, indexA, indexB);
-        }
-        // Rectangle vs Circle - swap and flip normal
-        if (shapeA === 'rectangle' && shapeB === 'circle') {
-            const result = circleVsOBB(state, indexB, indexA);
+            const result = circleVsOBB(state, indexA, indexB);
             if (result.collided && result.contact) {
-                // Flip normal to point from A to B
                 result.contact.normal = [-result.contact.normal[0], -result.contact.normal[1]];
             }
             return result;
+        }
+        // Rectangle vs Circle
+        // Here: A=rect, B=circle, so circleVsOBB(B, A) gives normal from A→B, which is correct
+        if (shapeA === 'rectangle' && shapeB === 'circle') {
+            return circleVsOBB(state, indexB, indexA);
         }
         // Rectangle vs Rectangle - use SAT
         return satCollisionTest(state, indexA, indexB);
@@ -1259,11 +1270,12 @@
      * Integrate angular motion (update angles from angular velocities)
      */
     function integrateAngularMotion(state) {
+        const dt = state.deltaTime;
         for (let i = 0; i < state.angles.length; i++) {
             const angle = state.angles[i];
             const angularVelocity = state.angularVelocities[i];
             if (angle !== undefined && angularVelocity !== undefined) {
-                state.angles[i] = angle + angularVelocity;
+                state.angles[i] = angle + angularVelocity * dt;
             }
         }
     }
@@ -1308,6 +1320,7 @@
             this.solverSlop = solver?.slop ?? 0.5;
             this.solverPercent = solver?.percent ?? 0.8;
             this.fixedDeltaTime = Math.max(1, solver?.fixedDeltaTime ?? 16.67);
+            this.substeps = Math.max(1, Math.floor(solver?.substeps ?? 1));
         }
         initialCondition(elements, rect, callback = () => { }) {
             this.container = rect;
@@ -1554,7 +1567,7 @@
                 buckets: this.buckets,
             };
         }
-        getOBBState() {
+        getOBBState(deltaTime) {
             return {
                 positions: this.positions,
                 velocities: this.velocities,
@@ -1572,60 +1585,71 @@
                 buckets: this.buckets,
                 slop: this.solverSlop,
                 percent: this.solverPercent,
+                deltaTime,
             };
         }
-        // Main update loop
+        // Main update loop with substepping support
         update(elements, callback) {
             const elementCount = elements.length;
-            // User callback runs first (allows modification of velocities/positions)
-            callback(this);
-            // Reset static elements after user callback (single pass, minimal overhead)
-            for (let index = 0; index < elementCount; index++) {
-                if (this.isStatic[index]) {
-                    const cachedPos = this.staticPositions[index];
-                    if (cachedPos) {
-                        // Restore position from cache (in case user modified it)
-                        this.positions[index] = cachedPos;
+            // Cache original deltaTime and compute substep deltaTime
+            const originalDeltaTime = this.fixedDeltaTime;
+            const substepDeltaTime = originalDeltaTime / this.substeps;
+            // Substep loop: smaller integration steps with collision checks between each
+            for (let step = 0; step < this.substeps; step++) {
+                // Set scaled deltaTime for this substep (user callback reads this)
+                this.fixedDeltaTime = substepDeltaTime;
+                // User callback (applies forces, integrates positions with scaled dt)
+                callback(this);
+                // Reset static elements after user callback
+                for (let index = 0; index < elementCount; index++) {
+                    if (this.isStatic[index]) {
+                        const cachedPos = this.staticPositions[index];
+                        if (cachedPos) {
+                            this.positions[index] = cachedPos;
+                        }
+                        this.velocities[index] = [0, 0];
+                        this.angularVelocities[index] = 0;
                     }
-                    // Reset velocities to zero (static elements don't move)
-                    this.velocities[index] = [0, 0];
-                    this.angularVelocities[index] = 0;
                 }
-            }
-            const borderState = {
-                positions: this.positions,
-                velocities: this.velocities,
-                dimensions: this.dimensions,
-                container: this.container,
-                containerOffsets: this.containerOffsets,
-                isStatic: this.isStatic,
-            };
-            // Handle borders
-            if (this.calculateBorders === 'rigid') {
-                handleRigidBorders(borderState, elementCount, (index) => this.hasBounced(index));
-            }
-            else if (this.calculateBorders === 'periodic') {
-                handlePeriodicBorders(borderState, elementCount);
-            }
-            // Handle collisions
-            if (this.calculatecCollisions) {
-                if (this.useOBB) {
-                    const obbState = this.getOBBState();
-                    this.collisionsList = detectAndResolveOBB(obbState, elementCount, (indexA, indexB) => {
-                        this.hasBounced(indexA);
-                        this.hasBounced(indexB);
-                    });
-                    integrateAngularMotion(obbState);
+                const borderState = {
+                    positions: this.positions,
+                    velocities: this.velocities,
+                    dimensions: this.dimensions,
+                    container: this.container,
+                    containerOffsets: this.containerOffsets,
+                    isStatic: this.isStatic,
+                };
+                // Handle borders
+                if (this.calculateBorders === 'rigid') {
+                    handleRigidBorders(borderState, elementCount, (index) => this.hasBounced(index));
                 }
-                else {
-                    const aabbState = this.getAABBState();
-                    this.collisionsList = detectAndResolveAABB(aabbState, elementCount, (indexA, indexB) => {
-                        this.hasBounced(indexA);
-                        this.hasBounced(indexB);
-                    });
+                else if (this.calculateBorders === 'periodic') {
+                    handlePeriodicBorders(borderState, elementCount);
                 }
+                // Handle collisions
+                if (this.calculatecCollisions) {
+                    if (this.useOBB) {
+                        const obbState = this.getOBBState(substepDeltaTime);
+                        this.collisionsList = detectAndResolveOBB(obbState, elementCount, (indexA, indexB) => {
+                            this.hasBounced(indexA);
+                            this.hasBounced(indexB);
+                        });
+                        integrateAngularMotion(obbState);
+                    }
+                    else {
+                        const aabbState = this.getAABBState();
+                        this.collisionsList = detectAndResolveAABB(aabbState, elementCount, (indexA, indexB) => {
+                            this.hasBounced(indexA);
+                            this.hasBounced(indexB);
+                        });
+                    }
+                }
+                // Update spatial hash for next substep's collision detection
+                this.updateSpatialHash(elementCount);
             }
-            // Update DOM positions
+            // Restore original deltaTime
+            this.fixedDeltaTime = originalDeltaTime;
+            // Update DOM positions once at end (not per substep)
             for (let index = 0; index < elementCount; index++) {
                 const element = elements[index];
                 const position = this.positions[index];
@@ -1639,8 +1663,6 @@
                     }, index);
                 }
             }
-            // Update spatial hash with buckets for next frame
-            this.updateSpatialHash(elementCount);
         }
     }
     /**

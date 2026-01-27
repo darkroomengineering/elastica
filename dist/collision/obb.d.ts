@@ -19,6 +19,7 @@ export type OBBState = {
     buckets: Map<number, number[]>;
     slop: number;
     percent: number;
+    deltaTime: number;
 };
 /**
  * Get the four corners of a rotated rectangle (OBB)

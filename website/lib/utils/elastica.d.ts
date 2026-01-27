@@ -24,6 +24,8 @@ declare module '@elastica' {
     percent?: number
     /** Fixed timestep in ms (default: 16.67) */
     fixedDeltaTime?: number
+    /** Number of physics substeps per frame (default: 1) */
+    substeps?: number
   }
 
   export interface ElasticaConfigOBB {
