@@ -1,6 +1,10 @@
 'use client'
 
-import Elastica from '@darkroom.engineering/elastica'
+import Elastica, {
+  createAccumulator,
+  accumulateTime,
+  type PhysicsAccumulator,
+} from '@darkroom.engineering/elastica'
 import type { ElementData } from '@darkroom.engineering/elastica'
 import { useFrame, useRect } from '@darkroom.engineering/hamo'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
@@ -66,6 +70,7 @@ export function CanvasElastica({
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const elasticaRef = useRef<Elastica | null>(null)
+  const accumulatorRef = useRef<PhysicsAccumulator | null>(null)
   const particlesRef = useRef<Map<number, CanvasParticleData>>(new Map())
   const nextIndexRef = useRef(0)
   const initializedRef = useRef(false)
@@ -103,7 +108,9 @@ export function CanvasElastica({
 
   // Initialize engine
   useEffect(() => {
-    elasticaRef.current = new Elastica(stableConfig)
+    const elastica = new Elastica(stableConfig)
+    elasticaRef.current = elastica
+    accumulatorRef.current = createAccumulator(elastica.fixedDeltaTime)
     initializedRef.current = false
   }, [stableConfig])
 
@@ -144,9 +151,10 @@ export function CanvasElastica({
   // Animation loop
   useFrame((time: number, deltaTime: number) => {
     const elastica = elasticaRef.current
+    const accumulator = accumulatorRef.current
     const canvas = canvasRef.current
     const ctx = canvas?.getContext('2d')
-    if (!elastica || !canvas || !ctx || !containerRect) return
+    if (!elastica || !accumulator || !canvas || !ctx || !containerRect) return
 
     const particles = Array.from(particlesRef.current.values())
     if (particles.length === 0) return
@@ -206,30 +214,33 @@ export function CanvasElastica({
       initializedRef.current = true
     }
 
-    // Run physics update
-    elastica.update(elements, () => {
-      updateRef.current?.({
-        boxes: elements,
-        positions: elastica.positions,
-        velocities: elastica.velocities,
-        externalForces: elastica.externalForces,
-        container: containerRect,
-        useOBB: elastica.useOBB,
-        angles: elastica.angles,
-        angularVelocities: elastica.angularVelocities,
-        masses: elastica.masses,
-        momentsOfInertia: elastica.momentsOfInertia,
-        restitutions: elastica.restitutions,
-        isStatic: elastica.isStatic,
-        displayScales: elastica.displayScales,
-        deltaTime: elastica.fixedDeltaTime,
-        hash: elastica.hash,
-        gridSize: elastica.gridSize,
-        bounced: elastica.bounced,
+    // Accumulate time and run physics at fixed rate
+    const steps = accumulateTime(accumulator, deltaTime)
+    for (let i = 0; i < steps; i++) {
+      elastica.update(elements, () => {
+        updateRef.current?.({
+          boxes: elements,
+          positions: elastica.positions,
+          velocities: elastica.velocities,
+          externalForces: elastica.externalForces,
+          container: containerRect,
+          useOBB: elastica.useOBB,
+          angles: elastica.angles,
+          angularVelocities: elastica.angularVelocities,
+          masses: elastica.masses,
+          momentsOfInertia: elastica.momentsOfInertia,
+          restitutions: elastica.restitutions,
+          isStatic: elastica.isStatic,
+          displayScales: elastica.displayScales,
+          deltaTime: elastica.fixedDeltaTime,
+          hash: elastica.hash,
+          gridSize: elastica.gridSize,
+          bounced: elastica.bounced,
+        })
       })
-    })
+    }
 
-    // Render to canvas
+    // Render to canvas (once per frame, not per physics step)
     ctx.save()
     ctx.scale(dpr, dpr)
     ctx.clearRect(0, 0, containerRect.width, containerRect.height)

@@ -12,3 +12,6 @@ export * from './collision'
 
 // Border handling (for advanced usage)
 export * from './borders'
+
+// Physics accumulator (for frame-rate independent physics)
+export * from './accumulator'

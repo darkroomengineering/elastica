@@ -39,7 +39,7 @@ const initialParams: Example4Params = {
   collisions: true,
   borders: 'periodic',
   useOBB: true,
-  thrustPower: 0.3,
+  thrustPower: 0.4,
   noiseStrength: 0.05,
   noiseSmoothing: 0.05,
   interactionRadius: 60,

@@ -1672,11 +1672,35 @@
      */
     Elastica.stylesInjected = false;
 
+    function createAccumulator(fixedDeltaTime) {
+        return {
+            accumulated: 0,
+            fixedDeltaTime,
+        };
+    }
+    /**
+     * Accumulates time and returns how many physics steps should run this frame.
+     * This decouples physics rate from render rate, ensuring consistent simulation
+     * speed across different screen refresh rates (60Hz vs 120Hz).
+     */
+    function accumulateTime(accumulator, deltaTime) {
+        accumulator.accumulated += deltaTime;
+        let steps = 0;
+        while (accumulator.accumulated >= accumulator.fixedDeltaTime) {
+            accumulator.accumulated -= accumulator.fixedDeltaTime;
+            steps++;
+        }
+        // Cap to prevent spiral of death if tab was backgrounded
+        return Math.min(steps, 4);
+    }
+
+    exports.accumulateTime = accumulateTime;
     exports.add = add;
     exports.calculateSuperposition = calculateSuperposition;
     exports.circleVsAABB = circleVsAABB;
     exports.circleVsCircle = circleVsCircle;
     exports.circleVsOBB = circleVsOBB;
+    exports.createAccumulator = createAccumulator;
     exports.cross = cross;
     exports.default = Elastica;
     exports.detectAndResolveAABB = detectAndResolveAABB;

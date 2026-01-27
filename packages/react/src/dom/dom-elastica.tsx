@@ -1,7 +1,11 @@
 'use client'
 
 import type { ElasticaConfigOBB, ElementData } from '@darkroom.engineering/elastica'
-import Elastica from '@darkroom.engineering/elastica'
+import Elastica, {
+  createAccumulator,
+  accumulateTime,
+  type PhysicsAccumulator,
+} from '@darkroom.engineering/elastica'
 import { useFrame, useRect } from '@darkroom.engineering/hamo'
 import {
   useCallback,
@@ -87,6 +91,7 @@ export function DomElastica({
     const timeRef = useRef(0)
     const isPausedRef = useRef(false)
     const boxesRefs = useRef(new Map<HTMLElement, ElementData>())
+    const accumulatorRef = useRef<PhysicsAccumulator | null>(null)
     const [sectionRectRef, sectionRect] = useRect()
     const [javascriptEnable, setJavascriptEnable] = useJavascriptEnable()
 
@@ -143,7 +148,9 @@ export function DomElastica({
     }, [update])
 
     useEffect(() => {
-      setElastica(new Elastica(stableConfig))
+      const newElastica = new Elastica(stableConfig)
+      setElastica(newElastica)
+      accumulatorRef.current = createAccumulator(newElastica.fixedDeltaTime)
     }, [stableConfig])
 
     const addBox = useCallback((element: HTMLElement, data: ElementData) => {
@@ -174,7 +181,7 @@ export function DomElastica({
     }, [elastica, sectionRect])
 
     // Update simulation
-    useFrame((time: number) => {
+    useFrame((time: number, deltaTime: number) => {
       if (isPausedRef.current) return
 
       if (!javascriptEnable) {
@@ -185,17 +192,24 @@ export function DomElastica({
       const boxes = [...boxesRefs.current.values()]
       timeRef.current = time
 
-      elastica.update(boxes, (instance) => {
-        updateRef.current({
-          boxes,
-          ...instance,
-          deltaTime: instance.fixedDeltaTime,
-          hash: instance.hash,
-          gridSize: instance.gridSize,
-          bounced: instance.bounced,
-          isStatic: instance.isStatic,
+      // Accumulate time and run physics at fixed rate
+      const accumulator = accumulatorRef.current
+      if (!accumulator) return
+
+      const steps = accumulateTime(accumulator, deltaTime)
+      for (let i = 0; i < steps; i++) {
+        elastica.update(boxes, (instance) => {
+          updateRef.current({
+            boxes,
+            ...instance,
+            deltaTime: instance.fixedDeltaTime,
+            hash: instance.hash,
+            gridSize: instance.gridSize,
+            bounced: instance.bounced,
+            isStatic: instance.isStatic,
+          })
         })
-      })
+      }
     })
 
     useImperativeHandle(ref, () => ({
