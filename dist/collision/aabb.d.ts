@@ -1,22 +1,11 @@
 import type { CollisionRecord, Vector2D } from '../types';
+import type { AABBState } from './types';
 /**
  * Sort-and-sweep algorithm for dense buckets
  * Sorts bodies by X-axis and uses early-exit to reduce pair checks
  * Returns pairs that potentially overlap on the X-axis
  */
 export declare function sweepBucket(bucket: number[], positions: Vector2D[], dimensions: Vector2D[]): Array<[number, number]>;
-/**
- * State required for AABB collision detection
- */
-export type AABBState = {
-    positions: Vector2D[];
-    velocities: Vector2D[];
-    dimensions: Vector2D[];
-    hash: number[];
-    gridSize: number;
-    isStatic: boolean[];
-    buckets: Map<number, number[]>;
-};
 /**
  * Get neighbor cell IDs for a given cell (3x3 grid)
  * Returns array of valid cell IDs including the cell itself

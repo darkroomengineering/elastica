@@ -1,38 +1,14 @@
 import { distanceSquared } from '../math'
-import { axesPool, cornersPool, vectorPool } from '../pool'
-import type { CollisionRecord, CollisionResult, ContactPoint, ShapeType, Vector2D } from '../types'
+import { axesPool, cornersPool } from '../pool'
+import type { CollisionRecord, CollisionResult, ContactPoint, Vector2D } from '../types'
 import { getNeighborCellIds, sweepBucket } from './aabb'
 import { circleVsCircle, circleVsOBB } from './circle'
+import type { OBBState } from './types'
 
 /**
  * Threshold for using sort-and-sweep in dense buckets
  */
 const DENSE_BUCKET_THRESHOLD = 16
-
-/**
- * State required for OBB collision detection
- */
-export type OBBState = {
-  positions: Vector2D[]
-  velocities: Vector2D[]
-  dimensions: Vector2D[]
-  angles: number[]
-  angularVelocities: number[]
-  masses: number[]
-  momentsOfInertia: number[]
-  restitutions: number[]
-  maxExtents: number[] // Cached diagonal extent for broad-phase checks
-  isStatic: boolean[]
-  shapeTypes: ShapeType[] // Shape type for each element ('rectangle' or 'circle')
-  // Spatial hash for broad phase
-  hash: number[]
-  gridSize: number
-  buckets: Map<number, number[]>
-  // Solver parameters
-  slop: number
-  percent: number
-  deltaTime: number
-}
 
 /**
  * Get the four corners of a rotated rectangle (OBB)

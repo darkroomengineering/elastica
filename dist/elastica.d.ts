@@ -1,13 +1,8 @@
-import type { BorderType, CollisionRecord, Container, ContainerOffsets, ElasticaConfigOBB, ElementData, PolarCoordinates, ShapeType, Vector2D } from './types';
+import type { BorderType, CollisionRecord, Container, ContainerOffsets, ElasticaConfigOBB, ElementData, ShapeType, Vector2D } from './types';
 export default class Elastica {
-    /**
-     * Static flag to ensure CSS is injected only once across all Elastica instances.
-     * The CSS rule uses [data-elastica] selector to apply transforms via CSS variables,
-     * which reduces per-frame string allocations compared to setting cssText directly.
-     */
-    private static stylesInjected;
-    private displayScaleWarningShown;
-    calculatecCollisions: boolean;
+    private renderer;
+    private spatialHash;
+    calculateCollisions: boolean;
     calculateBorders: BorderType;
     gridSize: number;
     containerOffsets: ContainerOffsets;
@@ -18,11 +13,11 @@ export default class Elastica {
     externalForces: Vector2D[];
     dimensions: Vector2D[];
     bounced: number[];
-    hash: number[];
     isStatic: boolean[];
     staticPositions: Vector2D[];
     displayScales: number[];
-    buckets: Map<number, number[]>;
+    get hash(): number[];
+    get buckets(): Map<number, number[]>;
     useOBB: boolean;
     angles: number[];
     angularVelocities: number[];
@@ -39,23 +34,9 @@ export default class Elastica {
     substeps: number;
     constructor({ gridSize, containerOffsets, collisions, borders, useOBB, defaultMass, defaultRestitution, solver, }?: ElasticaConfigOBB);
     initialCondition(elements: (ElementData | null | undefined)[], rect: Container, callback?: (elastica: Elastica) => void): void;
-    private computeCellId;
     updateSpatialHash(elementCount: number): void;
     getNeighborIndices(cellId: number): number[];
-    polarCoordinates(vector: Vector2D): PolarCoordinates;
-    cartesianCoordinates(speed: number, angle: number): Vector2D;
     hasBounced(index: number): number;
-    /**
-     * Lazily injects the CSS rule that enables CSS variable-based transforms.
-     * Called once on first element initialization.
-     *
-     * Why CSS variables instead of cssText:
-     * - cssText creates ~80 char strings every frame (e.g., "transform: translate3d(...)")
-     * - setProperty creates ~10 char strings (e.g., "123.45px")
-     * - Avoids CSS parsing overhead on every frame
-     * - will-change is set once via CSS, not reassigned every frame
-     */
-    private injectStyles;
     /**
      * Initializes an element for CSS variable-based positioning.
      * Should be called once per element when it's added to the simulation.
@@ -86,5 +67,6 @@ export default class Elastica {
     setRestitution(index: number, restitution: number): void;
     private getAABBState;
     private getOBBState;
+    private getBorderState;
     update(elements: (ElementData | null | undefined)[], callback: (elastica: Elastica) => void): void;
 }

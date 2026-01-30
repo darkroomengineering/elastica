@@ -1,6 +1,6 @@
 import { distanceSquared } from '../math'
 import type { CollisionResult, ContactPoint, Vector2D } from '../types'
-import type { OBBState } from './obb'
+import type { OBBState } from './types'
 
 /**
  * Circle vs Circle collision detection

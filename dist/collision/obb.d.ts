@@ -1,26 +1,5 @@
-import type { CollisionRecord, CollisionResult, ContactPoint, ShapeType, Vector2D } from '../types';
-/**
- * State required for OBB collision detection
- */
-export type OBBState = {
-    positions: Vector2D[];
-    velocities: Vector2D[];
-    dimensions: Vector2D[];
-    angles: number[];
-    angularVelocities: number[];
-    masses: number[];
-    momentsOfInertia: number[];
-    restitutions: number[];
-    maxExtents: number[];
-    isStatic: boolean[];
-    shapeTypes: ShapeType[];
-    hash: number[];
-    gridSize: number;
-    buckets: Map<number, number[]>;
-    slop: number;
-    percent: number;
-    deltaTime: number;
-};
+import type { CollisionRecord, CollisionResult, ContactPoint, Vector2D } from '../types';
+import type { OBBState } from './types';
 /**
  * Get the four corners of a rotated rectangle (OBB)
  * Returns corners in order: top-left, top-right, bottom-right, bottom-left

@@ -1,5 +1,5 @@
 import type { CollisionResult } from '../types';
-import type { OBBState } from './obb';
+import type { OBBState } from './types';
 /**
  * Circle vs Circle collision detection
  * Uses squared distance comparison to avoid sqrt in the common (non-colliding) case

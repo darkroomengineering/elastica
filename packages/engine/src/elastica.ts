@@ -1,7 +1,9 @@
-import { handlePeriodicBorders, handleRigidBorders } from './borders'
-import { detectAndResolveAABB, type AABBState } from './collision/aabb'
-import { detectAndResolveOBB, integrateAngularMotion, type OBBState } from './collision/obb'
-import { toCartesian, toPolar } from './math'
+import { handlePeriodicBorders, handleRigidBorders, type BorderState } from './borders'
+import { detectAndResolveAABB } from './collision/aabb'
+import { detectAndResolveOBB, integrateAngularMotion } from './collision/obb'
+import type { AABBState, OBBState } from './collision/types'
+import { DOMRenderer, type Renderer } from './renderer'
+import { SpatialHash } from './spatial-hash'
 import type {
   BorderType,
   CollisionRecord,
@@ -9,23 +11,19 @@ import type {
   ContainerOffsets,
   ElasticaConfigOBB,
   ElementData,
-  PolarCoordinates,
   ShapeType,
-  SolverConfig,
-  Vector2D,
+  Vector2D
 } from './types'
 
 export default class Elastica {
-  /**
-   * Static flag to ensure CSS is injected only once across all Elastica instances.
-   * The CSS rule uses [data-elastica] selector to apply transforms via CSS variables,
-   * which reduces per-frame string allocations compared to setting cssText directly.
-   */
-  private static stylesInjected = false
-  private displayScaleWarningShown = false
+  // Renderer for decoupling physics from presentation
+  private renderer: Renderer
+
+  // Spatial hash for collision detection
+  private spatialHash: SpatialHash
 
   // Core properties
-  calculatecCollisions: boolean
+  calculateCollisions: boolean
   calculateBorders: BorderType
   gridSize: number
   containerOffsets: ContainerOffsets
@@ -38,14 +36,18 @@ export default class Elastica {
   externalForces: Vector2D[]
   dimensions: Vector2D[]
   bounced: number[]
-  hash: number[]
   isStatic: boolean[]
   staticPositions: Vector2D[] // Cached positions for static elements
   displayScales: number[] // Visual-only scale (does not affect collision bounds)
 
-  // Spatial hash buckets: cellId → element indices
-  // This enables O(n×k) collision detection instead of O(n²)
-  buckets: Map<number, number[]>
+  // Public API getters for spatial hash data (preserves backward compatibility)
+  get hash(): number[] {
+    return this.spatialHash.getHash()
+  }
+
+  get buckets(): Map<number, number[]> {
+    return this.spatialHash.getBuckets()
+  }
 
   // OBB rigid body properties
   useOBB: boolean
@@ -73,7 +75,7 @@ export default class Elastica {
     defaultRestitution = 0.8,
     solver,
   }: ElasticaConfigOBB = {}) {
-    this.calculatecCollisions = collisions
+    this.calculateCollisions = collisions
     this.calculateBorders = borders
     this.gridSize = gridSize
     this.containerOffsets = {
@@ -85,17 +87,18 @@ export default class Elastica {
     this.container = { width: 0, height: 0 }
     this.collisionsList = []
 
+    // Initialize spatial hash
+    this.spatialHash = new SpatialHash(gridSize)
+
     // Per-body arrays
     this.positions = []
     this.velocities = []
     this.externalForces = []
     this.dimensions = []
     this.bounced = []
-    this.hash = []
     this.isStatic = []
     this.staticPositions = []
     this.displayScales = []
-    this.buckets = new Map()
 
     // OBB rigid body properties
     this.useOBB = useOBB
@@ -114,6 +117,16 @@ export default class Elastica {
     this.solverPercent = solver?.percent ?? 0.8
     this.fixedDeltaTime = Math.max(1, solver?.fixedDeltaTime ?? 16.67)
     this.substeps = Math.max(1, Math.floor(solver?.substeps ?? 1))
+
+    // Initialize renderer
+    this.renderer = new DOMRenderer(this.calculateCollisions)
+
+    // Backward-compatible alias for typo (deprecated)
+    Object.defineProperty(this, 'calculatecCollisions', {
+      get: () => this.calculateCollisions,
+      set: (value: boolean) => { this.calculateCollisions = value },
+      enumerable: false,
+    })
   }
 
   initialCondition(
@@ -122,6 +135,9 @@ export default class Elastica {
     callback: (elastica: Elastica) => void = () => {}
   ): void {
     this.container = rect
+
+    // Update spatial hash container
+    this.spatialHash.setContainer(rect)
 
     this.dimensions = elements.map((element, index) => {
       if (!element) return [0, 0] as Vector2D
@@ -203,74 +219,14 @@ export default class Elastica {
     this.updateSpatialHash(elementCount)
   }
 
-  // Spatial hash utilities
-  private computeCellId(pos: Vector2D): number {
-    const cellX = Math.floor((this.gridSize * pos[0]) / this.container.width)
-    const cellY = Math.floor((this.gridSize * pos[1]) / this.container.height)
-    // Clamp to valid range to handle edge cases
-    const clampedX = Math.max(0, Math.min(this.gridSize - 1, cellX))
-    const clampedY = Math.max(0, Math.min(this.gridSize - 1, cellY))
-    return clampedX + clampedY * this.gridSize
-  }
-
+  // Spatial hash utilities - delegated to SpatialHash class
   updateSpatialHash(elementCount: number): void {
-    // Clear all buckets
-    this.buckets.clear()
-
-    // Populate hash and buckets in single pass
-    for (let index = 0; index < elementCount; index++) {
-      const pos = this.positions[index]
-      if (!pos) continue
-
-      const cellId = this.computeCellId(pos)
-      this.hash[index] = cellId
-
-      // Add to bucket
-      const bucket = this.buckets.get(cellId)
-      if (bucket) {
-        bucket.push(index)
-      } else {
-        this.buckets.set(cellId, [index])
-      }
-    }
+    this.spatialHash.update(this.positions, elementCount)
   }
 
   // Get indices of elements in neighboring cells (3x3 grid around cell)
   getNeighborIndices(cellId: number): number[] {
-    const indices: number[] = []
-    const cellX = cellId % this.gridSize
-    const cellY = Math.floor(cellId / this.gridSize)
-
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const nx = cellX + dx
-        const ny = cellY + dy
-
-        // Skip out-of-bounds cells
-        if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) {
-          continue
-        }
-
-        const neighborCellId = nx + ny * this.gridSize
-        const bucket = this.buckets.get(neighborCellId)
-        if (bucket) {
-          for (let i = 0; i < bucket.length; i++) {
-            indices.push(bucket[i]!)
-          }
-        }
-      }
-    }
-
-    return indices
-  }
-
-  // Math utilities (delegated)
-  polarCoordinates(vector: Vector2D): PolarCoordinates {
-    return toPolar(vector)
-  }
-
-  cartesianCoordinates(speed: number, angle: number): Vector2D {
-    return toCartesian(speed, angle)
+    return this.spatialHash.getNeighborIndices(cellId)
   }
 
   // Bounce tracking
@@ -278,28 +234,6 @@ export default class Elastica {
     const current = this.bounced[index] ?? 0
     this.bounced[index] = current + 1
     return this.bounced[index]!
-  }
-
-  /**
-   * Lazily injects the CSS rule that enables CSS variable-based transforms.
-   * Called once on first element initialization.
-   *
-   * Why CSS variables instead of cssText:
-   * - cssText creates ~80 char strings every frame (e.g., "transform: translate3d(...)") 
-   * - setProperty creates ~10 char strings (e.g., "123.45px")
-   * - Avoids CSS parsing overhead on every frame
-   * - will-change is set once via CSS, not reassigned every frame
-   */
-  private injectStyles(): void {
-    if (Elastica.stylesInjected) return
-
-    const style = document.createElement('style')
-    style.id = 'elastica-css'
-    // Using CSS variables --ex (x), --ey (y), --er (rotation) for transform
-    // The [data-elastica] attribute marks elements managed by the engine
-    style.textContent = '[data-elastica]{transform:translate3d(var(--ex,0),var(--ey,0),0)rotate(var(--er,0))scale(var(--eds,1));will-change:transform}'
-    document.head.appendChild(style)
-    Elastica.stylesInjected = true
   }
 
   /**
@@ -313,14 +247,12 @@ export default class Elastica {
    * For canvas mode, this is a no-op when element is null/undefined.
    */
   initializeElement(element: HTMLElement | null | undefined): void {
-    if (!element) return  // No-op for canvas mode
-    this.injectStyles()
-    element.dataset.elastica = ''
+    this.renderer.initializeElement(element)
   }
 
   /**
    * Updates element position using CSS custom properties.
-   * 
+   *
    * Why setProperty over cssText:
    * - Shorter strings reduce GC pressure (~10 chars vs ~80 chars per update)
    * - No CSS parsing - just variable value updates
@@ -331,24 +263,13 @@ export default class Elastica {
     { x = 0, y = 0, angle = 0 }: { x?: number; y?: number; angle?: number },
     index: number
   ): void {
-    if (element && !this.isStatic[index]) {
-      // Update CSS variables - shorter strings than full cssText, no CSS parsing
-      element.style.setProperty('--ex', x + 'px')
-      element.style.setProperty('--ey', y + 'px')
-      // Only set rotation if non-zero to avoid unnecessary updates
-      if (angle !== 0) {
-        element.style.setProperty('--er', angle + 'rad')
-      }
-      // Apply visual scale (does not affect collision bounds)
-      const scale = this.displayScales[index]
-      if (scale !== undefined && scale !== 1) {
-        if (this.calculatecCollisions && !this.displayScaleWarningShown) {
-          console.warn('[Elastica] displayScale is visual-only, collision bounds unchanged')
-          this.displayScaleWarningShown = true
-        }
-        element.style.setProperty('--eds', String(scale))
-      }
-    }
+    const scale = this.displayScales[index] ?? 1
+    this.renderer.setPosition(
+      element,
+      { x, y, angle, scale },
+      index,
+      this.isStatic[index] ?? false
+    )
   }
 
   // Property setters
@@ -428,6 +349,17 @@ export default class Elastica {
     }
   }
 
+  private getBorderState(): BorderState {
+    return {
+      positions: this.positions,
+      velocities: this.velocities,
+      dimensions: this.dimensions,
+      container: this.container,
+      containerOffsets: this.containerOffsets,
+      isStatic: this.isStatic,
+    }
+  }
+
   // Main update loop with substepping support
   update(
     elements: (ElementData | null | undefined)[],
@@ -459,16 +391,8 @@ export default class Elastica {
         }
       }
 
-      const borderState = {
-        positions: this.positions,
-        velocities: this.velocities,
-        dimensions: this.dimensions,
-        container: this.container,
-        containerOffsets: this.containerOffsets,
-        isStatic: this.isStatic,
-      }
-
-      // Handle borders
+      // Handle borders (using cached state object)
+      const borderState = this.getBorderState()
       if (this.calculateBorders === 'rigid') {
         handleRigidBorders(borderState, elementCount, (index) => this.hasBounced(index))
       } else if (this.calculateBorders === 'periodic') {
@@ -476,7 +400,7 @@ export default class Elastica {
       }
 
       // Handle collisions
-      if (this.calculatecCollisions) {
+      if (this.calculateCollisions) {
         if (this.useOBB) {
           const obbState = this.getOBBState(substepDeltaTime)
           this.collisionsList = detectAndResolveOBB(

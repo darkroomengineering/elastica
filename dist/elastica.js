@@ -1280,10 +1280,132 @@
         }
     }
 
-    class Elastica {
-        constructor({ gridSize = 4, containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 }, collisions = true, borders = 'rigid', useOBB = true, defaultMass = 1, defaultRestitution = 0.8, solver, } = {}) {
+    /**
+     * No-op renderer for canvas mode or headless usage.
+     */
+    class NullRenderer {
+        initializeElement() { }
+        setPosition() { }
+    }
+    /**
+     * DOM renderer using CSS custom properties for efficient transforms.
+     */
+    class DOMRenderer {
+        constructor(collisionsEnabled = true) {
             this.displayScaleWarningShown = false;
-            this.calculatecCollisions = collisions;
+            this.collisionsEnabled = collisionsEnabled;
+        }
+        injectStyles() {
+            if (typeof document === 'undefined')
+                return;
+            if (DOMRenderer.stylesInjected)
+                return;
+            const style = document.createElement('style');
+            style.id = 'elastica-css';
+            style.textContent =
+                '[data-elastica]{transform:translate3d(var(--ex,0),var(--ey,0),0)rotate(var(--er,0))scale(var(--eds,1));will-change:transform}';
+            document.head.appendChild(style);
+            DOMRenderer.stylesInjected = true;
+        }
+        initializeElement(element) {
+            if (!element)
+                return;
+            this.injectStyles();
+            element.dataset.elastica = '';
+        }
+        setPosition(element, { x, y, angle, scale }, index, isStatic) {
+            if (!element || isStatic)
+                return;
+            element.style.setProperty('--ex', x + 'px');
+            element.style.setProperty('--ey', y + 'px');
+            if (angle !== 0) {
+                element.style.setProperty('--er', angle + 'rad');
+            }
+            if (scale !== 1) {
+                if (this.collisionsEnabled && !this.displayScaleWarningShown) {
+                    console.warn('[Elastica] displayScale is visual-only, collision bounds unchanged');
+                    this.displayScaleWarningShown = true;
+                }
+                element.style.setProperty('--eds', String(scale));
+            }
+        }
+    }
+    DOMRenderer.stylesInjected = false;
+
+    class SpatialHash {
+        constructor(gridSize) {
+            this.buckets = new Map();
+            this.hashArray = [];
+            this.container = { width: 0, height: 0 };
+            this.gridSize = gridSize;
+        }
+        setContainer(container) {
+            this.container = container;
+        }
+        getHash() {
+            return this.hashArray;
+        }
+        getBuckets() {
+            return this.buckets;
+        }
+        computeCellId(pos) {
+            const cellX = Math.floor((this.gridSize * pos[0]) / this.container.width);
+            const cellY = Math.floor((this.gridSize * pos[1]) / this.container.height);
+            const clampedX = Math.max(0, Math.min(this.gridSize - 1, cellX));
+            const clampedY = Math.max(0, Math.min(this.gridSize - 1, cellY));
+            return clampedX + clampedY * this.gridSize;
+        }
+        update(positions, elementCount) {
+            this.buckets.clear();
+            for (let index = 0; index < elementCount; index++) {
+                const pos = positions[index];
+                if (!pos)
+                    continue;
+                const cellId = this.computeCellId(pos);
+                this.hashArray[index] = cellId;
+                const bucket = this.buckets.get(cellId);
+                if (bucket) {
+                    bucket.push(index);
+                }
+                else {
+                    this.buckets.set(cellId, [index]);
+                }
+            }
+        }
+        getNeighborIndices(cellId) {
+            const indices = [];
+            const cellX = cellId % this.gridSize;
+            const cellY = Math.floor(cellId / this.gridSize);
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    const nx = cellX + dx;
+                    const ny = cellY + dy;
+                    if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) {
+                        continue;
+                    }
+                    const neighborCellId = nx + ny * this.gridSize;
+                    const bucket = this.buckets.get(neighborCellId);
+                    if (bucket) {
+                        for (let i = 0; i < bucket.length; i++) {
+                            indices.push(bucket[i]);
+                        }
+                    }
+                }
+            }
+            return indices;
+        }
+    }
+
+    class Elastica {
+        // Public API getters for spatial hash data (preserves backward compatibility)
+        get hash() {
+            return this.spatialHash.getHash();
+        }
+        get buckets() {
+            return this.spatialHash.getBuckets();
+        }
+        constructor({ gridSize = 4, containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 }, collisions = true, borders = 'rigid', useOBB = true, defaultMass = 1, defaultRestitution = 0.8, solver, } = {}) {
+            this.calculateCollisions = collisions;
             this.calculateBorders = borders;
             this.gridSize = gridSize;
             this.containerOffsets = {
@@ -1294,17 +1416,17 @@
             };
             this.container = { width: 0, height: 0 };
             this.collisionsList = [];
+            // Initialize spatial hash
+            this.spatialHash = new SpatialHash(gridSize);
             // Per-body arrays
             this.positions = [];
             this.velocities = [];
             this.externalForces = [];
             this.dimensions = [];
             this.bounced = [];
-            this.hash = [];
             this.isStatic = [];
             this.staticPositions = [];
             this.displayScales = [];
-            this.buckets = new Map();
             // OBB rigid body properties
             this.useOBB = useOBB;
             this.angles = [];
@@ -1321,9 +1443,19 @@
             this.solverPercent = solver?.percent ?? 0.8;
             this.fixedDeltaTime = Math.max(1, solver?.fixedDeltaTime ?? 16.67);
             this.substeps = Math.max(1, Math.floor(solver?.substeps ?? 1));
+            // Initialize renderer
+            this.renderer = new DOMRenderer(this.calculateCollisions);
+            // Backward-compatible alias for typo (deprecated)
+            Object.defineProperty(this, 'calculatecCollisions', {
+                get: () => this.calculateCollisions,
+                set: (value) => { this.calculateCollisions = value; },
+                enumerable: false,
+            });
         }
         initialCondition(elements, rect, callback = () => { }) {
             this.container = rect;
+            // Update spatial hash container
+            this.spatialHash.setContainer(rect);
             this.dimensions = elements.map((element, index) => {
                 if (!element)
                     return [0, 0];
@@ -1387,92 +1519,19 @@
             // Build initial spatial hash with buckets
             this.updateSpatialHash(elementCount);
         }
-        // Spatial hash utilities
-        computeCellId(pos) {
-            const cellX = Math.floor((this.gridSize * pos[0]) / this.container.width);
-            const cellY = Math.floor((this.gridSize * pos[1]) / this.container.height);
-            // Clamp to valid range to handle edge cases
-            const clampedX = Math.max(0, Math.min(this.gridSize - 1, cellX));
-            const clampedY = Math.max(0, Math.min(this.gridSize - 1, cellY));
-            return clampedX + clampedY * this.gridSize;
-        }
+        // Spatial hash utilities - delegated to SpatialHash class
         updateSpatialHash(elementCount) {
-            // Clear all buckets
-            this.buckets.clear();
-            // Populate hash and buckets in single pass
-            for (let index = 0; index < elementCount; index++) {
-                const pos = this.positions[index];
-                if (!pos)
-                    continue;
-                const cellId = this.computeCellId(pos);
-                this.hash[index] = cellId;
-                // Add to bucket
-                const bucket = this.buckets.get(cellId);
-                if (bucket) {
-                    bucket.push(index);
-                }
-                else {
-                    this.buckets.set(cellId, [index]);
-                }
-            }
+            this.spatialHash.update(this.positions, elementCount);
         }
         // Get indices of elements in neighboring cells (3x3 grid around cell)
         getNeighborIndices(cellId) {
-            const indices = [];
-            const cellX = cellId % this.gridSize;
-            const cellY = Math.floor(cellId / this.gridSize);
-            for (let dy = -1; dy <= 1; dy++) {
-                for (let dx = -1; dx <= 1; dx++) {
-                    const nx = cellX + dx;
-                    const ny = cellY + dy;
-                    // Skip out-of-bounds cells
-                    if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) {
-                        continue;
-                    }
-                    const neighborCellId = nx + ny * this.gridSize;
-                    const bucket = this.buckets.get(neighborCellId);
-                    if (bucket) {
-                        for (let i = 0; i < bucket.length; i++) {
-                            indices.push(bucket[i]);
-                        }
-                    }
-                }
-            }
-            return indices;
-        }
-        // Math utilities (delegated)
-        polarCoordinates(vector) {
-            return toPolar(vector);
-        }
-        cartesianCoordinates(speed, angle) {
-            return toCartesian(speed, angle);
+            return this.spatialHash.getNeighborIndices(cellId);
         }
         // Bounce tracking
         hasBounced(index) {
             const current = this.bounced[index] ?? 0;
             this.bounced[index] = current + 1;
             return this.bounced[index];
-        }
-        /**
-         * Lazily injects the CSS rule that enables CSS variable-based transforms.
-         * Called once on first element initialization.
-         *
-         * Why CSS variables instead of cssText:
-         * - cssText creates ~80 char strings every frame (e.g., "transform: translate3d(...)")
-         * - setProperty creates ~10 char strings (e.g., "123.45px")
-         * - Avoids CSS parsing overhead on every frame
-         * - will-change is set once via CSS, not reassigned every frame
-         */
-        injectStyles() {
-            if (Elastica.stylesInjected)
-                return;
-            const style = document.createElement('style');
-            style.id = 'elastica-css';
-            // Using CSS variables --ex (x), --ey (y), --er (rotation) for transform
-            // The [data-elastica] attribute marks elements managed by the engine
-            style.textContent = '[data-elastica]{transform:translate3d(var(--ex,0),var(--ey,0),0)rotate(var(--er,0))scale(var(--eds,1));will-change:transform}';
-            document.head.appendChild(style);
-            Elastica.stylesInjected = true;
         }
         /**
          * Initializes an element for CSS variable-based positioning.
@@ -1485,10 +1544,7 @@
          * For canvas mode, this is a no-op when element is null/undefined.
          */
         initializeElement(element) {
-            if (!element)
-                return; // No-op for canvas mode
-            this.injectStyles();
-            element.dataset.elastica = '';
+            this.renderer.initializeElement(element);
         }
         /**
          * Updates element position using CSS custom properties.
@@ -1499,24 +1555,8 @@
          * - Browser batches variable updates efficiently
          */
         setPosition(element, { x = 0, y = 0, angle = 0 }, index) {
-            if (element && !this.isStatic[index]) {
-                // Update CSS variables - shorter strings than full cssText, no CSS parsing
-                element.style.setProperty('--ex', x + 'px');
-                element.style.setProperty('--ey', y + 'px');
-                // Only set rotation if non-zero to avoid unnecessary updates
-                if (angle !== 0) {
-                    element.style.setProperty('--er', angle + 'rad');
-                }
-                // Apply visual scale (does not affect collision bounds)
-                const scale = this.displayScales[index];
-                if (scale !== undefined && scale !== 1) {
-                    if (this.calculatecCollisions && !this.displayScaleWarningShown) {
-                        console.warn('[Elastica] displayScale is visual-only, collision bounds unchanged');
-                        this.displayScaleWarningShown = true;
-                    }
-                    element.style.setProperty('--eds', String(scale));
-                }
-            }
+            const scale = this.displayScales[index] ?? 1;
+            this.renderer.setPosition(element, { x, y, angle, scale }, index, this.isStatic[index] ?? false);
         }
         // Property setters
         setAngle(index, angle) {
@@ -1588,6 +1628,16 @@
                 deltaTime,
             };
         }
+        getBorderState() {
+            return {
+                positions: this.positions,
+                velocities: this.velocities,
+                dimensions: this.dimensions,
+                container: this.container,
+                containerOffsets: this.containerOffsets,
+                isStatic: this.isStatic,
+            };
+        }
         // Main update loop with substepping support
         update(elements, callback) {
             const elementCount = elements.length;
@@ -1611,15 +1661,8 @@
                         this.angularVelocities[index] = 0;
                     }
                 }
-                const borderState = {
-                    positions: this.positions,
-                    velocities: this.velocities,
-                    dimensions: this.dimensions,
-                    container: this.container,
-                    containerOffsets: this.containerOffsets,
-                    isStatic: this.isStatic,
-                };
-                // Handle borders
+                // Handle borders (using cached state object)
+                const borderState = this.getBorderState();
                 if (this.calculateBorders === 'rigid') {
                     handleRigidBorders(borderState, elementCount, (index) => this.hasBounced(index));
                 }
@@ -1627,7 +1670,7 @@
                     handlePeriodicBorders(borderState, elementCount);
                 }
                 // Handle collisions
-                if (this.calculatecCollisions) {
+                if (this.calculateCollisions) {
                     if (this.useOBB) {
                         const obbState = this.getOBBState(substepDeltaTime);
                         this.collisionsList = detectAndResolveOBB(obbState, elementCount, (indexA, indexB) => {
@@ -1665,12 +1708,6 @@
             }
         }
     }
-    /**
-     * Static flag to ensure CSS is injected only once across all Elastica instances.
-     * The CSS rule uses [data-elastica] selector to apply transforms via CSS variables,
-     * which reduces per-frame string allocations compared to setting cssText directly.
-     */
-    Elastica.stylesInjected = false;
 
     function createAccumulator(fixedDeltaTime) {
         return {
@@ -1694,12 +1731,17 @@
         return Math.min(steps, 4);
     }
 
+    exports.DOMRenderer = DOMRenderer;
+    exports.NullRenderer = NullRenderer;
+    exports.SpatialHash = SpatialHash;
     exports.accumulateTime = accumulateTime;
     exports.add = add;
+    exports.axesPool = axesPool;
     exports.calculateSuperposition = calculateSuperposition;
     exports.circleVsAABB = circleVsAABB;
     exports.circleVsCircle = circleVsCircle;
     exports.circleVsOBB = circleVsOBB;
+    exports.cornersPool = cornersPool;
     exports.createAccumulator = createAccumulator;
     exports.cross = cross;
     exports.default = Elastica;

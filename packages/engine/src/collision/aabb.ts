@@ -1,4 +1,5 @@
 import type { CollisionRecord, Vector2D } from '../types'
+import type { AABBState } from './types'
 
 /**
  * Threshold for using sort-and-sweep in dense buckets
@@ -58,19 +59,6 @@ export function sweepBucket(
   }
 
   return pairs
-}
-
-/**
- * State required for AABB collision detection
- */
-export type AABBState = {
-  positions: Vector2D[]
-  velocities: Vector2D[]
-  dimensions: Vector2D[]
-  hash: number[]
-  gridSize: number
-  isStatic: boolean[]
-  buckets: Map<number, number[]>
 }
 
 /**
