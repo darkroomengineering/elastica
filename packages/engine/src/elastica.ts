@@ -2,7 +2,6 @@ import { handlePeriodicBorders, handleRigidBorders, type BorderState } from './b
 import { detectAndResolveAABB } from './collision/aabb'
 import { detectAndResolveOBB, integrateAngularMotion } from './collision/obb'
 import type { AABBState, OBBState } from './collision/types'
-import { DOMRenderer, type Renderer } from './renderer'
 import { SpatialHash } from './spatial-hash'
 import type {
   BorderType,
@@ -11,14 +10,12 @@ import type {
   ContainerOffsets,
   ElasticaConfigOBB,
   ElementData,
+  RenderCallback,
   ShapeType,
   Vector2D
 } from './types'
 
 export default class Elastica {
-  // Renderer for decoupling physics from presentation
-  private renderer: Renderer
-
   // Spatial hash for collision detection
   private spatialHash: SpatialHash
 
@@ -118,9 +115,6 @@ export default class Elastica {
     this.fixedDeltaTime = Math.max(1, solver?.fixedDeltaTime ?? 16.67)
     this.substeps = Math.max(1, Math.floor(solver?.substeps ?? 1))
 
-    // Initialize renderer
-    this.renderer = new DOMRenderer(this.calculateCollisions)
-
     // Backward-compatible alias for typo (deprecated)
     Object.defineProperty(this, 'calculatecCollisions', {
       get: () => this.calculateCollisions,
@@ -204,15 +198,6 @@ export default class Elastica {
       if (this.isStatic[index]) {
         this.staticPositions[index] = [pos[0], pos[1]]
       }
-
-      const element = elements[index]
-      const dimension = this.dimensions[index]
-      if (element && dimension) {
-        this.setPosition(element.element, {
-          x: pos[0] - dimension[0],
-          y: pos[1] - dimension[1],
-        }, index)
-      }
     }
 
     // Build initial spatial hash with buckets
@@ -234,42 +219,6 @@ export default class Elastica {
     const current = this.bounced[index] ?? 0
     this.bounced[index] = current + 1
     return this.bounced[index]!
-  }
-
-  /**
-   * Initializes an element for CSS variable-based positioning.
-   * Should be called once per element when it's added to the simulation.
-   *
-   * This marks the element with data-elastica attribute which:
-   * - Applies the CSS transform rule using variables
-   * - Sets will-change: transform once (not every frame)
-   *
-   * For canvas mode, this is a no-op when element is null/undefined.
-   */
-  initializeElement(element: HTMLElement | null | undefined): void {
-    this.renderer.initializeElement(element)
-  }
-
-  /**
-   * Updates element position using CSS custom properties.
-   *
-   * Why setProperty over cssText:
-   * - Shorter strings reduce GC pressure (~10 chars vs ~80 chars per update)
-   * - No CSS parsing - just variable value updates
-   * - Browser batches variable updates efficiently
-   */
-  setPosition(
-    element: HTMLElement | null | undefined,
-    { x = 0, y = 0, angle = 0 }: { x?: number; y?: number; angle?: number },
-    index: number
-  ): void {
-    const scale = this.displayScales[index] ?? 1
-    this.renderer.setPosition(
-      element,
-      { x, y, angle, scale },
-      index,
-      this.isStatic[index] ?? false
-    )
   }
 
   // Property setters
@@ -363,7 +312,8 @@ export default class Elastica {
   // Main update loop with substepping support
   update(
     elements: (ElementData | null | undefined)[],
-    callback: (elastica: Elastica) => void
+    callback: (elastica: Elastica) => void,
+    onRender?: RenderCallback
   ): void {
     const elementCount = elements.length
 
@@ -432,19 +382,21 @@ export default class Elastica {
     // Restore original deltaTime
     this.fixedDeltaTime = originalDeltaTime
 
-    // Update DOM positions once at end (not per substep)
-    for (let index = 0; index < elementCount; index++) {
-      const element = elements[index]
-      const position = this.positions[index]
-      const dimension = this.dimensions[index]
-      const angle = this.useOBB ? this.angles[index] : 0
+    // Render callback (once per frame, after all physics substeps)
+    if (onRender) {
+      for (let index = 0; index < elementCount; index++) {
+        if (this.isStatic[index]) continue
 
-      if (element && position && dimension) {
-        this.setPosition(element.element, {
-          x: position[0] - dimension[0],
-          y: position[1] - dimension[1],
-          angle: angle ?? 0,
-        }, index)
+        const position = this.positions[index]
+        const dimension = this.dimensions[index]
+        if (!position || !dimension) continue
+
+        const x = position[0] - dimension[0]
+        const y = position[1] - dimension[1]
+        const angle = this.useOBB ? (this.angles[index] ?? 0) : 0
+        const scale = this.displayScales[index] ?? 1
+
+        onRender(index, x, y, angle, scale)
       }
     }
   }

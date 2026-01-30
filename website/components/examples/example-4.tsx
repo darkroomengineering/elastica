@@ -40,7 +40,7 @@ const initialParams: Example4Params = {
   borders: 'periodic',
   useOBB: true,
   thrustPower: 0.4,
-  noiseStrength: 0.05,
+  noiseStrength: 0.025,
   noiseSmoothing: 0.05,
   interactionRadius: 60,
   play: true,

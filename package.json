@@ -1,6 +1,6 @@
 {
   "name": "@darkroom.engineering/elastica",
-  "version": "0.0.14",
+  "version": "1.0.0-dev",
   "workspaces": [
     "packages/*",
     "website"

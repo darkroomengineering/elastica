@@ -65,3 +65,5 @@ export type ElasticaConfigOBB = ElasticaConfig & {
     defaultRestitution?: number;
     solver?: SolverConfig;
 };
+/** Callback invoked for each element during render phase */
+export type RenderCallback = (index: number, x: number, y: number, angle: number, scale: number) => void;

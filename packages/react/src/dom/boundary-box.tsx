@@ -4,6 +4,7 @@ import type { ElementData } from '@darkroom.engineering/elastica'
 import { useRect } from '@darkroom.engineering/hamo'
 import { memo, useEffect, useRef, type HTMLAttributes } from 'react'
 import { useDomElastica } from '../context'
+import { initializeElement } from './renderer'
 
 export type BoundaryBoxProps = HTMLAttributes<HTMLDivElement>
 
@@ -31,7 +32,7 @@ export const BoundaryBox = memo(function BoundaryBox({
   children,
   ...props
 }: BoundaryBoxProps) {
-  const { addBox, removeBox, elastica } = useDomElastica()
+  const { addBox, removeBox } = useDomElastica()
   const [setRectRef, rect] = useRect()
   const elementRef = useRef<HTMLDivElement | null>(null)
   const elementDataRef = useRef<ElementData | null>(null)
@@ -42,7 +43,7 @@ export const BoundaryBox = memo(function BoundaryBox({
     if (!element) return
 
     // Initialize element for CSS variable-based positioning
-    elastica.initializeElement(element)
+    initializeElement(element)
 
     // Create element data object that will be mutated with rect updates
     const elementData: ElementData = {
@@ -56,9 +57,9 @@ export const BoundaryBox = memo(function BoundaryBox({
       removeBox(element)
       elementDataRef.current = null
     }
-    // Only depend on elastica and addBox/removeBox, not rect
+    // Only depend on addBox/removeBox, not rect
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [elastica, addBox, removeBox])
+  }, [addBox, removeBox])
 
   // Update rect in place without re-registering
   useEffect(() => {

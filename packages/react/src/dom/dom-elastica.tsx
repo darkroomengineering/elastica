@@ -21,6 +21,7 @@ import {
 import { ElasticaContext, type DomElasticaContextValue } from '../context'
 import type { InitialConditionParams, UpdateParams } from '../types'
 import { HashGrid, isEmptyArray, useJavascriptEnable } from '../utils'
+import { injectElasticaStyles, renderElement } from './renderer'
 
 export type DomElasticaRef = {
   play: () => void
@@ -151,6 +152,8 @@ export function DomElastica({
       const newElastica = new Elastica(stableConfig)
       setElastica(newElastica)
       accumulatorRef.current = createAccumulator(newElastica.fixedDeltaTime)
+      // Inject CSS styles for DOM rendering
+      injectElasticaStyles()
     }, [stableConfig])
 
     const addBox = useCallback((element: HTMLElement, data: ElementData) => {
@@ -198,17 +201,30 @@ export function DomElastica({
 
       const steps = accumulateTime(accumulator, deltaTime)
       for (let i = 0; i < steps; i++) {
-        elastica.update(boxes, (instance) => {
-          updateRef.current({
-            boxes,
-            ...instance,
-            deltaTime: instance.fixedDeltaTime,
-            hash: instance.hash,
-            gridSize: instance.gridSize,
-            bounced: instance.bounced,
-            isStatic: instance.isStatic,
-          })
-        })
+        // Pass render callback only on last step (render once per frame)
+        const isLastStep = i === steps - 1
+        elastica.update(
+          boxes,
+          (instance) => {
+            updateRef.current({
+              boxes,
+              ...instance,
+              deltaTime: instance.fixedDeltaTime,
+              hash: instance.hash,
+              gridSize: instance.gridSize,
+              bounced: instance.bounced,
+              isStatic: instance.isStatic,
+            })
+          },
+          isLastStep
+            ? (index, x, y, angle, scale) => {
+                const element = boxes[index]?.element
+                if (element) {
+                  renderElement(element, x, y, angle, scale, elastica.calculateCollisions)
+                }
+              }
+            : undefined
+        )
       }
     })
 

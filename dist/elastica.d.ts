@@ -1,6 +1,5 @@
-import type { BorderType, CollisionRecord, Container, ContainerOffsets, ElasticaConfigOBB, ElementData, ShapeType, Vector2D } from './types';
+import type { BorderType, CollisionRecord, Container, ContainerOffsets, ElasticaConfigOBB, ElementData, RenderCallback, ShapeType, Vector2D } from './types';
 export default class Elastica {
-    private renderer;
     private spatialHash;
     calculateCollisions: boolean;
     calculateBorders: BorderType;
@@ -37,30 +36,6 @@ export default class Elastica {
     updateSpatialHash(elementCount: number): void;
     getNeighborIndices(cellId: number): number[];
     hasBounced(index: number): number;
-    /**
-     * Initializes an element for CSS variable-based positioning.
-     * Should be called once per element when it's added to the simulation.
-     *
-     * This marks the element with data-elastica attribute which:
-     * - Applies the CSS transform rule using variables
-     * - Sets will-change: transform once (not every frame)
-     *
-     * For canvas mode, this is a no-op when element is null/undefined.
-     */
-    initializeElement(element: HTMLElement | null | undefined): void;
-    /**
-     * Updates element position using CSS custom properties.
-     *
-     * Why setProperty over cssText:
-     * - Shorter strings reduce GC pressure (~10 chars vs ~80 chars per update)
-     * - No CSS parsing - just variable value updates
-     * - Browser batches variable updates efficiently
-     */
-    setPosition(element: HTMLElement | null | undefined, { x, y, angle }: {
-        x?: number;
-        y?: number;
-        angle?: number;
-    }, index: number): void;
     setAngle(index: number, angle: number): void;
     setAngularVelocity(index: number, angularVelocity: number): void;
     setMass(index: number, mass: number): void;
@@ -68,5 +43,5 @@ export default class Elastica {
     private getAABBState;
     private getOBBState;
     private getBorderState;
-    update(elements: (ElementData | null | undefined)[], callback: (elastica: Elastica) => void): void;
+    update(elements: (ElementData | null | undefined)[], callback: (elastica: Elastica) => void, onRender?: RenderCallback): void;
 }
