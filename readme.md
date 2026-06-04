@@ -6,12 +6,12 @@ Physics engine for 2D rigid body collisions with React bindings.
 
 ## Features
 
-- **Two collision modes**: AABB (axis-aligned) and OBB (oriented/rotational)
-- **Two rendering modes**: DOM (CSS transforms) and Canvas (2D batched rendering)
-- **Shape support**: Rectangles and circles
-- **Frame-rate independent**: Fixed timestep physics with accumulator
-- **Spatial hashing**: Efficient broad-phase collision detection
-- **Configurable borders**: Rigid (bounce) or periodic (wrap-around)
+- **Two collision modes** — AABB (axis-aligned) and OBB (oriented / rotational) bounding boxes
+- **Two rendering modes** — DOM via CSS transforms, or batched 2D Canvas
+- **Shape support** — rectangles and circles
+- **Frame-rate independent** — fixed-timestep physics with an accumulator for a stable simulation
+- **Spatial hashing** — efficient broad-phase collision detection
+- **Configurable borders** — rigid (bounce) or periodic (wrap-around)
 
 ## Installation
 
