@@ -31,6 +31,8 @@ interface Example4Params {
   noiseStrength: number
   noiseSmoothing: number
   interactionRadius: number
+  impulseResponse: boolean
+  steeringRecovery: number
   play: boolean
 }
 
@@ -43,6 +45,8 @@ const initialParams: Example4Params = {
   noiseStrength: 0.025,
   noiseSmoothing: 0.05,
   interactionRadius: 60,
+  impulseResponse: true,
+  steeringRecovery: 0.01,
   play: true,
 }
 
@@ -230,26 +234,42 @@ export function Example4(_props: Example4Props) {
             // Update angle to Vicsek-averaged angle
             angles[index] = newAngle
 
-            // Self-propulsion displacement (scaled by warmup for smooth start)
-            const thrust: [number, number] = [
-              Math.cos(newAngle) * params.thrustPower * deltaTime * warmup,
-              Math.sin(newAngle) * params.thrustPower * deltaTime * warmup,
-            ]
+            if (params.impulseResponse) {
+              // Steering as a force: blend velocity toward the self-propulsion
+              // cruise velocity instead of overwriting it, so the resolver's
+              // collision impulses persist and boids visibly bounce apart.
+              const desiredVx = Math.cos(newAngle) * params.thrustPower * warmup
+              const desiredVy = Math.sin(newAngle) * params.thrustPower * warmup
+              const blend = 1 - Math.exp(-params.steeringRecovery * deltaTime)
 
-            // Update position
-            const newPosition: [number, number] = [
-              position[0] + thrust[0],
-              position[1] + thrust[1],
-            ]
+              const velocity = velocities[index] ?? [0, 0]
+              const nextVx = velocity[0] + (desiredVx - velocity[0]) * blend
+              const nextVy = velocity[1] + (desiredVy - velocity[1]) * blend
 
-            positions[index] = newPosition
-
-            // Update velocity for collision system
-            if (deltaTime > 0) {
-              velocities[index] = [
-                thrust[0] / deltaTime,
-                thrust[1] / deltaTime,
+              velocities[index] = [nextVx, nextVy]
+              positions[index] = [
+                position[0] + nextVx * deltaTime,
+                position[1] + nextVy * deltaTime,
               ]
+            } else {
+              // Legacy: rebuild velocity from thrust each frame — discards the
+              // resolver's collision impulses (kept for A/B comparison)
+              const thrust: [number, number] = [
+                Math.cos(newAngle) * params.thrustPower * deltaTime * warmup,
+                Math.sin(newAngle) * params.thrustPower * deltaTime * warmup,
+              ]
+
+              positions[index] = [
+                position[0] + thrust[0],
+                position[1] + thrust[1],
+              ]
+
+              if (deltaTime > 0) {
+                velocities[index] = [
+                  thrust[0] / deltaTime,
+                  thrust[1] / deltaTime,
+                ]
+              }
             }
 
             // Visual feedback for collisions
@@ -360,6 +380,31 @@ function useTweakpane(
         setParams((prev) => ({
           ...prev,
           thrustPower: ev.value,
+        }))
+      })
+
+    pane
+      .addBinding(localParams, 'impulseResponse', {
+        label: 'Impulse Response',
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          impulseResponse: ev.value,
+        }))
+      })
+
+    pane
+      .addBinding(localParams, 'steeringRecovery', {
+        label: 'Steering Recovery',
+        min: 0.002,
+        max: 0.05,
+        step: 0.001,
+      })
+      .on('change', (ev) => {
+        setParams((prev) => ({
+          ...prev,
+          steeringRecovery: ev.value,
         }))
       })
 
