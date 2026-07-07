@@ -6,6 +6,7 @@ import { Example1 } from '~/components/examples/example-1'
 import { Example3 } from '~/components/examples/example-3'
 import { Example4 } from '~/components/examples/example-4'
 import { Example6 } from '~/components/examples/example-6'
+import { Example7 } from '~/components/examples/example-7'
 import { Wrapper } from '~/components/layout/wrapper'
 import s from './page.module.css'
 
@@ -16,6 +17,7 @@ const examples = [
   { name: 'Flocking', component: 'Example4' },
   // { name: 'Text', component: 'Example5' },
   { name: 'Canvas', component: 'Example6' },
+  { name: 'Container', component: 'Example7' },
 ] as const
 
 const data = [
@@ -46,6 +48,8 @@ export default function Home() {
       //   return <Example5 data={data} />
       case 'Example6':
         return <Example6 />
+      case 'Example7':
+        return <Example7 />
       default:
         return null
     }
