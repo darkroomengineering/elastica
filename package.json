@@ -15,6 +15,7 @@
     "build": "bun run clean && bun run build:engine && bun run build:react && bun run build:website",
     "start:website": "cd website && bun run start",
     "clean": "shx rm -rf dist/*",
+    "test": "bun test packages",
     "publish": "bun publish",
     "publish:dev": "bun publish --tag dev"
   },
