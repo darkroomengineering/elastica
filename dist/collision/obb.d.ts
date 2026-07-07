@@ -32,12 +32,13 @@ export declare function isOBBNeighbor(state: OBBState, indexA: number, indexB: n
  */
 export declare function getKineticEnergy(state: OBBState, index: number): number;
 /**
- * Resolve OBB collision with energy conservation
+ * Resolve an OBB collision.
  *
- * PERF NOTE: Creates multiple Vector2D arrays per collision resolution.
- * For high collision counts, consider mutating in-place or using object pooling.
+ * Thin wrapper over the shared contact resolver (see resolve.ts for the full
+ * design rationale): mass-weighted impulse split, approach-velocity gate,
+ * kick proportional to approach speed, KE ceiling, positional correction.
  */
-export declare function resolveOBBCollision(state: OBBState, indexA: number, indexB: number, contact: ContactPoint): void;
+export declare function resolveOBBCollision(state: OBBState, indexA: number, indexB: number, contact: ContactPoint): boolean;
 /**
  * Detect and resolve all OBB collisions
  * Uses spatial hash buckets for O(n×k) complexity instead of O(n²)

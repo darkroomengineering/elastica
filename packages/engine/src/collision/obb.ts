@@ -3,6 +3,7 @@ import { axesPool, cornersPool } from '../pool'
 import type { CollisionRecord, CollisionResult, ContactPoint, Vector2D } from '../types'
 import { getNeighborCellIds, sweepBucket } from './aabb'
 import { circleVsCircle, circleVsOBB } from './circle'
+import { resolveContact } from './resolve'
 import type { OBBState } from './types'
 
 /**
@@ -225,188 +226,19 @@ export function getKineticEnergy(state: OBBState, index: number): number {
 }
 
 /**
- * Resolve OBB collision with energy conservation
+ * Resolve an OBB collision.
  *
- * PERF NOTE: Creates multiple Vector2D arrays per collision resolution.
- * For high collision counts, consider mutating in-place or using object pooling.
+ * Thin wrapper over the shared contact resolver (see resolve.ts for the full
+ * design rationale): mass-weighted impulse split, approach-velocity gate,
+ * kick proportional to approach speed, KE ceiling, positional correction.
  */
 export function resolveOBBCollision(
   state: OBBState,
   indexA: number,
   indexB: number,
   contact: ContactPoint
-): void {
-  const posA = state.positions[indexA]
-  const posB = state.positions[indexB]
-  const velA = state.velocities[indexA]
-  const velB = state.velocities[indexB]
-  const massA = state.masses[indexA]
-  const massB = state.masses[indexB]
-  const inertiaA = state.momentsOfInertia[indexA]
-  const inertiaB = state.momentsOfInertia[indexB]
-  const angVelA = state.angularVelocities[indexA]
-  const angVelB = state.angularVelocities[indexB]
-  const restA = state.restitutions[indexA]
-  const restB = state.restitutions[indexB]
-
-  if (
-    !posA || !posB || !velA || !velB ||
-    massA === undefined || massB === undefined ||
-    inertiaA === undefined || inertiaB === undefined ||
-    angVelA === undefined || angVelB === undefined ||
-    restA === undefined || restB === undefined
-  ) {
-    return
-  }
-
-  const isStaticA = state.isStatic[indexA] ?? false
-  const isStaticB = state.isStatic[indexB] ?? false
-
-  // Skip if both are static
-  if (isStaticA && isStaticB) return
-
-  const { normal, penetration } = contact
-  const restitution = Math.min(restA, restB)
-
-  const overlapForce = Math.max(penetration, 1)
-  const repulsionStrength = 1 / overlapForce
-
-  const { slop, percent } = state
-
-  // Handle static-dynamic collision
-  if (isStaticA || isStaticB) {
-    if (isStaticA) {
-      // A is static, B is dynamic
-      const initialKE = getKineticEnergy(state, indexB)
-
-      const newVelB: Vector2D = [
-        velB[0] + normal[0] * repulsionStrength * 2,
-        velB[1] + normal[1] * repulsionStrength * 2,
-      ]
-
-      const contactPoint: Vector2D = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2]
-      const rBx = contactPoint[0] - posB[0]
-      const rBy = contactPoint[1] - posB[1]
-      const torqueB = rBx * (normal[1] * repulsionStrength * 2) - rBy * (normal[0] * repulsionStrength * 2)
-      const dt = state.deltaTime
-      const newAngVelB = angVelB + (torqueB / inertiaB) / dt
-
-      state.velocities[indexB] = newVelB
-      state.angularVelocities[indexB] = newAngVelB
-
-      const finalKE = getKineticEnergy(state, indexB)
-      if (finalKE > 0) {
-        const targetKE = initialKE * restitution
-        const scale = Math.sqrt(targetKE / finalKE)
-        state.velocities[indexB] = [newVelB[0] * scale, newVelB[1] * scale]
-        state.angularVelocities[indexB] = newAngVelB * scale
-      }
-
-      // Position correction
-      if (penetration > slop) {
-        const correction = (penetration - slop) * percent
-        state.positions[indexB] = [
-          posB[0] + normal[0] * correction,
-          posB[1] + normal[1] * correction,
-        ]
-      }
-    } else {
-      // B is static, A is dynamic
-      const initialKE = getKineticEnergy(state, indexA)
-
-      const newVelA: Vector2D = [
-        velA[0] - normal[0] * repulsionStrength * 2,
-        velA[1] - normal[1] * repulsionStrength * 2,
-      ]
-
-      const contactPoint: Vector2D = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2]
-      const rAx = contactPoint[0] - posA[0]
-      const rAy = contactPoint[1] - posA[1]
-      const torqueA = rAx * (-normal[1] * repulsionStrength * 2) - rAy * (-normal[0] * repulsionStrength * 2)
-      const dt = state.deltaTime
-      const newAngVelA = angVelA + (torqueA / inertiaA) / dt
-
-      state.velocities[indexA] = newVelA
-      state.angularVelocities[indexA] = newAngVelA
-
-      const finalKE = getKineticEnergy(state, indexA)
-      if (finalKE > 0) {
-        const targetKE = initialKE * restitution
-        const scale = Math.sqrt(targetKE / finalKE)
-        state.velocities[indexA] = [newVelA[0] * scale, newVelA[1] * scale]
-        state.angularVelocities[indexA] = newAngVelA * scale
-      }
-
-      // Position correction
-      if (penetration > slop) {
-        const correction = (penetration - slop) * percent
-        state.positions[indexA] = [
-          posA[0] - normal[0] * correction,
-          posA[1] - normal[1] * correction,
-        ]
-      }
-    }
-    return
-  }
-
-  // Both are dynamic
-  const initialKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB)
-
-  const newVelA: Vector2D = [
-    velA[0] - normal[0] * repulsionStrength,
-    velA[1] - normal[1] * repulsionStrength,
-  ]
-  const newVelB: Vector2D = [
-    velB[0] + normal[0] * repulsionStrength,
-    velB[1] + normal[1] * repulsionStrength,
-  ]
-
-  const contactPoint: Vector2D = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2]
-
-  const rAx = contactPoint[0] - posA[0]
-  const rAy = contactPoint[1] - posA[1]
-  const rBx = contactPoint[0] - posB[0]
-  const rBy = contactPoint[1] - posB[1]
-
-  const torqueA = rAx * (-normal[1] * repulsionStrength) - rAy * (-normal[0] * repulsionStrength)
-  const torqueB = rBx * (normal[1] * repulsionStrength) - rBy * (normal[0] * repulsionStrength)
-
-  // Divide by dt to convert impulse units: integration multiplies by dt, so this cancels out
-  const dt = state.deltaTime
-  const newAngVelA = angVelA + (torqueA / inertiaA) / dt
-  const newAngVelB = angVelB + (torqueB / inertiaB) / dt
-
-  state.velocities[indexA] = newVelA
-  state.velocities[indexB] = newVelB
-  state.angularVelocities[indexA] = newAngVelA
-  state.angularVelocities[indexB] = newAngVelB
-
-  const finalKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB)
-
-  if (finalKE > 0) {
-    const targetKE = initialKE * restitution
-    const scale = Math.sqrt(targetKE / finalKE)
-
-    state.velocities[indexA] = [newVelA[0] * scale, newVelA[1] * scale]
-    state.velocities[indexB] = [newVelB[0] * scale, newVelB[1] * scale]
-    state.angularVelocities[indexA] = newAngVelA * scale
-    state.angularVelocities[indexB] = newAngVelB * scale
-  }
-
-  // Position correction
-  if (penetration > slop) {
-    const correction = (penetration - slop) * percent
-    const totalMass = massA + massB
-
-    state.positions[indexA] = [
-      posA[0] - normal[0] * correction * (massB / totalMass),
-      posA[1] - normal[1] * correction * (massB / totalMass),
-    ]
-    state.positions[indexB] = [
-      posB[0] + normal[0] * correction * (massA / totalMass),
-      posB[1] + normal[1] * correction * (massA / totalMass),
-    ]
-  }
+): boolean {
+  return resolveContact(state, indexA, indexB, contact)
 }
 
 /**
@@ -462,6 +294,9 @@ function processOBBCollisionPair(
   const velB = state.velocities[indexB]
   if (!velA || !velB) return
 
+  // Zero-size bodies never collide
+  if (!((state.maxExtents[indexA] ?? 0) > 0) || !((state.maxExtents[indexB] ?? 0) > 0)) return
+
   // Create pair key to avoid duplicate checks (bitwise encoding, no allocation)
   const pairKey = (indexA << 16) | indexB
   if (checkedPairs.has(pairKey)) return
@@ -475,11 +310,14 @@ function processOBBCollisionPair(
 
   if (!result.collided || !result.contact) return
 
+  // Resolve first: record + bounce callback only when a real impulse fired.
+  // Overlap-only frames (already-separating or resting pairs, drained by
+  // positional correction) are not bounces — recording them made touching
+  // pairs increment the bounce counter every frame.
+  if (!resolveOBBCollision(state, indexA, indexB, result.contact)) return
+
   collisionsList.push({ loop: indexA, inHash: indexB })
   onCollision?.(indexA, indexB)
-
-  // Resolve collision
-  resolveOBBCollision(state, indexA, indexB, result.contact)
 }
 
 /**
@@ -517,13 +355,26 @@ export function detectAndResolveOBB(
 
       // Dense bucket: use sort-and-sweep algorithm
       if (bucket.length > DENSE_BUCKET_THRESHOLD) {
-        // Only sweep each dense bucket once
-        if (sweptBuckets.has(neighborCellId)) continue
-        sweptBuckets.add(neighborCellId)
-
-        const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions)
-        for (const [idxA, idxB] of sweepPairs) {
-          processOBBCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision)
+        // Interior sweep: process all within-bucket pairs exactly once per frame.
+        // Passes maxExtents so the X-axis overlap check is rotation-safe (C38):
+        // for rotated OBBs, dimensions[0] is the unrotated half-width which
+        // under-estimates the true swept extent, causing valid pairs to be pruned.
+        if (!sweptBuckets.has(neighborCellId)) {
+          sweptBuckets.add(neighborCellId)
+          const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions, state.maxExtents)
+          for (const [idxA, idxB] of sweepPairs) {
+            processOBBCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision)
+          }
+        }
+        // Cross-cell pass: test indexA against members of this neighboring dense bucket.
+        // Skipped when neighborCellId is indexA's own cell because sweepBucket already
+        // covered all pairs among co-members. The checkedPairs guard in
+        // processOBBCollisionPair deduplicates any pair that appears in multiple neighbors.
+        if (neighborCellId !== cellIdA) {
+          for (const indexB of bucket) {
+            if (indexA >= indexB) continue
+            processOBBCollisionPair(state, indexA, indexB, checkedPairs, collisionsList, onCollision)
+          }
         }
         continue
       }

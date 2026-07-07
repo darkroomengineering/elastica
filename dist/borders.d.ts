@@ -9,6 +9,8 @@ export type BorderState = {
     container: Container;
     containerOffsets: ContainerOffsets;
     isStatic: boolean[];
+    /** Rotation-safe half-extents (diagonal) — used by periodic wrap margins */
+    maxExtents?: number[];
 };
 /**
  * Handle rigid borders - bodies bounce off container edges

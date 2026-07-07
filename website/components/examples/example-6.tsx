@@ -10,8 +10,8 @@ const RECT_COUNT = 100
 // Default cursor repulsion settings
 const initialParams = {
   repulsionRadius: 350,
-  repulsionStrength: 0.2,
-  gravity: 0.01,
+  repulsionStrength: 0.04,
+  gravity: 0.0006,
 }
 
 /**

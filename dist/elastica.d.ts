@@ -3,7 +3,6 @@ export default class Elastica {
     private spatialHash;
     calculateCollisions: boolean;
     calculateBorders: BorderType;
-    gridSize: number;
     containerOffsets: ContainerOffsets;
     container: Container;
     collisionsList: CollisionRecord[];
@@ -17,6 +16,8 @@ export default class Elastica {
     displayScales: number[];
     get hash(): number[];
     get buckets(): Map<number, number[]>;
+    get gridSize(): number;
+    set gridSize(v: number);
     useOBB: boolean;
     angles: number[];
     angularVelocities: number[];

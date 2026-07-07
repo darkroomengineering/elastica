@@ -1,4 +1,5 @@
 import type { CollisionRecord, Vector2D } from '../types'
+import { resolveContact } from './resolve'
 import type { AABBState } from './types'
 
 /**
@@ -15,20 +16,24 @@ const DENSE_BUCKET_THRESHOLD = 16
 export function sweepBucket(
   bucket: number[],
   positions: Vector2D[],
-  dimensions: Vector2D[]
+  dimensions: Vector2D[],
+  extents?: number[]
 ): Array<[number, number]> {
   if (bucket.length < 2) return []
 
-  // Build sortable entries with left edge position
+  // Build sortable entries with left edge position.
+  // When extents is provided (e.g. rotation-invariant maxExtents for OBBs),
+  // use it instead of dimensions[0] so rotated bodies are not pruned incorrectly.
   const entries: Array<{ idx: number; left: number; right: number }> = []
   for (const idx of bucket) {
     const pos = positions[idx]
     const dim = dimensions[idx]
     if (pos && dim) {
+      const halfExtent = extents !== undefined ? (extents[idx] ?? dim[0]) : dim[0]
       entries.push({
         idx,
-        left: pos[0] - dim[0],
-        right: pos[0] + dim[0],
+        left: pos[0] - halfExtent,
+        right: pos[0] + halfExtent,
       })
     }
   }
@@ -107,6 +112,11 @@ export function testAABB(
     return false
   }
 
+  // Zero-size bodies never collide (consistent with OBB zero-size guard)
+  if (dimA[0] <= 0 || dimA[1] <= 0 || dimB[0] <= 0 || dimB[1] <= 0) {
+    return false
+  }
+
   const overlapX = Math.abs(posA[0] - posB[0]) < dimA[0] + dimB[0]
   const overlapY = Math.abs(posA[1] - posB[1]) < dimA[1] + dimB[1]
 
@@ -144,80 +154,44 @@ export function calculateSuperposition(
 }
 
 /**
- * Resolve AABB collision with energy conservation
- * Swaps velocities and scales to conserve kinetic energy
+ * Resolve an AABB collision through the shared contact resolver.
+ *
+ * Builds a minimum-translation-vector contact (axis of least overlap, normal
+ * pointing from A toward B) and delegates to resolveContact — see resolve.ts
+ * for the full design rationale. AABB mode resolves without rotation.
  */
 export function resolveAABBCollision(
   state: AABBState,
   indexA: number,
   indexB: number
-): void {
-  const velA = state.velocities[indexA]
-  const velB = state.velocities[indexB]
+): boolean {
+  const posA = state.positions[indexA]
+  const dimA = state.dimensions[indexA]
+  const posB = state.positions[indexB]
+  const dimB = state.dimensions[indexB]
 
-  if (!velA || !velB) return
+  if (!posA || !dimA || !posB || !dimB) return false
 
-  const isStaticA = state.isStatic[indexA] ?? false
-  const isStaticB = state.isStatic[indexB] ?? false
+  const overlapX = dimA[0] + dimB[0] - Math.abs(posA[0] - posB[0])
+  const overlapY = dimA[1] + dimB[1] - Math.abs(posA[1] - posB[1])
+  if (overlapX <= 0 || overlapY <= 0) return false
 
-  // Skip if both are static
-  if (isStaticA && isStaticB) return
+  let normal: Vector2D
+  let penetration: number
 
-  // Calculate exclusion force
-  const exclusionForce = calculateSuperposition(state, indexA, indexB)
-
-  // Handle static-dynamic collision
-  if (isStaticA || isStaticB) {
-    if (isStaticA) {
-      // A is static, B is dynamic - apply double force to B and reverse it
-      const newVelB: Vector2D = [
-        velB[0] - exclusionForce[0] * 2,
-        velB[1] - exclusionForce[1] * 2,
-      ]
-      state.velocities[indexB] = newVelB
-      // Keep A's velocity unchanged (it's static)
-    } else {
-      // B is static, A is dynamic - apply double force to A
-      const newVelA: Vector2D = [
-        velA[0] + exclusionForce[0] * 2,
-        velA[1] + exclusionForce[1] * 2,
-      ]
-      state.velocities[indexA] = newVelA
-      // Keep B's velocity unchanged (it's static)
-    }
-    return
+  if (overlapX < overlapY) {
+    normal = [posB[0] >= posA[0] ? 1 : -1, 0]
+    penetration = overlapX
+  } else {
+    normal = [0, posB[1] >= posA[1] ? 1 : -1]
+    penetration = overlapY
   }
 
-  // Both are dynamic - original behavior
-  // Calculate initial kinetic energy (assuming equal masses)
-  const initialKE =
-    0.5 * (velA[0] * velA[0] + velA[1] * velA[1] + velB[0] * velB[0] + velB[1] * velB[1])
-
-  // Apply exclusion force to velocities
-  let newVelA: Vector2D = [
-    velA[0] + exclusionForce[0],
-    velA[1] + exclusionForce[1],
-  ]
-  let newVelB: Vector2D = [
-    velB[0] - exclusionForce[0],
-    velB[1] - exclusionForce[1],
-  ]
-
-  // Calculate final kinetic energy
-  const finalKE =
-    0.5 * (newVelA[0] * newVelA[0] + newVelA[1] * newVelA[1] +
-           newVelB[0] * newVelB[0] + newVelB[1] * newVelB[1])
-
-  // Scale to conserve energy
-  if (finalKE !== 0) {
-    const scale = Math.sqrt(initialKE / finalKE)
-    newVelA = [newVelA[0] * scale, newVelA[1] * scale]
-    newVelB = [newVelB[0] * scale, newVelB[1] * scale]
-  }
-
-  // Swap velocities (this creates the "bouncing" effect)
-  state.velocities[indexA] = newVelB
-  state.velocities[indexB] = newVelA
+  return resolveContact(state, indexA, indexB, {
+    point: [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2],
+    normal,
+    penetration,
+  })
 }
 
 /**
@@ -243,14 +217,14 @@ function processCollisionPair(
   // Test for collision
   if (!testAABB(state, indexA, indexB)) return
 
-  // Record collision
+  // Resolve first: record + bounce callback only when a real impulse fired.
+  // Overlap-only frames (already-separating or resting pairs, drained by
+  // positional correction) are not bounces — recording them made touching
+  // pairs increment the bounce counter every frame.
+  if (!resolveAABBCollision(state, indexA, indexB)) return
+
   collisionsList.push({ loop: indexA, inHash: indexB })
-
-  // Callback for bounce tracking
   onCollision?.(indexA, indexB)
-
-  // Resolve collision
-  resolveAABBCollision(state, indexA, indexB)
 }
 
 /**
@@ -288,13 +262,23 @@ export function detectAndResolveAABB(
 
       // Dense bucket: use sort-and-sweep algorithm
       if (bucket.length > DENSE_BUCKET_THRESHOLD) {
-        // Only sweep each dense bucket once
-        if (sweptBuckets.has(neighborCellId)) continue
-        sweptBuckets.add(neighborCellId)
-
-        const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions)
-        for (const [idxA, idxB] of sweepPairs) {
-          processCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision)
+        // Interior sweep: process all within-bucket pairs exactly once per frame.
+        if (!sweptBuckets.has(neighborCellId)) {
+          sweptBuckets.add(neighborCellId)
+          const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions)
+          for (const [idxA, idxB] of sweepPairs) {
+            processCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision)
+          }
+        }
+        // Cross-cell pass: test indexA against members of this neighboring dense bucket.
+        // Skipped when neighborCellId is indexA's own cell because sweepBucket already
+        // covered all pairs among co-members. The checkedPairs guard in
+        // processCollisionPair deduplicates any pair that appears in multiple neighbors.
+        if (neighborCellId !== cellIdA) {
+          for (const indexB of bucket) {
+            if (indexA >= indexB) continue
+            processCollisionPair(state, indexA, indexB, checkedPairs, collisionsList, onCollision)
+          }
         }
         continue
       }

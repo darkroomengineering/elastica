@@ -139,8 +139,8 @@ export function circleVsAABB(
 
   if (centerInside) {
     // Circle center is inside AABB - find closest edge
-    // Normal should point from rect toward circle (consistent with outside case)
-    // Since center is inside, normal points from closest edge toward center
+    // Normal must point from rect outward through the nearest face (same convention
+    // as the outside case) so that moving the circle along +normal expels it.
     const distToLeft = circlePos[0] - rectLeft
     const distToRight = rectRight - circlePos[0]
     const distToTop = circlePos[1] - rectTop
@@ -149,19 +149,19 @@ export function circleVsAABB(
     const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom)
 
     if (minDist === distToLeft) {
-      normal = [1, 0] // Point RIGHT (toward circle center from left edge)
+      normal = [-1, 0] // Point LEFT, out through left face to expel circle
       penetration = radius + distToLeft
       contactPoint = [rectLeft, circlePos[1]]
     } else if (minDist === distToRight) {
-      normal = [-1, 0] // Point LEFT (toward circle center from right edge)
+      normal = [1, 0] // Point RIGHT, out through right face to expel circle
       penetration = radius + distToRight
       contactPoint = [rectRight, circlePos[1]]
     } else if (minDist === distToTop) {
-      normal = [0, 1] // Point DOWN (toward circle center from top edge)
+      normal = [0, -1] // Point UP, out through top face to expel circle
       penetration = radius + distToTop
       contactPoint = [circlePos[0], rectTop]
     } else {
-      normal = [0, -1] // Point UP (toward circle center from bottom edge)
+      normal = [0, 1] // Point DOWN, out through bottom face to expel circle
       penetration = radius + distToBottom
       contactPoint = [circlePos[0], rectBottom]
     }
@@ -266,8 +266,8 @@ export function circleVsOBB(
 
   if (centerInside) {
     // Circle center is inside OBB - find closest edge in local space
-    // Normal should point from rect toward circle (consistent with outside case)
-    // Since center is inside, normal points from closest edge toward center
+    // Normal must point from rect outward through the nearest face (same convention
+    // as the outside case) so that moving the circle along +normal expels it.
     const distToLeft = localX - (-halfWidth)
     const distToRight = halfWidth - localX
     const distToTop = localY - (-halfHeight)
@@ -276,19 +276,19 @@ export function circleVsOBB(
     const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom)
 
     if (minDist === distToLeft) {
-      localNormal = [1, 0] // Point RIGHT (toward circle center from left edge)
+      localNormal = [-1, 0] // Point LEFT, out through left face to expel circle
       penetration = radius + distToLeft
       localContact = [-halfWidth, localY]
     } else if (minDist === distToRight) {
-      localNormal = [-1, 0] // Point LEFT (toward circle center from right edge)
+      localNormal = [1, 0] // Point RIGHT, out through right face to expel circle
       penetration = radius + distToRight
       localContact = [halfWidth, localY]
     } else if (minDist === distToTop) {
-      localNormal = [0, 1] // Point DOWN (toward circle center from top edge)
+      localNormal = [0, -1] // Point UP, out through top face to expel circle
       penetration = radius + distToTop
       localContact = [localX, -halfHeight]
     } else {
-      localNormal = [0, -1] // Point UP (toward circle center from bottom edge)
+      localNormal = [0, 1] // Point DOWN, out through bottom face to expel circle
       penetration = radius + distToBottom
       localContact = [localX, halfHeight]
     }

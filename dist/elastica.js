@@ -66,24 +66,258 @@
             const velocity = state.velocities[index];
             if (!dimension || !position || !velocity)
                 continue;
+            // Wrap only once the body has FULLY exited the view (trailing edge past
+            // the boundary), and re-enter fully outside the opposite edge so it
+            // glides in. The margin uses the rotation-safe maxExtent when available:
+            // a rotated body's corners reach beyond its unrotated half-extents, and
+            // wrapping while a corner is still visible pops it off-screen.
+            const margin = state.maxExtents?.[index] ?? Math.max(dimension[0], dimension[1]);
             const dir = [Math.sign(velocity[0]), Math.sign(velocity[1])];
-            // Top wall - wrap to bottom
-            if (dir[1] === -1 && position[1] < dimension[1] + container.height * top) {
-                state.positions[index] = [position[0], dimension[1] + container.height * bottom];
+            // Top exit - re-enter from below
+            if (dir[1] === -1 && position[1] < container.height * top - margin) {
+                state.positions[index] = [position[0], container.height * bottom + margin];
             }
-            // Bottom wall - wrap to top
-            if (dir[1] === 1 && position[1] > container.height * bottom - dimension[1]) {
-                state.positions[index] = [state.positions[index][0], container.height * top - dimension[1]];
+            // Bottom exit - re-enter from above
+            if (dir[1] === 1 && position[1] > container.height * bottom + margin) {
+                state.positions[index] = [state.positions[index][0], container.height * top - margin];
             }
-            // Left wall - wrap to right
-            if (dir[0] === -1 && position[0] < dimension[0] + container.width * left) {
-                state.positions[index] = [dimension[0] + container.width * right, state.positions[index][1]];
+            // Left exit - re-enter from the right
+            if (dir[0] === -1 && position[0] < container.width * left - margin) {
+                state.positions[index] = [container.width * right + margin, state.positions[index][1]];
             }
-            // Right wall - wrap to left
-            if (dir[0] === 1 && position[0] > container.width * right - dimension[0]) {
-                state.positions[index] = [container.width * left - dimension[0], state.positions[index][1]];
+            // Right exit - re-enter from the left
+            if (dir[0] === 1 && position[0] > container.width * right + margin) {
+                state.positions[index] = [container.width * left - margin, state.positions[index][1]];
             }
         }
+    }
+
+    /**
+     * Kinetic energy (linear + rotational when angular state exists) for one body.
+     * The rotational term matters for the KE ceiling: the spin pump below adds
+     * rotational energy that must count against the pair's energy budget.
+     */
+    function bodyKineticEnergy(state, index) {
+        const velocity = state.velocities[index];
+        const mass = state.masses[index];
+        if (!velocity || mass === undefined)
+            return 0;
+        const linearKE = 0.5 * mass * (velocity[0] * velocity[0] + velocity[1] * velocity[1]);
+        const angularVelocity = state.angularVelocities?.[index];
+        const inertia = state.momentsOfInertia?.[index];
+        const rotationalKE = angularVelocity !== undefined && inertia !== undefined
+            ? 0.5 * inertia * angularVelocity * angularVelocity
+            : 0;
+        return linearKE + rotationalKE;
+    }
+    /*
+     * CONTACT RESOLUTION — design rationale
+     *
+     * The velocity response is Newton's restitution law adopted factor by factor,
+     * with two algorithmic guardrails around it:
+     *
+     * 1. MASS SPLIT (Newton's 3rd law): the pair receives equal-and-opposite
+     *    impulse, so velocity changes split by inverse mass. Equal masses behave
+     *    exactly like the old equal-kick code; a light body no longer shoves a
+     *    heavy one as hard as itself. Static bodies have invMass = 0, which
+     *    reproduces the old x2 kick on the dynamic partner for free.
+     *
+     * 2. APPROACH GATE (contact forces are compressive-only): a collision is
+     *    defined on approach — like a trampoline, a contact pushes while bodies
+     *    move into it and lets go once they separate, even if geometry still
+     *    overlaps. Discrete substeps keep re-detecting leftover overlap; without
+     *    the gate each re-detection re-applied the restitution rescale (energy
+     *    x e^N for a contact persisting N substeps — the "resting pile freezes"
+     *    bug) or re-swapped velocities (the vibrating stuck pair). Overlap left
+     *    after the one impulse is geometry residue, drained by the positional
+     *    correction, not by more velocity kicks.
+     *
+     * 3. KICK PROPORTIONAL TO APPROACH SPEED (Newton's law of restitution):
+     *    exit speed = e x entry speed — linear in velocity, independent of
+     *    penetration depth. The old kick was 1/penetration and velocity-blind:
+     *    the hardest impacts got the weakest response. The kick is deliberately
+     *    NOT capped: with e <= 1 the impulse is self-limiting (exit energy never
+     *    exceeds entry energy), and an absolute cap was tried — fast impacts
+     *    (drag flings) then couldn't shed their approach velocity in one hit and
+     *    plowed through bodies for several frames instead of transferring
+     *    momentum. The KE ceiling below is the explosion rail, not a kick cap.
+     *
+     * Kept as deliberate algorithmic safety rails (NOT physics):
+     * - KE ceiling: pair energy may never exceed its pre-contact value. Nearly
+     *   always inert given the gate + capped kick; exists so no formula error can
+     *   inject energy ("never explodes" beats "physically exact").
+     * - Positional correction (slop/percent): standard Baumgarte-style overlap
+     *   drain, uncapped — identical to the shipped engine. (A per-step cap was
+     *   tried twice, absolute and geometry-derived: under sustained compression
+     *   — a follower pack squeezing toward a shared target — any cap below
+     *   "irrelevant" throttles the only response that survives callbacks that
+     *   overwrite velocities each frame, and overlap accumulates to a standing
+     *   equilibrium. Measured: capped held 9.5px average deep overlap in the
+     *   follow scenario vs 6.6px uncapped.)
+     *
+     * KNOWN LIMIT: one correction pass per substep. Under continuous multi-body
+     * compression, corrections between overlapping pairs conflict and a single
+     * pass cannot fully converge, leaving some standing overlap (pre-existing,
+     * identical in the old resolver). The proper fix is iterating the correction
+     * pass, which is a solver-architecture change, not a constant.
+     *
+     * Pile calm needs NO rest/sleep threshold: with e < 1 every bounce loses
+     * energy, and the approach gate never re-kicks a separating pair, so a
+     * gravity-pressed pile converges to oscillation at the forcing amplitude —
+     * measured ~0.04 px/frame average at the canvas example's gravity range,
+     * visually at rest. (A velocity threshold was tried: sized high enough to
+     * matter it made slow free-drifting bodies dock into clumps instead of
+     * bouncing; sized safely it did nothing the physics doesn't already do.)
+     *
+     * Angular response — PUMP at the historical rate, BLEED explicitly:
+     * - PUMP: each body's velocity kick applies a torque about the contact point,
+     *   divided by the substep dt — the shipped engine's formula, kept for feel.
+     *   Under the fixed-timestep accumulator this division is deterministic
+     *   (dt = fixedDeltaTime / substeps, config not display refresh), so spin
+     *   response is a tuning knob that scales with substep rate — deliberate feel
+     *   preservation, not exact impulse physics. Adopting the physically exact
+     *   un-attenuated impulse torque was tried and pumped ~16x more spin with
+     *   nothing damping it: every contact injected permanent rotation and sent
+     *   the follow/flocking examples orbiting.
+     * - BLEED: omega x= restitution per real contact. The old every-contact
+     *   energy rescale was the engine's ONLY angular damping (initial/preset
+     *   tumble decayed through collisions); with the rescale demoted to
+     *   ceiling-only, that decay must be explicit or spin persists forever.
+     * - The KE ceiling includes rotational energy, so the pump can redistribute
+     *   energy into spin but never add to the pair's total.
+     */
+    /**
+     * Returns true when a velocity impulse was applied (the pair was approaching),
+     * false for overlap-only frames handled purely by positional correction.
+     * Callers use this to record collisions / count bounces only for real
+     * contact events — recording raw overlap made touching pairs increment the
+     * bounce counter every frame (strobing bounce-reactive UIs).
+     */
+    function resolveContact(state, indexA, indexB, contact) {
+        const posA = state.positions[indexA];
+        const posB = state.positions[indexB];
+        const velA = state.velocities[indexA];
+        const velB = state.velocities[indexB];
+        const massA = state.masses[indexA];
+        const massB = state.masses[indexB];
+        const restA = state.restitutions[indexA];
+        const restB = state.restitutions[indexB];
+        if (!posA || !posB || !velA || !velB ||
+            massA === undefined || massB === undefined ||
+            restA === undefined || restB === undefined) {
+            return false;
+        }
+        const isStaticA = state.isStatic[indexA] ?? false;
+        const isStaticB = state.isStatic[indexB] ?? false;
+        // Skip if both are static
+        if (isStaticA && isStaticB)
+            return false;
+        const { normal, penetration } = contact;
+        const restitution = Math.min(restA, restB);
+        // Static bodies are immovable: inverse mass 0 sends their whole share of the
+        // impulse to the dynamic partner (doubling its kick vs an equal-mass pair).
+        const invMassA = isStaticA || !(massA > 0) ? 0 : 1 / massA;
+        const invMassB = isStaticB || !(massB > 0) ? 0 : 1 / massB;
+        const invMassSum = invMassA + invMassB;
+        if (invMassSum <= 0)
+            return false;
+        // Relative velocity along the contact normal (normal points A -> B).
+        // Negative = the bodies are closing on each other.
+        const relVelN = (velB[0] - velA[0]) * normal[0] + (velB[1] - velA[1]) * normal[1];
+        // APPROACH GATE (rationale #2): velocity response only while closing
+        if (relVelN < 0) {
+            const approachSpeed = -relVelN;
+            // KICK ∝ APPROACH SPEED (rationale #3): for an equal-mass pair this yields
+            // exit relative speed = restitution x entry relative speed. Uncapped —
+            // self-limiting via e <= 1; the KE ceiling below is the explosion rail.
+            const K = 0.5 * (1 + restitution) * approachSpeed;
+            // Pair energy before the impulse — ceiling for the guardrail below
+            const initialKE = bodyKineticEnergy(state, indexA) + bodyKineticEnergy(state, indexB);
+            // MASS SPLIT (rationale #1): equal-and-opposite impulse along the normal,
+            // velocity change split by inverse mass
+            const deltaA = 2 * K * (invMassA / invMassSum);
+            const deltaB = 2 * K * (invMassB / invMassSum);
+            state.velocities[indexA] = [
+                velA[0] - normal[0] * deltaA,
+                velA[1] - normal[1] * deltaA,
+            ];
+            state.velocities[indexB] = [
+                velB[0] + normal[0] * deltaB,
+                velB[1] + normal[1] * deltaB,
+            ];
+            // SPIN PUMP + BLEED (see rationale above). Pump: torque about the contact
+            // point from each body's own velocity kick, divided by the substep dt —
+            // the shipped engine's historical response rate. Bleed: x restitution per
+            // contact, the explicit replacement for the old rescale's spin damping.
+            const angularVelocities = state.angularVelocities;
+            const inertias = state.momentsOfInertia;
+            const dt = state.deltaTime ?? 0;
+            if (angularVelocities && inertias && dt > 0) {
+                const point = contact.point;
+                const inertiaA = inertias[indexA] ?? 0;
+                if (!isStaticA && inertiaA > 0) {
+                    const rAx = point[0] - posA[0];
+                    const rAy = point[1] - posA[1];
+                    const torqueA = rAx * (-normal[1] * deltaA) - rAy * (-normal[0] * deltaA);
+                    angularVelocities[indexA] =
+                        ((angularVelocities[indexA] ?? 0) + (torqueA / inertiaA) / dt) * restitution;
+                }
+                const inertiaB = inertias[indexB] ?? 0;
+                if (!isStaticB && inertiaB > 0) {
+                    const rBx = point[0] - posB[0];
+                    const rBy = point[1] - posB[1];
+                    const torqueB = rBx * (normal[1] * deltaB) - rBy * (normal[0] * deltaB);
+                    angularVelocities[indexB] =
+                        ((angularVelocities[indexB] ?? 0) + (torqueB / inertiaB) / dt) * restitution;
+                }
+            }
+            // KE CEILING (guardrail, not physics): never exit with more energy than
+            // entry — polices the spin pump's redistribution too
+            const finalKE = bodyKineticEnergy(state, indexA) + bodyKineticEnergy(state, indexB);
+            if (finalKE > initialKE && finalKE > 0) {
+                const scale = Math.sqrt(initialKE / finalKE);
+                if (!isStaticA) {
+                    const newVelA = state.velocities[indexA];
+                    if (newVelA) {
+                        state.velocities[indexA] = [newVelA[0] * scale, newVelA[1] * scale];
+                    }
+                    if (angularVelocities) {
+                        angularVelocities[indexA] = (angularVelocities[indexA] ?? 0) * scale;
+                    }
+                }
+                if (!isStaticB) {
+                    const newVelB = state.velocities[indexB];
+                    if (newVelB) {
+                        state.velocities[indexB] = [newVelB[0] * scale, newVelB[1] * scale];
+                    }
+                    if (angularVelocities) {
+                        angularVelocities[indexB] = (angularVelocities[indexB] ?? 0) * scale;
+                    }
+                }
+            }
+        }
+        // POSITIONAL CORRECTION (guardrail): drain residual overlap geometrically,
+        // split by inverse mass. Runs regardless of the approach gate — a pair that
+        // is separating but still overlapping needs the geometry resolved too.
+        const { slop, percent } = state;
+        if (penetration > slop) {
+            const correction = (penetration - slop) * percent;
+            if (!isStaticA && invMassA > 0) {
+                const share = invMassA / invMassSum;
+                state.positions[indexA] = [
+                    posA[0] - normal[0] * correction * share,
+                    posA[1] - normal[1] * correction * share,
+                ];
+            }
+            if (!isStaticB && invMassB > 0) {
+                const share = invMassB / invMassSum;
+                state.positions[indexB] = [
+                    posB[0] + normal[0] * correction * share,
+                    posB[1] + normal[1] * correction * share,
+                ];
+            }
+        }
+        return relVelN < 0;
     }
 
     /**
@@ -96,19 +330,22 @@
      * Sorts bodies by X-axis and uses early-exit to reduce pair checks
      * Returns pairs that potentially overlap on the X-axis
      */
-    function sweepBucket(bucket, positions, dimensions) {
+    function sweepBucket(bucket, positions, dimensions, extents) {
         if (bucket.length < 2)
             return [];
-        // Build sortable entries with left edge position
+        // Build sortable entries with left edge position.
+        // When extents is provided (e.g. rotation-invariant maxExtents for OBBs),
+        // use it instead of dimensions[0] so rotated bodies are not pruned incorrectly.
         const entries = [];
         for (const idx of bucket) {
             const pos = positions[idx];
             const dim = dimensions[idx];
             if (pos && dim) {
+                const halfExtent = extents !== undefined ? (extents[idx] ?? dim[0]) : dim[0];
                 entries.push({
                     idx,
-                    left: pos[0] - dim[0],
-                    right: pos[0] + dim[0],
+                    left: pos[0] - halfExtent,
+                    right: pos[0] + halfExtent,
                 });
             }
         }
@@ -167,6 +404,10 @@
         if (!dimA || !posA || !dimB || !posB) {
             return false;
         }
+        // Zero-size bodies never collide (consistent with OBB zero-size guard)
+        if (dimA[0] <= 0 || dimA[1] <= 0 || dimB[0] <= 0 || dimB[1] <= 0) {
+            return false;
+        }
         const overlapX = Math.abs(posA[0] - posB[0]) < dimA[0] + dimB[0];
         const overlapY = Math.abs(posA[1] - posB[1]) < dimA[1] + dimB[1];
         return overlapX && overlapY;
@@ -193,67 +434,38 @@
         ];
     }
     /**
-     * Resolve AABB collision with energy conservation
-     * Swaps velocities and scales to conserve kinetic energy
+     * Resolve an AABB collision through the shared contact resolver.
+     *
+     * Builds a minimum-translation-vector contact (axis of least overlap, normal
+     * pointing from A toward B) and delegates to resolveContact — see resolve.ts
+     * for the full design rationale. AABB mode resolves without rotation.
      */
     function resolveAABBCollision(state, indexA, indexB) {
-        const velA = state.velocities[indexA];
-        const velB = state.velocities[indexB];
-        if (!velA || !velB)
-            return;
-        const isStaticA = state.isStatic[indexA] ?? false;
-        const isStaticB = state.isStatic[indexB] ?? false;
-        // Skip if both are static
-        if (isStaticA && isStaticB)
-            return;
-        // Calculate exclusion force
-        const exclusionForce = calculateSuperposition(state, indexA, indexB);
-        // Handle static-dynamic collision
-        if (isStaticA || isStaticB) {
-            if (isStaticA) {
-                // A is static, B is dynamic - apply double force to B and reverse it
-                const newVelB = [
-                    velB[0] - exclusionForce[0] * 2,
-                    velB[1] - exclusionForce[1] * 2,
-                ];
-                state.velocities[indexB] = newVelB;
-                // Keep A's velocity unchanged (it's static)
-            }
-            else {
-                // B is static, A is dynamic - apply double force to A
-                const newVelA = [
-                    velA[0] + exclusionForce[0] * 2,
-                    velA[1] + exclusionForce[1] * 2,
-                ];
-                state.velocities[indexA] = newVelA;
-                // Keep B's velocity unchanged (it's static)
-            }
-            return;
+        const posA = state.positions[indexA];
+        const dimA = state.dimensions[indexA];
+        const posB = state.positions[indexB];
+        const dimB = state.dimensions[indexB];
+        if (!posA || !dimA || !posB || !dimB)
+            return false;
+        const overlapX = dimA[0] + dimB[0] - Math.abs(posA[0] - posB[0]);
+        const overlapY = dimA[1] + dimB[1] - Math.abs(posA[1] - posB[1]);
+        if (overlapX <= 0 || overlapY <= 0)
+            return false;
+        let normal;
+        let penetration;
+        if (overlapX < overlapY) {
+            normal = [posB[0] >= posA[0] ? 1 : -1, 0];
+            penetration = overlapX;
         }
-        // Both are dynamic - original behavior
-        // Calculate initial kinetic energy (assuming equal masses)
-        const initialKE = 0.5 * (velA[0] * velA[0] + velA[1] * velA[1] + velB[0] * velB[0] + velB[1] * velB[1]);
-        // Apply exclusion force to velocities
-        let newVelA = [
-            velA[0] + exclusionForce[0],
-            velA[1] + exclusionForce[1],
-        ];
-        let newVelB = [
-            velB[0] - exclusionForce[0],
-            velB[1] - exclusionForce[1],
-        ];
-        // Calculate final kinetic energy
-        const finalKE = 0.5 * (newVelA[0] * newVelA[0] + newVelA[1] * newVelA[1] +
-            newVelB[0] * newVelB[0] + newVelB[1] * newVelB[1]);
-        // Scale to conserve energy
-        if (finalKE !== 0) {
-            const scale = Math.sqrt(initialKE / finalKE);
-            newVelA = [newVelA[0] * scale, newVelA[1] * scale];
-            newVelB = [newVelB[0] * scale, newVelB[1] * scale];
+        else {
+            normal = [0, posB[1] >= posA[1] ? 1 : -1];
+            penetration = overlapY;
         }
-        // Swap velocities (this creates the "bouncing" effect)
-        state.velocities[indexA] = newVelB;
-        state.velocities[indexB] = newVelA;
+        return resolveContact(state, indexA, indexB, {
+            point: [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2],
+            normal,
+            penetration,
+        });
     }
     /**
      * Process a collision pair - test, record, and resolve
@@ -271,12 +483,14 @@
         // Test for collision
         if (!testAABB(state, indexA, indexB))
             return;
-        // Record collision
+        // Resolve first: record + bounce callback only when a real impulse fired.
+        // Overlap-only frames (already-separating or resting pairs, drained by
+        // positional correction) are not bounces — recording them made touching
+        // pairs increment the bounce counter every frame.
+        if (!resolveAABBCollision(state, indexA, indexB))
+            return;
         collisionsList.push({ loop: indexA, inHash: indexB });
-        // Callback for bounce tracking
         onCollision?.(indexA, indexB);
-        // Resolve collision
-        resolveAABBCollision(state, indexA, indexB);
     }
     /**
      * Detect and resolve all AABB collisions
@@ -306,13 +520,24 @@
                     continue;
                 // Dense bucket: use sort-and-sweep algorithm
                 if (bucket.length > DENSE_BUCKET_THRESHOLD$1) {
-                    // Only sweep each dense bucket once
-                    if (sweptBuckets.has(neighborCellId))
-                        continue;
-                    sweptBuckets.add(neighborCellId);
-                    const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions);
-                    for (const [idxA, idxB] of sweepPairs) {
-                        processCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision);
+                    // Interior sweep: process all within-bucket pairs exactly once per frame.
+                    if (!sweptBuckets.has(neighborCellId)) {
+                        sweptBuckets.add(neighborCellId);
+                        const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions);
+                        for (const [idxA, idxB] of sweepPairs) {
+                            processCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision);
+                        }
+                    }
+                    // Cross-cell pass: test indexA against members of this neighboring dense bucket.
+                    // Skipped when neighborCellId is indexA's own cell because sweepBucket already
+                    // covered all pairs among co-members. The checkedPairs guard in
+                    // processCollisionPair deduplicates any pair that appears in multiple neighbors.
+                    if (neighborCellId !== cellIdA) {
+                        for (const indexB of bucket) {
+                            if (indexA >= indexB)
+                                continue;
+                            processCollisionPair(state, indexA, indexB, checkedPairs, collisionsList, onCollision);
+                        }
                     }
                     continue;
                 }
@@ -675,30 +900,30 @@
         let contactPoint;
         if (centerInside) {
             // Circle center is inside AABB - find closest edge
-            // Normal should point from rect toward circle (consistent with outside case)
-            // Since center is inside, normal points from closest edge toward center
+            // Normal must point from rect outward through the nearest face (same convention
+            // as the outside case) so that moving the circle along +normal expels it.
             const distToLeft = circlePos[0] - rectLeft;
             const distToRight = rectRight - circlePos[0];
             const distToTop = circlePos[1] - rectTop;
             const distToBottom = rectBottom - circlePos[1];
             const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom);
             if (minDist === distToLeft) {
-                normal = [1, 0]; // Point RIGHT (toward circle center from left edge)
+                normal = [-1, 0]; // Point LEFT, out through left face to expel circle
                 penetration = radius + distToLeft;
                 contactPoint = [rectLeft, circlePos[1]];
             }
             else if (minDist === distToRight) {
-                normal = [-1, 0]; // Point LEFT (toward circle center from right edge)
+                normal = [1, 0]; // Point RIGHT, out through right face to expel circle
                 penetration = radius + distToRight;
                 contactPoint = [rectRight, circlePos[1]];
             }
             else if (minDist === distToTop) {
-                normal = [0, 1]; // Point DOWN (toward circle center from top edge)
+                normal = [0, -1]; // Point UP, out through top face to expel circle
                 penetration = radius + distToTop;
                 contactPoint = [circlePos[0], rectTop];
             }
             else {
-                normal = [0, -1]; // Point UP (toward circle center from bottom edge)
+                normal = [0, 1]; // Point DOWN, out through bottom face to expel circle
                 penetration = radius + distToBottom;
                 contactPoint = [circlePos[0], rectBottom];
             }
@@ -784,30 +1009,30 @@
         let localContact;
         if (centerInside) {
             // Circle center is inside OBB - find closest edge in local space
-            // Normal should point from rect toward circle (consistent with outside case)
-            // Since center is inside, normal points from closest edge toward center
+            // Normal must point from rect outward through the nearest face (same convention
+            // as the outside case) so that moving the circle along +normal expels it.
             const distToLeft = localX - (-halfWidth);
             const distToRight = halfWidth - localX;
             const distToTop = localY - (-halfHeight);
             const distToBottom = halfHeight - localY;
             const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom);
             if (minDist === distToLeft) {
-                localNormal = [1, 0]; // Point RIGHT (toward circle center from left edge)
+                localNormal = [-1, 0]; // Point LEFT, out through left face to expel circle
                 penetration = radius + distToLeft;
                 localContact = [-halfWidth, localY];
             }
             else if (minDist === distToRight) {
-                localNormal = [-1, 0]; // Point LEFT (toward circle center from right edge)
+                localNormal = [1, 0]; // Point RIGHT, out through right face to expel circle
                 penetration = radius + distToRight;
                 localContact = [halfWidth, localY];
             }
             else if (minDist === distToTop) {
-                localNormal = [0, 1]; // Point DOWN (toward circle center from top edge)
+                localNormal = [0, -1]; // Point UP, out through top face to expel circle
                 penetration = radius + distToTop;
                 localContact = [localX, -halfHeight];
             }
             else {
-                localNormal = [0, -1]; // Point UP (toward circle center from bottom edge)
+                localNormal = [0, 1]; // Point DOWN, out through bottom face to expel circle
                 penetration = radius + distToBottom;
                 localContact = [localX, halfHeight];
             }
@@ -1014,154 +1239,14 @@
         return linearKE + rotationalKE;
     }
     /**
-     * Resolve OBB collision with energy conservation
+     * Resolve an OBB collision.
      *
-     * PERF NOTE: Creates multiple Vector2D arrays per collision resolution.
-     * For high collision counts, consider mutating in-place or using object pooling.
+     * Thin wrapper over the shared contact resolver (see resolve.ts for the full
+     * design rationale): mass-weighted impulse split, approach-velocity gate,
+     * kick proportional to approach speed, KE ceiling, positional correction.
      */
     function resolveOBBCollision(state, indexA, indexB, contact) {
-        const posA = state.positions[indexA];
-        const posB = state.positions[indexB];
-        const velA = state.velocities[indexA];
-        const velB = state.velocities[indexB];
-        const massA = state.masses[indexA];
-        const massB = state.masses[indexB];
-        const inertiaA = state.momentsOfInertia[indexA];
-        const inertiaB = state.momentsOfInertia[indexB];
-        const angVelA = state.angularVelocities[indexA];
-        const angVelB = state.angularVelocities[indexB];
-        const restA = state.restitutions[indexA];
-        const restB = state.restitutions[indexB];
-        if (!posA || !posB || !velA || !velB ||
-            massA === undefined || massB === undefined ||
-            inertiaA === undefined || inertiaB === undefined ||
-            angVelA === undefined || angVelB === undefined ||
-            restA === undefined || restB === undefined) {
-            return;
-        }
-        const isStaticA = state.isStatic[indexA] ?? false;
-        const isStaticB = state.isStatic[indexB] ?? false;
-        // Skip if both are static
-        if (isStaticA && isStaticB)
-            return;
-        const { normal, penetration } = contact;
-        const restitution = Math.min(restA, restB);
-        const overlapForce = Math.max(penetration, 1);
-        const repulsionStrength = 1 / overlapForce;
-        const { slop, percent } = state;
-        // Handle static-dynamic collision
-        if (isStaticA || isStaticB) {
-            if (isStaticA) {
-                // A is static, B is dynamic
-                const initialKE = getKineticEnergy(state, indexB);
-                const newVelB = [
-                    velB[0] + normal[0] * repulsionStrength * 2,
-                    velB[1] + normal[1] * repulsionStrength * 2,
-                ];
-                const contactPoint = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2];
-                const rBx = contactPoint[0] - posB[0];
-                const rBy = contactPoint[1] - posB[1];
-                const torqueB = rBx * (normal[1] * repulsionStrength * 2) - rBy * (normal[0] * repulsionStrength * 2);
-                const dt = state.deltaTime;
-                const newAngVelB = angVelB + (torqueB / inertiaB) / dt;
-                state.velocities[indexB] = newVelB;
-                state.angularVelocities[indexB] = newAngVelB;
-                const finalKE = getKineticEnergy(state, indexB);
-                if (finalKE > 0) {
-                    const targetKE = initialKE * restitution;
-                    const scale = Math.sqrt(targetKE / finalKE);
-                    state.velocities[indexB] = [newVelB[0] * scale, newVelB[1] * scale];
-                    state.angularVelocities[indexB] = newAngVelB * scale;
-                }
-                // Position correction
-                if (penetration > slop) {
-                    const correction = (penetration - slop) * percent;
-                    state.positions[indexB] = [
-                        posB[0] + normal[0] * correction,
-                        posB[1] + normal[1] * correction,
-                    ];
-                }
-            }
-            else {
-                // B is static, A is dynamic
-                const initialKE = getKineticEnergy(state, indexA);
-                const newVelA = [
-                    velA[0] - normal[0] * repulsionStrength * 2,
-                    velA[1] - normal[1] * repulsionStrength * 2,
-                ];
-                const contactPoint = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2];
-                const rAx = contactPoint[0] - posA[0];
-                const rAy = contactPoint[1] - posA[1];
-                const torqueA = rAx * (-normal[1] * repulsionStrength * 2) - rAy * (-normal[0] * repulsionStrength * 2);
-                const dt = state.deltaTime;
-                const newAngVelA = angVelA + (torqueA / inertiaA) / dt;
-                state.velocities[indexA] = newVelA;
-                state.angularVelocities[indexA] = newAngVelA;
-                const finalKE = getKineticEnergy(state, indexA);
-                if (finalKE > 0) {
-                    const targetKE = initialKE * restitution;
-                    const scale = Math.sqrt(targetKE / finalKE);
-                    state.velocities[indexA] = [newVelA[0] * scale, newVelA[1] * scale];
-                    state.angularVelocities[indexA] = newAngVelA * scale;
-                }
-                // Position correction
-                if (penetration > slop) {
-                    const correction = (penetration - slop) * percent;
-                    state.positions[indexA] = [
-                        posA[0] - normal[0] * correction,
-                        posA[1] - normal[1] * correction,
-                    ];
-                }
-            }
-            return;
-        }
-        // Both are dynamic
-        const initialKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB);
-        const newVelA = [
-            velA[0] - normal[0] * repulsionStrength,
-            velA[1] - normal[1] * repulsionStrength,
-        ];
-        const newVelB = [
-            velB[0] + normal[0] * repulsionStrength,
-            velB[1] + normal[1] * repulsionStrength,
-        ];
-        const contactPoint = [(posA[0] + posB[0]) / 2, (posA[1] + posB[1]) / 2];
-        const rAx = contactPoint[0] - posA[0];
-        const rAy = contactPoint[1] - posA[1];
-        const rBx = contactPoint[0] - posB[0];
-        const rBy = contactPoint[1] - posB[1];
-        const torqueA = rAx * (-normal[1] * repulsionStrength) - rAy * (-normal[0] * repulsionStrength);
-        const torqueB = rBx * (normal[1] * repulsionStrength) - rBy * (normal[0] * repulsionStrength);
-        // Divide by dt to convert impulse units: integration multiplies by dt, so this cancels out
-        const dt = state.deltaTime;
-        const newAngVelA = angVelA + (torqueA / inertiaA) / dt;
-        const newAngVelB = angVelB + (torqueB / inertiaB) / dt;
-        state.velocities[indexA] = newVelA;
-        state.velocities[indexB] = newVelB;
-        state.angularVelocities[indexA] = newAngVelA;
-        state.angularVelocities[indexB] = newAngVelB;
-        const finalKE = getKineticEnergy(state, indexA) + getKineticEnergy(state, indexB);
-        if (finalKE > 0) {
-            const targetKE = initialKE * restitution;
-            const scale = Math.sqrt(targetKE / finalKE);
-            state.velocities[indexA] = [newVelA[0] * scale, newVelA[1] * scale];
-            state.velocities[indexB] = [newVelB[0] * scale, newVelB[1] * scale];
-            state.angularVelocities[indexA] = newAngVelA * scale;
-            state.angularVelocities[indexB] = newAngVelB * scale;
-        }
-        // Position correction
-        if (penetration > slop) {
-            const correction = (penetration - slop) * percent;
-            const totalMass = massA + massB;
-            state.positions[indexA] = [
-                posA[0] - normal[0] * correction * (massB / totalMass),
-                posA[1] - normal[1] * correction * (massB / totalMass),
-            ];
-            state.positions[indexB] = [
-                posB[0] + normal[0] * correction * (massA / totalMass),
-                posB[1] + normal[1] * correction * (massA / totalMass),
-            ];
-        }
+        return resolveContact(state, indexA, indexB, contact);
     }
     /**
      * Perform narrow-phase collision test based on shape types
@@ -1200,6 +1285,9 @@
         const velB = state.velocities[indexB];
         if (!velA || !velB)
             return;
+        // Zero-size bodies never collide
+        if (!((state.maxExtents[indexA] ?? 0) > 0) || !((state.maxExtents[indexB] ?? 0) > 0))
+            return;
         // Create pair key to avoid duplicate checks (bitwise encoding, no allocation)
         const pairKey = (indexA << 16) | indexB;
         if (checkedPairs.has(pairKey))
@@ -1212,10 +1300,14 @@
         const result = shapeCollisionTest(state, indexA, indexB);
         if (!result.collided || !result.contact)
             return;
+        // Resolve first: record + bounce callback only when a real impulse fired.
+        // Overlap-only frames (already-separating or resting pairs, drained by
+        // positional correction) are not bounces — recording them made touching
+        // pairs increment the bounce counter every frame.
+        if (!resolveOBBCollision(state, indexA, indexB, result.contact))
+            return;
         collisionsList.push({ loop: indexA, inHash: indexB });
         onCollision?.(indexA, indexB);
-        // Resolve collision
-        resolveOBBCollision(state, indexA, indexB, result.contact);
     }
     /**
      * Detect and resolve all OBB collisions
@@ -1245,13 +1337,27 @@
                     continue;
                 // Dense bucket: use sort-and-sweep algorithm
                 if (bucket.length > DENSE_BUCKET_THRESHOLD) {
-                    // Only sweep each dense bucket once
-                    if (sweptBuckets.has(neighborCellId))
-                        continue;
-                    sweptBuckets.add(neighborCellId);
-                    const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions);
-                    for (const [idxA, idxB] of sweepPairs) {
-                        processOBBCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision);
+                    // Interior sweep: process all within-bucket pairs exactly once per frame.
+                    // Passes maxExtents so the X-axis overlap check is rotation-safe (C38):
+                    // for rotated OBBs, dimensions[0] is the unrotated half-width which
+                    // under-estimates the true swept extent, causing valid pairs to be pruned.
+                    if (!sweptBuckets.has(neighborCellId)) {
+                        sweptBuckets.add(neighborCellId);
+                        const sweepPairs = sweepBucket(bucket, state.positions, state.dimensions, state.maxExtents);
+                        for (const [idxA, idxB] of sweepPairs) {
+                            processOBBCollisionPair(state, idxA, idxB, checkedPairs, collisionsList, onCollision);
+                        }
+                    }
+                    // Cross-cell pass: test indexA against members of this neighboring dense bucket.
+                    // Skipped when neighborCellId is indexA's own cell because sweepBucket already
+                    // covered all pairs among co-members. The checkedPairs guard in
+                    // processOBBCollisionPair deduplicates any pair that appears in multiple neighbors.
+                    if (neighborCellId !== cellIdA) {
+                        for (const indexB of bucket) {
+                            if (indexA >= indexB)
+                                continue;
+                            processOBBCollisionPair(state, indexA, indexB, checkedPairs, collisionsList, onCollision);
+                        }
                     }
                     continue;
                 }
@@ -1285,7 +1391,37 @@
             this.buckets = new Map();
             this.hashArray = [];
             this.container = { width: 0, height: 0 };
-            this.gridSize = gridSize;
+            this.largestExtent = 0;
+            this.noSizeUpdates = 0;
+            this._gridSize = Number.isFinite(gridSize) && gridSize >= 1 ? Math.floor(gridSize) : 4;
+        }
+        get gridSize() {
+            return this._gridSize;
+        }
+        set gridSize(v) {
+            if (Number.isFinite(v) && v >= 1) {
+                this._gridSize = Math.floor(v);
+            }
+        }
+        /**
+         * Set the largest body half-extent in the scene so effectiveGridSize can
+         * auto-scale the cell size to guarantee the 3×3 neighborhood is sufficient.
+         */
+        setLargestExtent(v) {
+            this.largestExtent = Number.isFinite(v) && v >= 0 ? v : 0;
+        }
+        /**
+         * The grid size actually used for hashing.
+         * When bodies are large relative to the container, the user-configured
+         * gridSize is reduced so that a 3×3 cell neighborhood always encompasses
+         * the full extent of any body, preventing missed collision pairs.
+         */
+        get effectiveGridSize() {
+            const { width, height } = this.container;
+            if (this.largestExtent > 0 && width > 0 && height > 0) {
+                return Math.max(1, Math.min(this._gridSize, Math.floor(Math.min(width, height) / this.largestExtent)));
+            }
+            return this._gridSize;
         }
         setContainer(container) {
             this.container = container;
@@ -1297,13 +1433,29 @@
             return this.buckets;
         }
         computeCellId(pos) {
-            const cellX = Math.floor((this.gridSize * pos[0]) / this.container.width);
-            const cellY = Math.floor((this.gridSize * pos[1]) / this.container.height);
-            const clampedX = Math.max(0, Math.min(this.gridSize - 1, cellX));
-            const clampedY = Math.max(0, Math.min(this.gridSize - 1, cellY));
-            return clampedX + clampedY * this.gridSize;
+            const gs = this.effectiveGridSize;
+            const rawCellX = Math.floor((gs * pos[0]) / this.container.width);
+            const rawCellY = Math.floor((gs * pos[1]) / this.container.height);
+            // NaN-safe: clamp non-finite values to 0 before clamping to grid bounds
+            const cellX = Number.isFinite(rawCellX) ? rawCellX : 0;
+            const cellY = Number.isFinite(rawCellY) ? rawCellY : 0;
+            const clampedX = Math.max(0, Math.min(gs - 1, cellX));
+            const clampedY = Math.max(0, Math.min(gs - 1, cellY));
+            return clampedX + clampedY * gs;
         }
         update(positions, elementCount) {
+            if (!(this.container.width > 0) || !(this.container.height > 0)) {
+                this.buckets.clear();
+                this.hashArray.length = 0;
+                // Warn only after sustained unsized updates (~1s at 60fps): transient
+                // pre-measure mounts stay silent, a genuinely missing container surfaces.
+                this.noSizeUpdates++;
+                if (this.noSizeUpdates === 60) {
+                    console.warn('Elastica: spatial hash disabled — container has no size; collisions are off until a sized container is provided');
+                }
+                return;
+            }
+            this.noSizeUpdates = 0;
             this.buckets.clear();
             for (let index = 0; index < elementCount; index++) {
                 const pos = positions[index];
@@ -1322,16 +1474,17 @@
         }
         getNeighborIndices(cellId) {
             const indices = [];
-            const cellX = cellId % this.gridSize;
-            const cellY = Math.floor(cellId / this.gridSize);
+            const gs = this.effectiveGridSize;
+            const cellX = cellId % gs;
+            const cellY = Math.floor(cellId / gs);
             for (let dy = -1; dy <= 1; dy++) {
                 for (let dx = -1; dx <= 1; dx++) {
                     const nx = cellX + dx;
                     const ny = cellY + dy;
-                    if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) {
+                    if (nx < 0 || nx >= gs || ny < 0 || ny >= gs) {
                         continue;
                     }
-                    const neighborCellId = nx + ny * this.gridSize;
+                    const neighborCellId = nx + ny * gs;
                     const bucket = this.buckets.get(neighborCellId);
                     if (bucket) {
                         for (let i = 0; i < bucket.length; i++) {
@@ -1352,10 +1505,21 @@
         get buckets() {
             return this.spatialHash.getBuckets();
         }
+        // gridSize accessor — delegated to SpatialHash so encode/decode are always in sync
+        get gridSize() {
+            return this.spatialHash.gridSize;
+        }
+        set gridSize(v) {
+            this.spatialHash.gridSize = v;
+            // Re-encode immediately so hash contents never lag the new grid size
+            // (otherwise the first update after the change decodes stale cell ids)
+            if (this.container.width > 0 && this.container.height > 0) {
+                this.updateSpatialHash(this.positions.length);
+            }
+        }
         constructor({ gridSize = 4, containerOffsets = { top: 0, bottom: 0, left: 0, right: 0 }, collisions = true, borders = 'rigid', useOBB = true, defaultMass = 1, defaultRestitution = 0.8, solver, } = {}) {
             this.calculateCollisions = collisions;
             this.calculateBorders = borders;
-            this.gridSize = gridSize;
             this.containerOffsets = {
                 top: containerOffsets.top ?? 0,
                 bottom: containerOffsets.bottom ?? 0,
@@ -1364,8 +1528,10 @@
             };
             this.container = { width: 0, height: 0 };
             this.collisionsList = [];
-            // Initialize spatial hash
-            this.spatialHash = new SpatialHash(gridSize);
+            // Validate gridSize: must be a finite integer >= 1
+            const validGridSize = Number.isFinite(gridSize) && gridSize >= 1 ? Math.floor(gridSize) : 4;
+            // Initialize spatial hash with validated gridSize
+            this.spatialHash = new SpatialHash(validGridSize);
             // Per-body arrays
             this.positions = [];
             this.velocities = [];
@@ -1384,13 +1550,17 @@
             this.restitutions = [];
             this.maxExtents = [];
             this.shapeTypes = [];
-            this.defaultMass = defaultMass;
-            this.defaultRestitution = defaultRestitution;
-            // Solver config
+            // Clamp defaultMass: must be finite and positive
+            this.defaultMass = Number.isFinite(defaultMass) && defaultMass > 0 ? defaultMass : 1;
+            // Clamp defaultRestitution to [0, 1]; non-finite values fall back to 0.8
+            this.defaultRestitution = Math.max(0, Math.min(1, Number.isFinite(defaultRestitution) ? defaultRestitution : 0.8));
+            // Solver config — guard against NaN/Infinity in caller-supplied values
             this.solverSlop = solver?.slop ?? 0.5;
             this.solverPercent = solver?.percent ?? 0.8;
-            this.fixedDeltaTime = Math.max(1, solver?.fixedDeltaTime ?? 16.67);
-            this.substeps = Math.max(1, Math.floor(solver?.substeps ?? 1));
+            const rawFdt = solver?.fixedDeltaTime ?? 16.67;
+            this.fixedDeltaTime = Number.isFinite(rawFdt) ? Math.max(1, rawFdt) : 16.67;
+            const rawSubsteps = solver?.substeps ?? 1;
+            this.substeps = Number.isFinite(rawSubsteps) ? Math.max(1, Math.floor(rawSubsteps)) : 1;
             // Backward-compatible alias for typo (deprecated)
             Object.defineProperty(this, 'calculatecCollisions', {
                 get: () => this.calculateCollisions,
@@ -1402,9 +1572,46 @@
             this.container = rect;
             // Update spatial hash container
             this.spatialHash.setContainer(rect);
+            // Truncate all per-index arrays to match the new element count.
+            // This removes stale tail entries when the element list shrinks,
+            // preventing dead indices from integrating or hashing across re-init.
+            const newCount = elements.length;
+            this.positions.length = newCount;
+            this.velocities.length = newCount;
+            this.externalForces.length = newCount;
+            this.dimensions.length = newCount;
+            this.bounced.length = newCount;
+            this.isStatic.length = newCount;
+            this.staticPositions.length = newCount;
+            this.displayScales.length = newCount;
+            this.angles.length = newCount;
+            this.angularVelocities.length = newCount;
+            this.masses.length = newCount;
+            this.momentsOfInertia.length = newCount;
+            this.restitutions.length = newCount;
+            this.maxExtents.length = newCount;
+            this.shapeTypes.length = newCount;
             this.dimensions = elements.map((element, index) => {
-                if (!element)
+                if (!element) {
+                    // Fully reset slot so ghost colliders cannot persist across re-init.
+                    // With maxExtents=0 and dimensions=[0,0] the zero-size guards in the
+                    // collision modules make this slot inert.
+                    this.positions[index] = [0, 0];
+                    this.velocities[index] = [0, 0];
+                    this.externalForces[index] = [0, 0];
+                    this.bounced[index] = 0;
+                    this.displayScales[index] = 1;
+                    this.isStatic[index] = false;
+                    this.staticPositions[index] = undefined;
+                    this.angles[index] = 0;
+                    this.angularVelocities[index] = 0;
+                    this.masses[index] = this.defaultMass;
+                    this.momentsOfInertia[index] = 0;
+                    this.restitutions[index] = this.defaultRestitution;
+                    this.shapeTypes[index] = 'rectangle';
+                    this.maxExtents[index] = 0;
                     return [0, 0];
+                }
                 // Check for static state - handle both DOM and canvas modes
                 this.isStatic[index] = element.element?.dataset?.state === 'static';
                 // Pre-allocate positions and velocities so callback can use .length
@@ -1421,9 +1628,13 @@
                 const { rect: elementRect } = element;
                 const shapeType = element.shape ?? 'rectangle';
                 this.shapeTypes[index] = shapeType;
+                // Sanitize element rect dimensions: treat non-finite or non-positive values as 0
+                // (a NaN-rect element becomes a zero-size body that never collides)
+                const rawW = Number.isFinite(elementRect.width) && elementRect.width > 0 ? elementRect.width : 0;
+                const rawH = Number.isFinite(elementRect.height) && elementRect.height > 0 ? elementRect.height : 0;
                 if (shapeType === 'circle') {
                     // For circles: use the smaller dimension as diameter, store radius in both slots
-                    const radius = Math.min(elementRect.width, elementRect.height) / 2;
+                    const radius = Math.min(rawW, rawH) / 2;
                     // Moment of inertia for circle: I = 0.5 * m * r²
                     this.momentsOfInertia[index] = 0.5 * this.defaultMass * radius * radius;
                     // For circles, maxExtent is just the radius
@@ -1432,17 +1643,20 @@
                     return [radius, radius];
                 }
                 // Rectangle handling (default)
-                const halfWidth = elementRect.width / 2;
-                const halfHeight = elementRect.height / 2;
+                const halfWidth = rawW / 2;
+                const halfHeight = rawH / 2;
                 // Calculate moment of inertia for rectangle: I = (m/12) * (w² + h²)
-                const width = elementRect.width;
-                const height = elementRect.height;
                 this.momentsOfInertia[index] =
-                    (this.defaultMass / 12) * (width * width + height * height);
+                    (this.defaultMass / 12) * (rawW * rawW + rawH * rawH);
                 // Cache max extent (diagonal) for broad-phase collision checks
                 this.maxExtents[index] = Math.sqrt(halfWidth * halfWidth + halfHeight * halfHeight);
                 return [halfWidth, halfHeight];
             });
+            // Inform the spatial hash of the largest body extent so effectiveGridSize
+            // can auto-clamp the cell size to guarantee the 3×3 neighborhood covers
+            // every possible collision pair.
+            const largestExtent = this.maxExtents.reduce((max, v) => (Number.isFinite(v) && v > max ? v : max), 0);
+            this.spatialHash.setLargestExtent(largestExtent);
             callback(this);
             const elementCount = elements.length;
             // Cache static element positions after initialization
@@ -1483,6 +1697,9 @@
             }
         }
         setMass(index, mass) {
+            // Non-finite or non-positive mass would produce infinite/NaN inertia — reject silently
+            if (!Number.isFinite(mass) || mass <= 0)
+                return;
             if (index >= 0 && index < this.masses.length) {
                 this.masses[index] = mass;
                 // Recalculate moment of inertia based on shape type
@@ -1504,6 +1721,9 @@
             }
         }
         setRestitution(index, restitution) {
+            // NaN passes through Math.max/min as NaN — guard explicitly
+            if (!Number.isFinite(restitution))
+                return;
             if (index >= 0 && index < this.restitutions.length) {
                 this.restitutions[index] = Math.max(0, Math.min(1, restitution));
             }
@@ -1514,10 +1734,15 @@
                 positions: this.positions,
                 velocities: this.velocities,
                 dimensions: this.dimensions,
+                masses: this.masses,
+                restitutions: this.restitutions,
                 hash: this.hash,
-                gridSize: this.gridSize,
+                // Use effectiveGridSize so neighbor decoding matches the encoding in update()
+                gridSize: this.spatialHash.effectiveGridSize,
                 isStatic: this.isStatic,
                 buckets: this.buckets,
+                slop: this.solverSlop,
+                percent: this.solverPercent,
             };
         }
         getOBBState(deltaTime) {
@@ -1534,7 +1759,8 @@
                 isStatic: this.isStatic,
                 shapeTypes: this.shapeTypes,
                 hash: this.hash,
-                gridSize: this.gridSize,
+                // Use effectiveGridSize so neighbor decoding matches the encoding in update()
+                gridSize: this.spatialHash.effectiveGridSize,
                 buckets: this.buckets,
                 slop: this.solverSlop,
                 percent: this.solverPercent,
@@ -1549,6 +1775,7 @@
                 container: this.container,
                 containerOffsets: this.containerOffsets,
                 isStatic: this.isStatic,
+                maxExtents: this.maxExtents,
             };
         }
         // Main update loop with substepping support
@@ -1624,10 +1851,17 @@
         }
     }
 
+    /**
+     * Maximum number of physics steps allowed per frame.
+     * Caps catch-up steps after a backgrounded tab (spiral-of-death guard).
+     * Under sustained overload the simulation runs slower than wall-clock by design.
+     */
+    const MAX_STEPS_PER_FRAME = 4;
     function createAccumulator(fixedDeltaTime) {
+        const safeDt = Number.isFinite(fixedDeltaTime) ? Math.max(1, fixedDeltaTime) : 16.67;
         return {
             accumulated: 0,
-            fixedDeltaTime,
+            fixedDeltaTime: safeDt,
         };
     }
     /**
@@ -1643,7 +1877,7 @@
             steps++;
         }
         // Cap to prevent spiral of death if tab was backgrounded
-        return Math.min(steps, 4);
+        return Math.min(steps, MAX_STEPS_PER_FRAME);
     }
 
     exports.SpatialHash = SpatialHash;
