@@ -12,9 +12,23 @@ export type CollisionState = {
     buckets: Map<number, number[]>;
 };
 /**
- * State required for AABB collision detection
+ * State required by the shared contact resolver (see resolve.ts).
+ * The angular fields are optional: AABB mode resolves without rotation.
  */
-export type AABBState = CollisionState;
+export type ResolutionState = CollisionState & {
+    masses: number[];
+    restitutions: number[];
+    slop: number;
+    percent: number;
+    angularVelocities?: number[];
+    momentsOfInertia?: number[];
+    deltaTime?: number;
+};
+/**
+ * State required for AABB collision detection.
+ * AABB mode shares the contact resolver, minus the angular fields.
+ */
+export type AABBState = ResolutionState;
 /**
  * State required for OBB collision detection
  * Extends CollisionState with rotation and physics properties
