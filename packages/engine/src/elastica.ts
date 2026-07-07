@@ -22,7 +22,6 @@ export default class Elastica {
   // Core properties
   calculateCollisions: boolean
   calculateBorders: BorderType
-  gridSize: number
   containerOffsets: ContainerOffsets
   container: Container
   collisionsList: CollisionRecord[]
@@ -44,6 +43,20 @@ export default class Elastica {
 
   get buckets(): Map<number, number[]> {
     return this.spatialHash.getBuckets()
+  }
+
+  // gridSize accessor — delegated to SpatialHash so encode/decode are always in sync
+  get gridSize(): number {
+    return this.spatialHash.gridSize
+  }
+
+  set gridSize(v: number) {
+    this.spatialHash.gridSize = v
+    // Re-encode immediately so hash contents never lag the new grid size
+    // (otherwise the first update after the change decodes stale cell ids)
+    if (this.container.width > 0 && this.container.height > 0) {
+      this.updateSpatialHash(this.positions.length)
+    }
   }
 
   // OBB rigid body properties
@@ -74,7 +87,6 @@ export default class Elastica {
   }: ElasticaConfigOBB = {}) {
     this.calculateCollisions = collisions
     this.calculateBorders = borders
-    this.gridSize = gridSize
     this.containerOffsets = {
       top: containerOffsets.top ?? 0,
       bottom: containerOffsets.bottom ?? 0,
@@ -84,8 +96,11 @@ export default class Elastica {
     this.container = { width: 0, height: 0 }
     this.collisionsList = []
 
-    // Initialize spatial hash
-    this.spatialHash = new SpatialHash(gridSize)
+    // Validate gridSize: must be a finite integer >= 1
+    const validGridSize = Number.isFinite(gridSize) && gridSize >= 1 ? Math.floor(gridSize) : 4
+
+    // Initialize spatial hash with validated gridSize
+    this.spatialHash = new SpatialHash(validGridSize)
 
     // Per-body arrays
     this.positions = []
@@ -106,14 +121,22 @@ export default class Elastica {
     this.restitutions = []
     this.maxExtents = []
     this.shapeTypes = []
-    this.defaultMass = defaultMass
-    this.defaultRestitution = defaultRestitution
 
-    // Solver config
+    // Clamp defaultMass: must be finite and positive
+    this.defaultMass = Number.isFinite(defaultMass) && defaultMass > 0 ? defaultMass : 1
+    // Clamp defaultRestitution to [0, 1]; non-finite values fall back to 0.8
+    this.defaultRestitution = Math.max(
+      0,
+      Math.min(1, Number.isFinite(defaultRestitution) ? defaultRestitution : 0.8)
+    )
+
+    // Solver config — guard against NaN/Infinity in caller-supplied values
     this.solverSlop = solver?.slop ?? 0.5
     this.solverPercent = solver?.percent ?? 0.8
-    this.fixedDeltaTime = Math.max(1, solver?.fixedDeltaTime ?? 16.67)
-    this.substeps = Math.max(1, Math.floor(solver?.substeps ?? 1))
+    const rawFdt = solver?.fixedDeltaTime ?? 16.67
+    this.fixedDeltaTime = Number.isFinite(rawFdt) ? Math.max(1, rawFdt) : 16.67
+    const rawSubsteps = solver?.substeps ?? 1
+    this.substeps = Number.isFinite(rawSubsteps) ? Math.max(1, Math.floor(rawSubsteps)) : 1
 
     // Backward-compatible alias for typo (deprecated)
     Object.defineProperty(this, 'calculatecCollisions', {
@@ -133,8 +156,47 @@ export default class Elastica {
     // Update spatial hash container
     this.spatialHash.setContainer(rect)
 
+    // Truncate all per-index arrays to match the new element count.
+    // This removes stale tail entries when the element list shrinks,
+    // preventing dead indices from integrating or hashing across re-init.
+    const newCount = elements.length
+    this.positions.length = newCount
+    this.velocities.length = newCount
+    this.externalForces.length = newCount
+    this.dimensions.length = newCount
+    this.bounced.length = newCount
+    this.isStatic.length = newCount
+    this.staticPositions.length = newCount
+    this.displayScales.length = newCount
+    this.angles.length = newCount
+    this.angularVelocities.length = newCount
+    this.masses.length = newCount
+    this.momentsOfInertia.length = newCount
+    this.restitutions.length = newCount
+    this.maxExtents.length = newCount
+    this.shapeTypes.length = newCount
+
     this.dimensions = elements.map((element, index) => {
-      if (!element) return [0, 0] as Vector2D
+      if (!element) {
+        // Fully reset slot so ghost colliders cannot persist across re-init.
+        // With maxExtents=0 and dimensions=[0,0] the zero-size guards in the
+        // collision modules make this slot inert.
+        this.positions[index] = [0, 0]
+        this.velocities[index] = [0, 0]
+        this.externalForces[index] = [0, 0]
+        this.bounced[index] = 0
+        this.displayScales[index] = 1
+        this.isStatic[index] = false
+        ;(this.staticPositions as Array<Vector2D | undefined>)[index] = undefined
+        this.angles[index] = 0
+        this.angularVelocities[index] = 0
+        this.masses[index] = this.defaultMass
+        this.momentsOfInertia[index] = 0
+        this.restitutions[index] = this.defaultRestitution
+        this.shapeTypes[index] = 'rectangle'
+        this.maxExtents[index] = 0
+        return [0, 0] as Vector2D
+      }
 
       // Check for static state - handle both DOM and canvas modes
       this.isStatic[index] = element.element?.dataset?.state === 'static'
@@ -156,9 +218,16 @@ export default class Elastica {
       const shapeType = element.shape ?? 'rectangle'
       this.shapeTypes[index] = shapeType
 
+      // Sanitize element rect dimensions: treat non-finite or non-positive values as 0
+      // (a NaN-rect element becomes a zero-size body that never collides)
+      const rawW =
+        Number.isFinite(elementRect.width) && elementRect.width > 0 ? elementRect.width : 0
+      const rawH =
+        Number.isFinite(elementRect.height) && elementRect.height > 0 ? elementRect.height : 0
+
       if (shapeType === 'circle') {
         // For circles: use the smaller dimension as diameter, store radius in both slots
-        const radius = Math.min(elementRect.width, elementRect.height) / 2
+        const radius = Math.min(rawW, rawH) / 2
 
         // Moment of inertia for circle: I = 0.5 * m * r²
         this.momentsOfInertia[index] = 0.5 * this.defaultMass * radius * radius
@@ -171,20 +240,27 @@ export default class Elastica {
       }
 
       // Rectangle handling (default)
-      const halfWidth = elementRect.width / 2
-      const halfHeight = elementRect.height / 2
+      const halfWidth = rawW / 2
+      const halfHeight = rawH / 2
 
       // Calculate moment of inertia for rectangle: I = (m/12) * (w² + h²)
-      const width = elementRect.width
-      const height = elementRect.height
       this.momentsOfInertia[index] =
-        (this.defaultMass / 12) * (width * width + height * height)
+        (this.defaultMass / 12) * (rawW * rawW + rawH * rawH)
 
       // Cache max extent (diagonal) for broad-phase collision checks
       this.maxExtents[index] = Math.sqrt(halfWidth * halfWidth + halfHeight * halfHeight)
 
       return [halfWidth, halfHeight] as Vector2D
     })
+
+    // Inform the spatial hash of the largest body extent so effectiveGridSize
+    // can auto-clamp the cell size to guarantee the 3×3 neighborhood covers
+    // every possible collision pair.
+    const largestExtent = this.maxExtents.reduce<number>(
+      (max, v) => (Number.isFinite(v) && v > max ? v : max),
+      0
+    )
+    this.spatialHash.setLargestExtent(largestExtent)
 
     callback(this)
 
@@ -235,6 +311,9 @@ export default class Elastica {
   }
 
   setMass(index: number, mass: number): void {
+    // Non-finite or non-positive mass would produce infinite/NaN inertia — reject silently
+    if (!Number.isFinite(mass) || mass <= 0) return
+
     if (index >= 0 && index < this.masses.length) {
       this.masses[index] = mass
 
@@ -258,6 +337,8 @@ export default class Elastica {
   }
 
   setRestitution(index: number, restitution: number): void {
+    // NaN passes through Math.max/min as NaN — guard explicitly
+    if (!Number.isFinite(restitution)) return
     if (index >= 0 && index < this.restitutions.length) {
       this.restitutions[index] = Math.max(0, Math.min(1, restitution))
     }
@@ -269,10 +350,15 @@ export default class Elastica {
       positions: this.positions,
       velocities: this.velocities,
       dimensions: this.dimensions,
+      masses: this.masses,
+      restitutions: this.restitutions,
       hash: this.hash,
-      gridSize: this.gridSize,
+      // Use effectiveGridSize so neighbor decoding matches the encoding in update()
+      gridSize: this.spatialHash.effectiveGridSize,
       isStatic: this.isStatic,
       buckets: this.buckets,
+      slop: this.solverSlop,
+      percent: this.solverPercent,
     }
   }
 
@@ -290,7 +376,8 @@ export default class Elastica {
       isStatic: this.isStatic,
       shapeTypes: this.shapeTypes,
       hash: this.hash,
-      gridSize: this.gridSize,
+      // Use effectiveGridSize so neighbor decoding matches the encoding in update()
+      gridSize: this.spatialHash.effectiveGridSize,
       buckets: this.buckets,
       slop: this.solverSlop,
       percent: this.solverPercent,
@@ -306,6 +393,7 @@ export default class Elastica {
       container: this.container,
       containerOffsets: this.containerOffsets,
       isStatic: this.isStatic,
+      maxExtents: this.maxExtents,
     }
   }
 

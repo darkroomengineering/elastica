@@ -3,10 +3,18 @@ export type PhysicsAccumulator = {
   fixedDeltaTime: number
 }
 
+/**
+ * Maximum number of physics steps allowed per frame.
+ * Caps catch-up steps after a backgrounded tab (spiral-of-death guard).
+ * Under sustained overload the simulation runs slower than wall-clock by design.
+ */
+const MAX_STEPS_PER_FRAME = 4
+
 export function createAccumulator(fixedDeltaTime: number): PhysicsAccumulator {
+  const safeDt = Number.isFinite(fixedDeltaTime) ? Math.max(1, fixedDeltaTime) : 16.67
   return {
     accumulated: 0,
-    fixedDeltaTime,
+    fixedDeltaTime: safeDt,
   }
 }
 
@@ -28,5 +36,5 @@ export function accumulateTime(
   }
 
   // Cap to prevent spiral of death if tab was backgrounded
-  return Math.min(steps, 4)
+  return Math.min(steps, MAX_STEPS_PER_FRAME)
 }
