@@ -6,7 +6,13 @@ import { memo, useEffect, useRef, type HTMLAttributes } from 'react'
 import { useDomElastica } from '../context'
 import { initializeElement } from './renderer'
 
-export type BoundaryBoxProps = HTMLAttributes<HTMLDivElement>
+export type BoundaryBoxProps = HTMLAttributes<HTMLDivElement> & {
+  /**
+   * Collision shape for the body. Circles use `min(width, height) / 2`
+   * as the radius. Defaults to 'rectangle'.
+   */
+  shape?: 'rectangle' | 'circle'
+}
 
 /**
  * BoundaryBox wraps a DOM element to register it with DomElastica physics simulation.
@@ -26,10 +32,16 @@ export type BoundaryBoxProps = HTMLAttributes<HTMLDivElement>
  *   <div>Static obstacle</div>
  * </BoundaryBox>
  * ```
+ *
+ * Pass `shape="circle"` for a circular collision body (e.g. rolling glyphs):
+ * ```tsx
+ * <BoundaryBox shape="circle">(n)</BoundaryBox>
+ * ```
  */
 export const BoundaryBox = memo(function BoundaryBox({
   className,
   children,
+  shape,
   ...props
 }: BoundaryBoxProps) {
   const { addBox, removeBox } = useDomElastica()
@@ -49,6 +61,7 @@ export const BoundaryBox = memo(function BoundaryBox({
     const elementData: ElementData = {
       element,
       rect: rect ?? { width: 0, height: 0 },
+      ...(shape ? { shape } : {}),
     }
     elementDataRef.current = elementData
     addBox(element, elementData)

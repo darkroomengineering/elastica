@@ -1,0 +1,3262 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <meta name="design_doc_mode" content="canvas" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Fragment+Mono:ital@0;1&display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          html,
+          body {
+            margin: 0;
+            padding: 0;
+            background: #d6d1c5;
+          }
+          body {
+            font-family: 'Archivo', sans-serif;
+            color: #16140f;
+            -webkit-font-smoothing: antialiased;
+          }
+          a {
+            color: #e30613;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #16140f;
+            text-decoration: underline;
+          }
+          ::selection {
+            background: #e30613;
+            color: #f2efe9;
+          }
+        </style>
+      </helmet>
+
+      <div
+        style="
+          display: flex;
+          gap: 120px;
+          padding: 80px;
+          align-items: flex-start;
+        "
+      >
+        <!-- ================================================================ -->
+        <!-- LEFT — FINAL PAGE @1440                                          -->
+        <!-- ================================================================ -->
+        <div
+          style="flex: none; display: flex; flex-direction: column; gap: 20px"
+        >
+          <div>
+            <div
+              style="
+                font-family: 'Fragment Mono', monospace;
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: #57534a;
+              "
+            >
+              elastica.darkroom.engineering — final design · desktop 1440 ·
+              settled states
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 24px">
+            <!-- scroll ruler -->
+            <div
+              style="
+                width: 56px;
+                flex: none;
+                position: relative;
+                font-family: 'Fragment Mono', monospace;
+                font-size: 11px;
+                color: #57534a;
+              "
+            >
+              <div
+                style="
+                  position: absolute;
+                  top: 0;
+                  right: 0;
+                  bottom: 0;
+                  border-right: 1px solid #a8a296;
+                "
+              ></div>
+              <div style="position: absolute; top: 0; right: 8px">0%</div>
+              <div
+                style="
+                  position: absolute;
+                  top: 880px;
+                  right: 8px;
+                  color: #e30613;
+                "
+              >
+                18%
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  top: 1700px;
+                  right: 8px;
+                  color: #e30613;
+                "
+              >
+                35%
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  top: 2020px;
+                  right: 8px;
+                  color: #e30613;
+                "
+              >
+                42%
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  top: 2840px;
+                  right: 8px;
+                  color: #e30613;
+                "
+              >
+                59%
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  top: 3660px;
+                  right: 8px;
+                  color: #e30613;
+                "
+              >
+                76%
+              </div>
+              <div style="position: absolute; bottom: 0; right: 8px">100%</div>
+            </div>
+
+            <!-- the page -->
+            <div
+              style="
+                width: 1440px;
+                flex: none;
+                border: 1.5px solid #16140f;
+                box-shadow: 0 2px 24px rgba(22, 20, 15, 0.12);
+              "
+            >
+              <!-- S1 HERO -->
+              <div
+                data-screen-label="Final S1 Hero"
+                style="
+                  height: 880px;
+                  background: #f2efe9;
+                  position: relative;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 24px 32px;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 13px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                  "
+                >
+                  <span>elastica</span>
+                  <span style="color: #57534a"
+                    >@darkroom.engineering/elastica</span
+                  >
+                  <a href="https://github.com/darkroomengineering/elastica"
+                    >github ↗</a
+                  >
+                </div>
+                <!-- roller progress track -->
+                <div
+                  style="
+                    position: absolute;
+                    top: 72px;
+                    left: 32px;
+                    right: 32px;
+                    border-top: 1px solid #c9c4ba;
+                  "
+                ></div>
+                <div
+                  style="
+                    position: absolute;
+                    top: 65px;
+                    left: 36px;
+                    width: 15px;
+                    height: 15px;
+                    border-radius: 50%;
+                    background: #e30613;
+                  "
+                ></div>
+                <!-- settled wordmark -->
+                <div
+                  style="
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    bottom: 176px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: flex-end;
+                    gap: 4px;
+                    font-weight: 800;
+                    font-stretch: 115%;
+                    font-size: 176px;
+                    line-height: 0.82;
+                    letter-spacing: -0.03em;
+                    color: #e30613;
+                  "
+                >
+                  <span style="transform: rotate(-2.5deg)">E</span>
+                  <span style="transform: rotate(1.5deg) translateY(2px)"
+                    >L</span
+                  >
+                  <span style="transform: rotate(-1deg)">A</span>
+                  <span style="transform: rotate(2deg) translateY(1px)">S</span>
+                  <span style="transform: rotate(-3deg)">T</span>
+                  <span style="transform: rotate(1deg) translateY(3px)">I</span>
+                  <span style="transform: rotate(-1.5deg)">C</span>
+                  <span style="transform: rotate(3deg) translateY(1px)">A</span>
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    left: 120px;
+                    right: 120px;
+                    bottom: 172px;
+                    border-bottom: 1px dashed #c9c4ba;
+                  "
+                ></div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 96px;
+                    left: 0;
+                    right: 0;
+                    text-align: center;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 13px;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: #57534a;
+                  "
+                >
+                  the unserious physics engine
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 28px;
+                    left: 32px;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 12px;
+                    color: #57534a;
+                  "
+                >
+                  v1.0 · MIT
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 28px;
+                    left: 0;
+                    right: 0;
+                    text-align: center;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 12px;
+                    color: #16140f;
+                  "
+                >
+                  scroll ↓
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 28px;
+                    right: 32px;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 12px;
+                    color: #57534a;
+                  "
+                >
+                  2d · dom · canvas
+                </div>
+              </div>
+
+              <!-- S2 PILLS -->
+              <div
+                data-screen-label="Final S2 Pills"
+                style="
+                  height: 820px;
+                  background: #f2efe9;
+                  border-top: 1px solid #ddd8cc;
+                  position: relative;
+                  overflow: hidden;
+                  padding: 96px 96px 0;
+                "
+              >
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 13px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                    color: #e30613;
+                  "
+                >
+                  01 — what it is
+                </div>
+                <div
+                  style="
+                    font-size: 68px;
+                    font-weight: 700;
+                    letter-spacing: -0.02em;
+                    line-height: 1.02;
+                    max-width: 760px;
+                    margin-top: 20px;
+                  "
+                >
+                  Collision as a layout tool.
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 14px;
+                    max-width: 1100px;
+                    margin-top: 56px;
+                  "
+                >
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                    "
+                  >
+                    2D rigid bodies
+                  </div>
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                    "
+                  >
+                    AABB · OBB
+                  </div>
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                    "
+                  >
+                    DOM mode
+                  </div>
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                      background: #e30613;
+                      color: #f2efe9;
+                      border-color: #e30613;
+                    "
+                  >
+                    canvas mode
+                  </div>
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                    "
+                  >
+                    circles + rectangles
+                  </div>
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                    "
+                  >
+                    spatial hashing
+                  </div>
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                    "
+                  >
+                    fixed timestep
+                  </div>
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                    "
+                  >
+                    rigid / periodic borders
+                  </div>
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                      background: #e30613;
+                      color: #f2efe9;
+                      border-color: #e30613;
+                    "
+                  >
+                    React bindings
+                  </div>
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                    "
+                  >
+                    restitution 0…1
+                  </div>
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                    "
+                  >
+                    static bodies
+                  </div>
+                  <div
+                    style="
+                      border: 1.5px solid #16140f;
+                      border-radius: 999px;
+                      padding: 16px 28px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 15px;
+                    "
+                  >
+                    MIT
+                  </div>
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 32px;
+                    right: 96px;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 12px;
+                    color: #57534a;
+                  "
+                >
+                  ↓ halfway down, these unpin and follow you
+                </div>
+              </div>
+
+              <!-- INT ROLLERS -->
+              <div
+                data-screen-label="Final INT Rollers"
+                style="
+                  height: 320px;
+                  background: #eae6dd;
+                  border-top: 1px solid #ddd8cc;
+                  border-bottom: 1px solid #ddd8cc;
+                  position: relative;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  style="
+                    position: absolute;
+                    top: 24px;
+                    left: 32px;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 12px;
+                    color: #57534a;
+                  "
+                >
+                  spare parts — they rolled in while you scrolled
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: -10px;
+                    right: 40px;
+                    display: flex;
+                    align-items: flex-end;
+                    font-weight: 700;
+                    color: #e30613;
+                    letter-spacing: -0.04em;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 130px;
+                      transform: rotate(-8deg) translateY(-14px);
+                    "
+                  >
+                    (n)
+                  </div>
+                  <div
+                    style="
+                      font-size: 170px;
+                      transform: rotate(4deg);
+                      margin-left: -30px;
+                    "
+                  >
+                    (2d)
+                  </div>
+                  <div
+                    style="
+                      font-size: 110px;
+                      transform: rotate(-14deg) translateY(-8px);
+                      margin-left: -24px;
+                    "
+                  >
+                    (60fps)
+                  </div>
+                  <div
+                    style="
+                      font-size: 148px;
+                      transform: rotate(6deg);
+                      margin-left: -28px;
+                    "
+                  >
+                    (0.8)
+                  </div>
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    border-bottom: 1.5px solid #16140f;
+                  "
+                ></div>
+              </div>
+
+              <!-- S3 MURMUR -->
+              <div
+                data-screen-label="Final S3 Murmur"
+                style="
+                  height: 820px;
+                  background: #f2efe9;
+                  position: relative;
+                  overflow: hidden;
+                  padding: 96px 96px 0;
+                "
+              >
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 13px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                    color: #e30613;
+                  "
+                >
+                  02 — how it feels
+                </div>
+                <div
+                  style="
+                    max-width: 900px;
+                    margin-top: 32px;
+                    font-size: 34px;
+                    line-height: 1.5;
+                    font-weight: 500;
+                    letter-spacing: -0.01em;
+                  "
+                >
+                  Elastica is
+                  <span
+                    style="
+                      border-bottom: 2px dashed #c9c4ba;
+                      color: transparent;
+                      user-select: none;
+                    "
+                    >a</span
+                  >
+                  2D physics engine built not
+                  <span
+                    style="
+                      border-bottom: 2px dashed #c9c4ba;
+                      color: transparent;
+                      user-select: none;
+                    "
+                    >for</span
+                  >
+                  accuracy but for feeling. Anything on your page
+                  <span
+                    style="
+                      border-bottom: 2px dashed #c9c4ba;
+                      color: transparent;
+                      user-select: none;
+                    "
+                    >can</span
+                  >
+                  become a body — words, images, buttons,
+                  <span
+                    style="
+                      border-bottom: 2px dashed #c9c4ba;
+                      color: transparent;
+                      user-select: none;
+                    "
+                    >the</span
+                  >
+                  footer. It collides, settles,
+                  <span
+                    style="
+                      border-bottom: 2px dashed #c9c4ba;
+                      color: transparent;
+                      user-select: none;
+                    "
+                    >and</span
+                  >
+                  misbehaves at sixty frames per second. And it never,
+                  <span
+                    style="
+                      border-bottom: 2px dashed #c9c4ba;
+                      color: transparent;
+                      user-select: none;
+                    "
+                    >ever</span
+                  >
+                  teleports.
+                </div>
+                <!-- the flock of stolen words -->
+                <div
+                  style="
+                    position: absolute;
+                    top: 420px;
+                    right: 140px;
+                    width: 420px;
+                    height: 260px;
+                  "
+                >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 10px;
+                      left: 150px;
+                      font-size: 20px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(-12deg);
+                    "
+                    >for</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 48px;
+                      left: 92px;
+                      font-size: 20px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(8deg);
+                    "
+                    >a</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 60px;
+                      left: 210px;
+                      font-size: 20px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(-4deg);
+                    "
+                    >the</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 108px;
+                      left: 140px;
+                      font-size: 20px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(14deg);
+                    "
+                    >can</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 96px;
+                      left: 270px;
+                      font-size: 20px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(-9deg);
+                    "
+                    >and</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 150px;
+                      left: 200px;
+                      font-size: 20px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(5deg);
+                    "
+                    >ever</span
+                  >
+                  <div
+                    style="
+                      position: absolute;
+                      top: 104px;
+                      left: 196px;
+                      width: 9px;
+                      height: 9px;
+                      border-radius: 50%;
+                      border: 1.5px solid #16140f;
+                    "
+                  ></div>
+                </div>
+              </div>
+
+              <!-- S4 POP -->
+              <div
+                data-screen-label="Final S4 Pop"
+                style="
+                  height: 820px;
+                  background: #f2efe9;
+                  border-top: 1px solid #ddd8cc;
+                  position: relative;
+                  overflow: hidden;
+                  padding: 96px 96px 0;
+                "
+              >
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 13px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                    color: #e30613;
+                  "
+                >
+                  03 — things we like
+                </div>
+                <div
+                  style="
+                    font-size: 68px;
+                    font-weight: 700;
+                    letter-spacing: -0.02em;
+                    line-height: 1.02;
+                    max-width: 800px;
+                    margin-top: 20px;
+                  "
+                >
+                  A shelf that fights for space.
+                </div>
+                <!-- settled, jostled shelf -->
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 56px;
+                    left: 96px;
+                    right: 96px;
+                    height: 380px;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 0;
+                      left: 0;
+                      width: 250px;
+                      height: 170px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 6px,
+                        #ddd8cc 6px,
+                        #ddd8cc 12px
+                      );
+                      border: 1.5px solid #16140f;
+                      transform: rotate(-3deg);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 11px;
+                      color: #57534a;
+                    "
+                  >
+                    team pick 01
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 120px;
+                      left: 140px;
+                      width: 180px;
+                      height: 180px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 6px,
+                        #ddd8cc 6px,
+                        #ddd8cc 12px
+                      );
+                      border: 1.5px solid #16140f;
+                      transform: rotate(6deg);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 11px;
+                      color: #57534a;
+                    "
+                  >
+                    icon
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 0;
+                      left: 300px;
+                      width: 210px;
+                      height: 280px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 6px,
+                        #ddd8cc 6px,
+                        #ddd8cc 12px
+                      );
+                      border: 1.5px solid #16140f;
+                      transform: rotate(-1.5deg);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 11px;
+                      color: #57534a;
+                    "
+                  >
+                    team pick 02
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 4px;
+                      left: 540px;
+                      width: 280px;
+                      height: 180px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 6px,
+                        #ddd8cc 6px,
+                        #ddd8cc 12px
+                      );
+                      border: 1.5px solid #16140f;
+                      transform: rotate(2.5deg);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 11px;
+                      color: #57534a;
+                    "
+                  >
+                    team pick 03
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 190px;
+                      left: 600px;
+                      width: 150px;
+                      height: 150px;
+                      background: #e30613;
+                      border: 1.5px solid #16140f;
+                      transform: rotate(-8deg);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 11px;
+                      color: #f2efe9;
+                    "
+                  >
+                    glyph
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 0;
+                      left: 850px;
+                      width: 190px;
+                      height: 250px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 6px,
+                        #ddd8cc 6px,
+                        #ddd8cc 12px
+                      );
+                      border: 1.5px solid #16140f;
+                      transform: rotate(4deg);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 11px;
+                      color: #57534a;
+                    "
+                  >
+                    team pick 04
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 8px;
+                      right: 0;
+                      width: 200px;
+                      height: 140px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 6px,
+                        #ddd8cc 6px,
+                        #ddd8cc 12px
+                      );
+                      border: 1.5px solid #16140f;
+                      transform: rotate(-5deg);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 11px;
+                      color: #57534a;
+                    "
+                  >
+                    team pick 05
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 170px;
+                      right: 120px;
+                      width: 140px;
+                      height: 100px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 6px,
+                        #ddd8cc 6px,
+                        #ddd8cc 12px
+                      );
+                      border: 1.5px solid #16140f;
+                      transform: rotate(9deg);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 11px;
+                      color: #57534a;
+                    "
+                  >
+                    sticker
+                  </div>
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 20px;
+                    left: 96px;
+                    right: 96px;
+                    border-bottom: 1.5px solid #16140f;
+                  "
+                ></div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 32px;
+                    right: 96px;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 12px;
+                    color: #57534a;
+                    background: #f2efe9;
+                    padding-left: 8px;
+                  "
+                >
+                  drag to rearrange · hover lifts a piece straight
+                </div>
+              </div>
+
+              <!-- S5 FOOTER -->
+              <div
+                data-screen-label="Final S5 Footer"
+                style="
+                  height: 900px;
+                  background: #16140f;
+                  position: relative;
+                  overflow: hidden;
+                "
+              >
+                <canvas
+                  ref="{{ footFinalRef }}"
+                  width="2160"
+                  height="1350"
+                  style="
+                    position: absolute;
+                    inset: 0;
+                    width: 1440px;
+                    height: 900px;
+                    display: block;
+                  "
+                ></canvas>
+                <div
+                  style="
+                    position: absolute;
+                    top: 24px;
+                    left: 32px;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 12px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                    color: #57534a;
+                  "
+                >
+                  the unserious physics engine
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    top: 24px;
+                    right: 32px;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 12px;
+                    color: #57534a;
+                  "
+                >
+                  npm i @darkroom.engineering/elastica
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 28px;
+                    left: 32px;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 13px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                  "
+                >
+                  <a
+                    href="https://github.com/darkroomengineering/elastica"
+                    style="color: #f2efe9"
+                    >github ↗</a
+                  >
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 28px;
+                    right: 32px;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 13px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                  "
+                >
+                  <a href="https://darkroom.engineering" style="color: #f2efe9"
+                    >darkroom.engineering ↗</a
+                  >
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 28px;
+                    left: 0;
+                    right: 0;
+                    text-align: center;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 11px;
+                    color: #57534a;
+                  "
+                >
+                  cursor bores · click pulses · shake the window ↯
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================ -->
+        <!-- RIGHT — STATE BOARDS + SPECS                                     -->
+        <!-- ================================================================ -->
+        <div
+          style="
+            flex: none;
+            width: 1560px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+          "
+        >
+          <div
+            style="
+              font-family: 'Fragment Mono', monospace;
+              font-size: 13px;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
+              color: #57534a;
+            "
+          >
+            state boards — how each section evolves · physics specs for dev
+          </div>
+
+          <!-- BOARD S1 -->
+          <div
+            data-screen-label="Board S1"
+            style="display: flex; flex-direction: column; gap: 10px"
+          >
+            <div
+              style="
+                font-family: 'Fragment Mono', monospace;
+                font-size: 12px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+              "
+            >
+              <span style="color: #e30613">S1 hero</span> — drop &amp; magnet
+            </div>
+            <div style="display: flex; gap: 14px">
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      top: 8px;
+                      left: 10px;
+                      right: 10px;
+                      display: flex;
+                      justify-content: space-between;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 8px;
+                      color: #c9c4ba;
+                    "
+                  >
+                    <span>elastica</span><span>github ↗</span>
+                  </div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  A — empty fold · scroll locked · beat of silence
+                </div>
+              </div>
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      top: -8px;
+                      left: 60px;
+                      font-size: 44px;
+                      font-weight: 800;
+                      color: #e30613;
+                      transform: rotate(18deg);
+                    "
+                  >
+                    E
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 40px;
+                      left: 110px;
+                      font-size: 44px;
+                      font-weight: 800;
+                      color: #e30613;
+                      transform: rotate(-24deg);
+                    "
+                  >
+                    L
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 90px;
+                      left: 150px;
+                      font-size: 44px;
+                      font-weight: 800;
+                      color: #e30613;
+                      transform: rotate(9deg);
+                    "
+                  >
+                    A
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 16px;
+                      left: 196px;
+                      font-size: 44px;
+                      font-weight: 800;
+                      color: #e30613;
+                      transform: rotate(-8deg);
+                    "
+                  >
+                    S
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 120px;
+                      left: 228px;
+                      font-size: 44px;
+                      font-weight: 800;
+                      color: #e30613;
+                      transform: rotate(31deg);
+                    "
+                  >
+                    T
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 66px;
+                      left: 262px;
+                      font-size: 44px;
+                      font-weight: 800;
+                      color: #e30613;
+                      transform: rotate(-15deg);
+                    "
+                  >
+                    I
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 30px;
+                      left: 20px;
+                      right: 20px;
+                      border-bottom: 1px dashed #57534a;
+                    "
+                  ></div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  B — letters fall as OBB bodies, tumbling
+                </div>
+              </div>
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 28px;
+                      left: 0;
+                      right: 0;
+                      display: flex;
+                      justify-content: center;
+                      align-items: flex-end;
+                      gap: 1px;
+                      font-size: 44px;
+                      font-weight: 800;
+                      color: #e30613;
+                      line-height: 0.82;
+                    "
+                  >
+                    <span style="transform: rotate(-2.5deg)">E</span
+                    ><span style="transform: rotate(1.5deg)">L</span
+                    ><span>A</span><span style="transform: rotate(2deg)">S</span
+                    ><span style="transform: rotate(-3deg)">T</span
+                    ><span style="transform: rotate(1deg)">I</span
+                    ><span style="transform: rotate(-1.5deg)">C</span
+                    ><span style="transform: rotate(3deg)">A</span>
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 26px;
+                      left: 20px;
+                      right: 20px;
+                      border-bottom: 1px dashed #57534a;
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 8px;
+                      left: 0;
+                      right: 0;
+                      text-align: center;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 8px;
+                      color: #16140f;
+                    "
+                  >
+                    scroll ↓
+                  </div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  C — one bounce · settle · scroll unlocks
+                </div>
+              </div>
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      top: 60px;
+                      left: 120px;
+                      width: 170px;
+                      height: 120px;
+                    "
+                  >
+                    <span
+                      style="
+                        position: absolute;
+                        top: 0;
+                        left: 50px;
+                        font-size: 40px;
+                        font-weight: 800;
+                        color: #e30613;
+                        transform: rotate(-18deg);
+                      "
+                      >E</span
+                    >
+                    <span
+                      style="
+                        position: absolute;
+                        top: 26px;
+                        left: 14px;
+                        font-size: 40px;
+                        font-weight: 800;
+                        color: #e30613;
+                        transform: rotate(24deg);
+                      "
+                      >L</span
+                    >
+                    <span
+                      style="
+                        position: absolute;
+                        top: 30px;
+                        left: 84px;
+                        font-size: 40px;
+                        font-weight: 800;
+                        color: #e30613;
+                        transform: rotate(8deg);
+                      "
+                      >A</span
+                    >
+                    <span
+                      style="
+                        position: absolute;
+                        top: 58px;
+                        left: 44px;
+                        font-size: 40px;
+                        font-weight: 800;
+                        color: #e30613;
+                        transform: rotate(-31deg);
+                      "
+                      >S</span
+                    >
+                    <span
+                      style="
+                        position: absolute;
+                        top: 62px;
+                        left: 106px;
+                        font-size: 40px;
+                        font-weight: 800;
+                        color: #e30613;
+                        transform: rotate(15deg);
+                      "
+                      >T</span
+                    >
+                    <span
+                      style="
+                        position: absolute;
+                        top: 6px;
+                        left: 110px;
+                        font-size: 40px;
+                        font-weight: 800;
+                        color: #e30613;
+                        transform: rotate(40deg);
+                      "
+                      >I</span
+                    >
+                    <span
+                      style="
+                        position: absolute;
+                        top: 84px;
+                        left: 74px;
+                        font-size: 40px;
+                        font-weight: 800;
+                        color: #e30613;
+                        transform: rotate(-12deg);
+                      "
+                      >C</span
+                    >
+                    <span
+                      style="
+                        position: absolute;
+                        top: 88px;
+                        left: 10px;
+                        font-size: 40px;
+                        font-weight: 800;
+                        color: #e30613;
+                        transform: rotate(20deg);
+                      "
+                      >A</span
+                    >
+                    <div
+                      style="
+                        position: absolute;
+                        top: 52px;
+                        left: 76px;
+                        width: 9px;
+                        height: 9px;
+                        border-radius: 50%;
+                        border: 1.5px solid #16140f;
+                      "
+                    ></div>
+                  </div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  D — magnet: letters knot around cursor · spring home on leave
+                </div>
+              </div>
+            </div>
+            <div
+              style="
+                border: 1px solid #a8a296;
+                background: #e3ded2;
+                padding: 12px 16px;
+                font-family: 'Fragment Mono', monospace;
+                font-size: 11px;
+                line-height: 1.7;
+                color: #37342e;
+                max-width: 1494px;
+              "
+            >
+              SPEC · 8 OBB bodies · restitution 0.4 (one honest rebound) ·
+              hitbox 85% of glyph (visual near-overlap in knots) · home spring
+              k≈0.02 when idle · magnet: radial attraction within 240px of
+              cursor, restitution→0 while clumped · scroll-lock until Σ|v| &lt;
+              ε, ANY input fast-forwards settle · first scroll tick injects
+              shear (velocity channel gain 1.0)
+            </div>
+          </div>
+
+          <!-- BOARD S2 -->
+          <div
+            data-screen-label="Board S2"
+            style="display: flex; flex-direction: column; gap: 10px"
+          >
+            <div
+              style="
+                font-family: 'Fragment Mono', monospace;
+                font-size: 12px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+              "
+            >
+              <span style="color: #e30613">S2 pills</span> — the escort
+            </div>
+            <div style="display: flex; gap: 14px">
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                    padding: 20px;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 17px;
+                      font-weight: 700;
+                      letter-spacing: -0.02em;
+                    "
+                  >
+                    Collision as a layout tool.
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      flex-wrap: wrap;
+                      gap: 5px;
+                      margin-top: 14px;
+                      max-width: 300px;
+                    "
+                  >
+                    <div
+                      style="
+                        border: 1px solid #16140f;
+                        border-radius: 99px;
+                        padding: 4px 10px;
+                        font-family: 'Fragment Mono', monospace;
+                        font-size: 7.5px;
+                      "
+                    >
+                      2D rigid bodies
+                    </div>
+                    <div
+                      style="
+                        border: 1px solid #16140f;
+                        border-radius: 99px;
+                        padding: 4px 10px;
+                        font-family: 'Fragment Mono', monospace;
+                        font-size: 7.5px;
+                      "
+                    >
+                      AABB · OBB
+                    </div>
+                    <div
+                      style="
+                        border: 1px solid #16140f;
+                        border-radius: 99px;
+                        padding: 4px 10px;
+                        font-family: 'Fragment Mono', monospace;
+                        font-size: 7.5px;
+                      "
+                    >
+                      DOM mode
+                    </div>
+                    <div
+                      style="
+                        border: 1px solid #e30613;
+                        background: #e30613;
+                        color: #f2efe9;
+                        border-radius: 99px;
+                        padding: 4px 10px;
+                        font-family: 'Fragment Mono', monospace;
+                        font-size: 7.5px;
+                      "
+                    >
+                      canvas mode
+                    </div>
+                    <div
+                      style="
+                        border: 1px solid #16140f;
+                        border-radius: 99px;
+                        padding: 4px 10px;
+                        font-family: 'Fragment Mono', monospace;
+                        font-size: 7.5px;
+                      "
+                    >
+                      spatial hashing
+                    </div>
+                    <div
+                      style="
+                        border: 1px solid #16140f;
+                        border-radius: 99px;
+                        padding: 4px 10px;
+                        font-family: 'Fragment Mono', monospace;
+                        font-size: 7.5px;
+                      "
+                    >
+                      fixed timestep
+                    </div>
+                  </div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  A — pinned grid (isStatic) · reads as normal UI
+                </div>
+              </div>
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      top: 24px;
+                      left: 20px;
+                      border: 1px solid #16140f;
+                      border-radius: 99px;
+                      padding: 4px 10px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 7.5px;
+                      color: #c9c4ba;
+                      border-color: #c9c4ba;
+                    "
+                  >
+                    2D rigid bodies
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 50%;
+                      left: 55%;
+                      width: 9px;
+                      height: 9px;
+                      border-radius: 50%;
+                      border: 1.5px solid #16140f;
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 40%;
+                      left: 30%;
+                      border: 1px solid #16140f;
+                      border-radius: 99px;
+                      padding: 4px 10px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 7.5px;
+                      transform: rotate(-8deg);
+                    "
+                  >
+                    AABB · OBB
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 58%;
+                      left: 34%;
+                      border: 1px solid #e30613;
+                      background: #e30613;
+                      color: #f2efe9;
+                      border-radius: 99px;
+                      padding: 4px 10px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 7.5px;
+                      transform: rotate(5deg);
+                    "
+                  >
+                    canvas mode
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 66%;
+                      left: 52%;
+                      border: 1px solid #16140f;
+                      border-radius: 99px;
+                      padding: 4px 10px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 7.5px;
+                      transform: rotate(-4deg);
+                    "
+                  >
+                    spatial hashing
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 38%;
+                      left: 60%;
+                      border: 1px solid #16140f;
+                      border-radius: 99px;
+                      padding: 4px 10px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 7.5px;
+                      transform: rotate(10deg);
+                    "
+                  >
+                    DOM mode
+                  </div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  B — 50% fold: unpin staggered, heaviest first → follow swarm
+                </div>
+              </div>
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 18px;
+                      left: 30px;
+                      border: 1px solid #16140f;
+                      border-radius: 99px;
+                      padding: 4px 10px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 7.5px;
+                      transform: rotate(-6deg);
+                    "
+                  >
+                    2D rigid bodies
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 34px;
+                      left: 110px;
+                      border: 1px solid #16140f;
+                      border-radius: 99px;
+                      padding: 4px 10px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 7.5px;
+                      transform: rotate(4deg);
+                    "
+                  >
+                    AABB · OBB
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 16px;
+                      left: 190px;
+                      border: 1px solid #e30613;
+                      background: #e30613;
+                      color: #f2efe9;
+                      border-radius: 99px;
+                      padding: 4px 10px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 7.5px;
+                      transform: rotate(-3deg);
+                    "
+                  >
+                    canvas mode
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 40px;
+                      left: 250px;
+                      border: 1px solid #16140f;
+                      border-radius: 99px;
+                      padding: 4px 10px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 7.5px;
+                      transform: rotate(7deg);
+                    "
+                  >
+                    DOM mode
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 12px;
+                      left: 0;
+                      right: 0;
+                      border-bottom: 1.5px solid #e30613;
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 16px;
+                      right: 12px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 8px;
+                      color: #e30613;
+                    "
+                  >
+                    fence
+                  </div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  C — section exit: pills bunch against the fence, left behind
+                </div>
+              </div>
+            </div>
+            <div
+              style="
+                border: 1px solid #a8a296;
+                background: #e3ded2;
+                padding: 12px 16px;
+                font-family: 'Fragment Mono', monospace;
+                font-size: 11px;
+                line-height: 1.7;
+                color: #37342e;
+                max-width: 1494px;
+              "
+            >
+              SPEC · 12 DOM bodies (real text, selectable) · isStatic until
+              section 50% viewport progress · unpin stagger 80ms, mass ∝ pill
+              area · follow: spring to cursor with per-pill offset, stiffness
+              0.012–0.02 · inter-pill collisions ON (swarm has body) · fence =
+              containerOffsets.bottom at section edge, restitution 0.2
+            </div>
+          </div>
+
+          <!-- BOARD INT -->
+          <div
+            data-screen-label="Board INT"
+            style="display: flex; flex-direction: column; gap: 10px"
+          >
+            <div
+              style="
+                font-family: 'Fragment Mono', monospace;
+                font-size: 12px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+              "
+            >
+              <span style="color: #e30613">INT rollers</span> — spare parts band
+            </div>
+            <div style="display: flex; gap: 14px">
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 110px;
+                    background: #eae6dd;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: -4px;
+                      left: 30px;
+                      font-size: 44px;
+                      font-weight: 700;
+                      color: #e30613;
+                      transform: rotate(-30deg);
+                    "
+                  >
+                    (n)
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 30px;
+                      left: 6px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 10px;
+                      color: #57534a;
+                    "
+                  >
+                    → vx from scroll velocity
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 0;
+                      left: 0;
+                      right: 0;
+                      border-bottom: 1px solid #16140f;
+                    "
+                  ></div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  A — glyph cannonballs in, rolling with real angular velocity
+                </div>
+              </div>
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 110px;
+                    background: #eae6dd;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: -6px;
+                      right: 10px;
+                      display: flex;
+                      align-items: flex-end;
+                      color: #e30613;
+                      font-weight: 700;
+                    "
+                  >
+                    <div style="font-size: 34px; transform: rotate(-8deg)">
+                      (n)
+                    </div>
+                    <div
+                      style="
+                        font-size: 46px;
+                        transform: rotate(4deg);
+                        margin-left: -8px;
+                      "
+                    >
+                      (2d)
+                    </div>
+                    <div
+                      style="
+                        font-size: 30px;
+                        transform: rotate(-12deg);
+                        margin-left: -6px;
+                      "
+                    >
+                      (60fps)
+                    </div>
+                    <div
+                      style="
+                        font-size: 40px;
+                        transform: rotate(6deg);
+                        margin-left: -8px;
+                      "
+                    >
+                      (0.8)
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 0;
+                      left: 0;
+                      right: 0;
+                      border-bottom: 1px solid #16140f;
+                    "
+                  ></div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  B — pile against the right wall · nudge them with the cursor
+                </div>
+              </div>
+            </div>
+            <div
+              style="
+                border: 1px solid #a8a296;
+                background: #e3ded2;
+                padding: 12px 16px;
+                font-family: 'Fragment Mono', monospace;
+                font-size: 11px;
+                line-height: 1.7;
+                color: #37342e;
+                max-width: 1494px;
+              "
+            >
+              SPEC · 4–6 circle bodies with glyph render (rotation = angle) ·
+              spawn on band entering viewport, vx = clamp(lenisVelocity × 2.5,
+              4, 18) · left border periodic (they re-enter if flung), right
+              rigid · band field #EAE6DD, glyphs #E30613 · giant hit areas,
+              near-free
+            </div>
+          </div>
+
+          <!-- BOARD S3 -->
+          <div
+            data-screen-label="Board S3"
+            style="display: flex; flex-direction: column; gap: 10px"
+          >
+            <div
+              style="
+                font-family: 'Fragment Mono', monospace;
+                font-size: 12px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+              "
+            >
+              <span style="color: #e30613">S3 murmur</span> — flocking copy +
+              word-thief cursor
+            </div>
+            <div style="display: flex; gap: 14px">
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                    padding: 22px;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 12.5px;
+                      line-height: 1.6;
+                      font-weight: 500;
+                      max-width: 300px;
+                    "
+                  >
+                    Elastica is a 2D physics engine built not for accuracy but
+                    for feeling. Anything on your page can become a body —
+                    words, images, buttons, the footer.
+                  </div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  A — paragraph intact · every word is a sleeping body
+                </div>
+              </div>
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                    padding: 22px;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 12.5px;
+                      line-height: 1.6;
+                      font-weight: 500;
+                      max-width: 300px;
+                    "
+                  >
+                    Elastica is
+                    <span
+                      style="
+                        color: transparent;
+                        border-bottom: 1px dashed #c9c4ba;
+                      "
+                      >a</span
+                    >
+                    2D physics engine built not
+                    <span
+                      style="
+                        color: transparent;
+                        border-bottom: 1px dashed #c9c4ba;
+                      "
+                      >for</span
+                    >
+                    accuracy but for feeling. Anything on your page
+                    <span
+                      style="
+                        color: transparent;
+                        border-bottom: 1px dashed #c9c4ba;
+                      "
+                      >can</span
+                    >
+                    become
+                    <span
+                      style="
+                        color: transparent;
+                        border-bottom: 1px dashed #c9c4ba;
+                      "
+                      >a</span
+                    >
+                    body…
+                  </div>
+                  <span
+                    style="
+                      position: absolute;
+                      top: 130px;
+                      left: 160px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(-14deg);
+                    "
+                    >for</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 148px;
+                      left: 200px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(8deg);
+                    "
+                    >a</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 160px;
+                      left: 158px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(-5deg);
+                    "
+                    >can</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 142px;
+                      left: 246px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(12deg);
+                    "
+                    >a</span
+                  >
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  B — words peel off in reading order and school together
+                </div>
+              </div>
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      top: 90px;
+                      left: 150px;
+                      width: 9px;
+                      height: 9px;
+                      border-radius: 50%;
+                      border: 1.5px solid #16140f;
+                    "
+                  ></div>
+                  <span
+                    style="
+                      position: absolute;
+                      top: 66px;
+                      left: 130px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(-10deg);
+                    "
+                    >the</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 74px;
+                      left: 180px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(14deg);
+                    "
+                    >of</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 110px;
+                      left: 118px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(6deg);
+                    "
+                    >and</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      top: 116px;
+                      left: 182px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      color: #e30613;
+                      transform: rotate(-7deg);
+                    "
+                    >is</span
+                  >
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 14px;
+                      left: 20px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 9px;
+                      color: #57534a;
+                    "
+                  >
+                    dwell 1.5s → words fly back to their sentences
+                  </div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  C — the cursor is a word-thief · swarm cap ~25
+                </div>
+              </div>
+            </div>
+            <div
+              style="
+                border: 1px solid #a8a296;
+                background: #e3ded2;
+                padding: 12px 16px;
+                font-family: 'Fragment Mono', monospace;
+                font-size: 11px;
+                line-height: 1.7;
+                color: #37342e;
+                max-width: 1494px;
+              "
+            >
+              SPEC · ~60 word bodies (span-wrapped, pre-measured once) · release
+              trigger: word's line crosses viewport center, stagger = reading
+              order · boids: separation 1.2 / alignment 0.6 / cohesion 0.4,
+              target drifts with scroll · thief: steals words ≤4 chars within
+              120px, noisy orbit r 30–70px · fully reversible on scroll-up
+              (words re-dock via spring to original rect)
+            </div>
+          </div>
+
+          <!-- BOARD S4 -->
+          <div
+            data-screen-label="Board S4"
+            style="display: flex; flex-direction: column; gap: 10px"
+          >
+            <div
+              style="
+                font-family: 'Fragment Mono', monospace;
+                font-size: 12px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+              "
+            >
+              <span style="color: #e30613">S4 pop</span> — media shelf
+            </div>
+            <div style="display: flex; gap: 14px">
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 18px;
+                      left: 40px;
+                      width: 70px;
+                      height: 48px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 4px,
+                        #ddd8cc 4px,
+                        #ddd8cc 8px
+                      );
+                      border: 1px solid #16140f;
+                      transform: rotate(-2deg);
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 60px;
+                      left: 130px;
+                      width: 34px;
+                      height: 34px;
+                      background: #e30613;
+                      border: 1px solid #16140f;
+                      transform: rotate(12deg) scale(0.55);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 7px;
+                      color: #f2efe9;
+                    "
+                  >
+                    pop
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 16px;
+                      left: 0;
+                      right: 0;
+                      border-bottom: 1px solid #16140f;
+                      margin: 0 20px;
+                    "
+                  ></div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  A — scroll milestone: item spawns at 0% scale
+                </div>
+              </div>
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 18px;
+                      left: 30px;
+                      width: 70px;
+                      height: 48px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 4px,
+                        #ddd8cc 4px,
+                        #ddd8cc 8px
+                      );
+                      border: 1px solid #16140f;
+                      transform: rotate(-7deg);
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 20px;
+                      left: 108px;
+                      width: 62px;
+                      height: 62px;
+                      background: #e30613;
+                      border: 1px solid #16140f;
+                      transform: rotate(4deg);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 8px;
+                      color: #f2efe9;
+                    "
+                  >
+                    inflating
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 18px;
+                      left: 180px;
+                      width: 80px;
+                      height: 56px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 4px,
+                        #ddd8cc 4px,
+                        #ddd8cc 8px
+                      );
+                      border: 1px solid #16140f;
+                      transform: rotate(6deg);
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 16px;
+                      left: 0;
+                      right: 0;
+                      border-bottom: 1px solid #16140f;
+                      margin: 0 20px;
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 18px;
+                      left: 20px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 9px;
+                      color: #57534a;
+                    "
+                  >
+                    growing collision radius shoves neighbors →
+                  </div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  B — inflation displaces the settled pile · like packing a
+                  suitcase
+                </div>
+              </div>
+              <div style="width: 360px">
+                <div
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    background: #f2efe9;
+                    border: 1.5px solid #16140f;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 18px;
+                      left: 24px;
+                      width: 76px;
+                      height: 52px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 4px,
+                        #ddd8cc 4px,
+                        #ddd8cc 8px
+                      );
+                      border: 1px solid #16140f;
+                      transform: rotate(-3deg);
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 52px;
+                      left: 76px;
+                      width: 54px;
+                      height: 54px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 4px,
+                        #ddd8cc 4px,
+                        #ddd8cc 8px
+                      );
+                      border: 1px solid #16140f;
+                      transform: rotate(7deg);
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 18px;
+                      left: 128px;
+                      width: 64px;
+                      height: 84px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 4px,
+                        #ddd8cc 4px,
+                        #ddd8cc 8px
+                      );
+                      border: 1px solid #16140f;
+                      transform: rotate(-1deg);
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 20px;
+                      left: 200px;
+                      width: 84px;
+                      height: 56px;
+                      background: repeating-linear-gradient(
+                        45deg,
+                        #eae6dd,
+                        #eae6dd 4px,
+                        #ddd8cc 4px,
+                        #ddd8cc 8px
+                      );
+                      border: 1px solid #16140f;
+                      transform: rotate(3deg);
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 60px;
+                      left: 236px;
+                      width: 44px;
+                      height: 44px;
+                      background: #e30613;
+                      border: 1px solid #16140f;
+                      transform: rotate(-9deg);
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 16px;
+                      left: 0;
+                      right: 0;
+                      border-bottom: 1px solid #16140f;
+                      margin: 0 20px;
+                    "
+                  ></div>
+                </div>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  C — settled shelf · drag to toss · hover lifts straight
+                </div>
+              </div>
+            </div>
+            <div
+              style="
+                border: 1px solid #a8a296;
+                background: #e3ded2;
+                padding: 12px 16px;
+                font-family: 'Fragment Mono', monospace;
+                font-size: 11px;
+                line-height: 1.7;
+                color: #37342e;
+                max-width: 1494px;
+              "
+            >
+              SPEC · ≤20 OBB bodies, real &lt;img&gt; elements (hover/click/drag
+              work natively) · spawn at scroll milestones, displayScale 0→1 over
+              600ms with collision bounds synced to scale · high friction,
+              restitution 0.15 (suitcase, not ball pit) · hover: displayScale
+              1.06 + rotation→0 spring · drag = pointer impulse · content:
+              darkroom team picks (TBD)
+            </div>
+          </div>
+
+          <!-- BOARD S5 -->
+          <div
+            data-screen-label="Board S5"
+            style="display: flex; flex-direction: column; gap: 10px"
+          >
+            <div
+              style="
+                font-family: 'Fragment Mono', monospace;
+                font-size: 12px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+              "
+            >
+              <span style="color: #e30613">S5 footer</span> — the clutch
+            </div>
+            <div style="display: flex; gap: 14px">
+              <div style="width: 360px">
+                <canvas
+                  ref="{{ footARef }}"
+                  width="720"
+                  height="450"
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    display: block;
+                    border: 1.5px solid #16140f;
+                  "
+                ></canvas>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  A — particles drift inward from everywhere
+                </div>
+              </div>
+              <div style="width: 360px">
+                <canvas
+                  ref="{{ footBRef }}"
+                  width="720"
+                  height="450"
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    display: block;
+                    border: 1.5px solid #16140f;
+                  "
+                ></canvas>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  B — crust forms · wordmark emerges as negative space
+                </div>
+              </div>
+              <div style="width: 360px">
+                <canvas
+                  ref="{{ footCRef }}"
+                  width="720"
+                  height="450"
+                  style="
+                    width: 360px;
+                    height: 225px;
+                    display: block;
+                    border: 1.5px solid #16140f;
+                  "
+                ></canvas>
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    color: #57534a;
+                    margin-top: 5px;
+                  "
+                >
+                  C — settled · cursor bores a hole through the crust
+                </div>
+              </div>
+            </div>
+            <div
+              style="
+                border: 1px solid #a8a296;
+                background: #e3ded2;
+                padding: 12px 16px;
+                font-family: 'Fragment Mono', monospace;
+                font-size: 11px;
+                line-height: 1.7;
+                color: #37342e;
+                max-width: 1494px;
+              "
+            >
+              SPEC · CanvasElastica · ~1300 circle bodies, radii 5.5/7.5/10 (mix
+              for tight packing) · wordmark = compound of ~35 isStatic rects,
+              stencil letterforms only (A counter filled — no enclosed counters)
+              · inward attraction to wordmark bbox, restitution ≈ 0 · sprites =
+              lozenges rotated to velocity/field-tangent in draw pass (collision
+              stays circular) · cursor bore r 90 · click radial pulse · wheel
+              slosh · window-shake impulse via screenX/Y delta + devicemotion on
+              mobile
+            </div>
+          </div>
+
+          <!-- TOKENS -->
+          <div
+            data-screen-label="Tokens"
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+              margin-top: 8px;
+            "
+          >
+            <div
+              style="
+                font-family: 'Fragment Mono', monospace;
+                font-size: 12px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+              "
+            >
+              <span style="color: #e30613">tokens</span> — system sheet
+            </div>
+            <div style="display: flex; gap: 14px; align-items: stretch">
+              <div
+                style="
+                  border: 1.5px solid #16140f;
+                  background: #f2efe9;
+                  width: 548px;
+                "
+              >
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                    padding: 8px 12px;
+                    border-bottom: 1px solid #16140f;
+                  "
+                >
+                  color
+                </div>
+                <div
+                  style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+                    height: 84px;
+                  "
+                >
+                  <div
+                    style="
+                      background: #f2efe9;
+                      border-right: 1px solid #16140f;
+                      display: flex;
+                      align-items: flex-end;
+                      padding: 6px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 8.5px;
+                    "
+                  >
+                    #F2EFE9<br />field
+                  </div>
+                  <div
+                    style="
+                      background: #eae6dd;
+                      border-right: 1px solid #16140f;
+                      display: flex;
+                      align-items: flex-end;
+                      padding: 6px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 8.5px;
+                    "
+                  >
+                    #EAE6DD<br />band
+                  </div>
+                  <div
+                    style="
+                      background: #e30613;
+                      border-right: 1px solid #16140f;
+                      color: #f2efe9;
+                      display: flex;
+                      align-items: flex-end;
+                      padding: 6px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 8.5px;
+                    "
+                  >
+                    #E30613<br />bodies only
+                  </div>
+                  <div
+                    style="
+                      background: #16140f;
+                      border-right: 1px solid #16140f;
+                      color: #f2efe9;
+                      display: flex;
+                      align-items: flex-end;
+                      padding: 6px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 8.5px;
+                    "
+                  >
+                    #16140F<br />ink
+                  </div>
+                  <div
+                    style="
+                      background: #c9c4ba;
+                      display: flex;
+                      align-items: flex-end;
+                      padding: 6px;
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 8.5px;
+                    "
+                  >
+                    #C9C4BA<br />hairlines
+                  </div>
+                </div>
+              </div>
+              <div
+                style="
+                  border: 1.5px solid #16140f;
+                  background: #f2efe9;
+                  width: 548px;
+                "
+              >
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                    padding: 8px 12px;
+                    border-bottom: 1px solid #16140f;
+                  "
+                >
+                  type
+                </div>
+                <div
+                  style="
+                    padding: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 30px;
+                      font-weight: 800;
+                      font-stretch: 115%;
+                      text-transform: uppercase;
+                      letter-spacing: -0.03em;
+                      line-height: 1;
+                    "
+                  >
+                    Archivo var — display
+                  </div>
+                  <div
+                    style="
+                      font-size: 15px;
+                      font-weight: 700;
+                      letter-spacing: -0.02em;
+                    "
+                  >
+                    Archivo 700 — headings 68/34
+                  </div>
+                  <div
+                    style="
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 12px;
+                      color: #57534a;
+                    "
+                  >
+                    Fragment Mono — labels 12–15 · uppercase · 0.08em
+                  </div>
+                  <div
+                    style="
+                      font-family: 'Fragment Mono', monospace;
+                      font-size: 10px;
+                      color: #e30613;
+                    "
+                  >
+                    wdth axis 62–125 = velocity (squash on impact, stretch in
+                    flight)
+                  </div>
+                </div>
+              </div>
+              <div
+                style="
+                  border: 1.5px solid #16140f;
+                  background: #f2efe9;
+                  flex: 1;
+                "
+              >
+                <div
+                  style="
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 10px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                    padding: 8px 12px;
+                    border-bottom: 1px solid #16140f;
+                  "
+                >
+                  laws
+                </div>
+                <div
+                  style="
+                    padding: 12px;
+                    font-family: 'Fragment Mono', monospace;
+                    font-size: 11px;
+                    line-height: 1.8;
+                    color: #37342e;
+                  "
+                >
+                  1 · nothing teleports<br />
+                  2 · everything settles, nothing stops<br />
+                  3 · the cursor has mass<br />
+                  4 · red belongs to bodies, never fields<br />
+                  5 · ≤100 DOM bodies; beyond → canvas<br />
+                  6 · one section simulates at a time
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script>
+      class Component extends DCLogic {
+        footFinalRef = React.createRef()
+        footARef = React.createRef()
+        footBRef = React.createRef()
+        footCRef = React.createRef()
+
+        renderVals() {
+          return {
+            footFinalRef: this.footFinalRef,
+            footARef: this.footARef,
+            footBRef: this.footBRef,
+            footCRef: this.footCRef,
+          }
+        }
+
+        componentDidMount() {
+          // small state frames: synchronous settle
+          this.renderCrust(this.footARef.current, 360, 225, { steps: 26 })
+          this.renderCrust(this.footBRef.current, 360, 225, { steps: 120 })
+          this.renderCrust(this.footCRef.current, 360, 225, { steps: 380, hole: { fx: 0.63, fy: 0.36 } })
+          // final frame: settle progressively so the page stays responsive
+          this.finalSim = this.setupSim(1440, 900)
+          this.finalSteps = 0
+          const tick = () => {
+            if (!this.footFinalRef.current) return
+            for (let i = 0; i < 6 && this.finalSteps < 380; i++) { this.stepSim(this.finalSim, null); this.finalSteps++ }
+            this.drawSim(this.footFinalRef.current, this.finalSim, 1.5)
+            if (this.finalSteps < 380) this.raf = requestAnimationFrame(tick)
+          }
+          this.raf = requestAnimationFrame(tick)
+        }
+
+        componentWillUnmount() { cancelAnimationFrame(this.raf) }
+
+        // ---------- deterministic crust sim (mirrors Elastica semantics) ----------
+
+        rng(seed) { let a = seed; return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
+
+        wordmarkStatics(w, h) {
+          const T = 0.26, W = 0.72
+          const L = {
+            E: [[0,0,T,1],[0,0,W,T],[0,0.42,W*0.82,T],[0,1-T,W,T]],
+            L: [[0,0,T,1],[0,1-T,W,T]],
+            A: [[0,0,T,1],[W-T,0,T,1],[0,0,W,T],[0,0.48,W,T],[T,T,W-2*T,0.48-T]],
+            S: [[0,0,W,T],[0,0,T,0.52],[0,0.42,W,T],[W-T,0.42,T,0.58],[0,1-T,W,T]],
+            T: [[0,0,W,T],[(W-T)/2,0,T,1]],
+            I: [[0,0,W,T],[(W-T)/2,0,T,1],[0,1-T,W,T]],
+            C: [[0,0,T,1],[0,0,W,T],[0,1-T,W,T]],
+          }
+          const word = 'ELASTICA'
+          const units = (word.length - 1) * 1.0 + W
+          const s = (w * 0.72) / units
+          const letterH = s * 1.35
+          const x0 = (w - units * s) / 2
+          const y0 = h / 2 - letterH / 2
+          const statics = []
+          let cx = x0
+          for (const ch of word) {
+            for (const [rx, ry, rw, rh] of L[ch]) statics.push({ x: cx + rx * s, y: y0 + ry * letterH, w: rw * s, h: rh * letterH })
+            cx += 1.0 * s
+          }
+          return { statics, bb: { x0, y0, x1: x0 + units * s, y1: y0 + letterH, cx: w / 2, cy: h / 2 } }
+        }
+
+        setupSim(w, h) {
+          const rnd = this.rng(20260708)
+          const { statics, bb } = this.wordmarkStatics(w, h)
+          const scale = w / 1440
+          const radii = [5.5 * scale, 7.5 * scale, 10 * scale]
+          const n = Math.round(1300 * (w * h) / (1440 * 900))
+          const P = []
+          const inside = (x, y, r) => statics.some(s => x > s.x - r && x < s.x + s.w + r && y > s.y - r && y < s.y + s.h + r)
+          for (let i = 0; i < n; i++) {
+            const r = radii[(rnd() * 3) | 0]
+            let x = rnd() * w, y = rnd() * h
+            for (let t = 0; t < 12 && inside(x, y, r); t++) { x = rnd() * w; y = rnd() * h }
+            P.push({ x, y, vx: (rnd() - 0.5) * 2, vy: (rnd() - 0.5) * 2, r, a: rnd() * Math.PI * 2, red: rnd() < 0.15 })
+          }
+          return { P, statics, bb, w, h, scale, rnd }
+        }
+
+        stepSim(sim, hole) {
+          const { P, bb, w, h, scale } = sim
+          const A = 0.06 * scale
+          for (const p of P) {
+            let tx = Math.max(bb.x0, Math.min(bb.x1, p.x))
+            let ty = Math.max(bb.y0, Math.min(bb.y1, p.y))
+            if (tx === p.x && ty === p.y) { tx = bb.cx; ty = bb.cy }
+            const dx = tx - p.x, dy = ty - p.y
+            const d = Math.hypot(dx, dy)
+            if (d > 1) { p.vx += (dx / d) * A; p.vy += (dy / d) * A }
+            if (hole) {
+              const hx = p.x - hole.fx * w, hy = p.y - hole.fy * h
+              const hd = Math.hypot(hx, hy)
+              const hr = 90 * scale
+              if (hd < hr && hd > 0.01) { const f = 1.5 * scale * (1 - hd / hr); p.vx += (hx / hd) * f; p.vy += (hy / hd) * f }
+            }
+            p.vx *= 0.982; p.vy *= 0.982
+            const sp = Math.hypot(p.vx, p.vy), mx = 10 * scale
+            if (sp > mx) { p.vx = (p.vx / sp) * mx; p.vy = (p.vy / sp) * mx }
+            p.x += p.vx; p.y += p.vy
+          }
+          for (let it = 0; it < 2; it++) this.resolveSim(sim)
+          for (const p of P) {
+            const sp = Math.hypot(p.vx, p.vy)
+            let des
+            if (sp > 1.1 * scale) des = Math.atan2(p.vy, p.vx)
+            else {
+              let tx = Math.max(bb.x0, Math.min(bb.x1, p.x))
+              let ty = Math.max(bb.y0, Math.min(bb.y1, p.y))
+              if (tx === p.x && ty === p.y) { tx = bb.cx; ty = bb.cy }
+              des = Math.atan2(tx - p.x, -(ty - p.y))
+            }
+            let del = ((des - p.a + Math.PI * 3) % (Math.PI * 2)) - Math.PI
+            p.a += del * 0.14
+          }
+        }
+
+        resolveSim(sim) {
+          const { P, statics, bb, w, h, scale } = sim
+          const cell = 21 * scale
+          const cols = Math.ceil(w / cell) + 2
+          const hash = new Map()
+          for (let i = 0; i < P.length; i++) {
+            const p = P[i]
+            const k = (((p.x / cell) | 0) + 1) + (((p.y / cell) | 0) + 1) * cols
+            const b = hash.get(k)
+            if (b) b.push(i); else hash.set(k, [i])
+          }
+          for (let i = 0; i < P.length; i++) {
+            const p = P[i]
+            const gx = ((p.x / cell) | 0) + 1, gy = ((p.y / cell) | 0) + 1
+            for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
+              const bkt = hash.get(gx + ox + (gy + oy) * cols)
+              if (!bkt) continue
+              for (const j of bkt) {
+                if (j <= i) continue
+                const q = P[j]
+                const dx = q.x - p.x, dy = q.y - p.y, rr = p.r + q.r
+                if (Math.abs(dx) > rr || Math.abs(dy) > rr) continue
+                const d2 = dx * dx + dy * dy
+                if (d2 >= rr * rr || d2 === 0) continue
+                const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, push = (rr - d) * 0.5
+                p.x -= nx * push; p.y -= ny * push; q.x += nx * push; q.y += ny * push
+                const rvn = (q.vx - p.vx) * nx + (q.vy - p.vy) * ny
+                if (rvn < 0) { const im = rvn * 0.55; p.vx += nx * im; p.vy += ny * im; q.vx -= nx * im; q.vy -= ny * im }
+              }
+            }
+          }
+          for (const p of P) {
+            if (p.x > bb.x0 - 12 * scale && p.x < bb.x1 + 12 * scale && p.y > bb.y0 - 12 * scale && p.y < bb.y1 + 12 * scale) {
+              for (const s of statics) {
+                if (p.x < s.x - p.r || p.x > s.x + s.w + p.r || p.y < s.y - p.r || p.y > s.y + s.h + p.r) continue
+                const cx = Math.max(s.x, Math.min(s.x + s.w, p.x))
+                const cy = Math.max(s.y, Math.min(s.y + s.h, p.y))
+                const dx = p.x - cx, dy = p.y - cy
+                const d = Math.hypot(dx, dy)
+                if (d === 0) {
+                  const pl = p.x - s.x, pr = s.x + s.w - p.x, pt = p.y - s.y, pb = s.y + s.h - p.y
+                  const m = Math.min(pl, pr, pt, pb)
+                  if (m === pl) p.x = s.x - p.r; else if (m === pr) p.x = s.x + s.w + p.r
+                  else if (m === pt) p.y = s.y - p.r; else p.y = s.y + s.h + p.r
+                } else if (d < p.r) {
+                  const nx = dx / d, ny = dy / d
+                  p.x += nx * (p.r - d); p.y += ny * (p.r - d)
+                  const vn = p.vx * nx + p.vy * ny
+                  if (vn < 0) { p.vx -= nx * vn * 1.1; p.vy -= ny * vn * 1.1 }
+                }
+              }
+            }
+            if (p.x < p.r) { p.x = p.r; p.vx = Math.abs(p.vx) * 0.3 }
+            else if (p.x > w - p.r) { p.x = w - p.r; p.vx = -Math.abs(p.vx) * 0.3 }
+            if (p.y < p.r) { p.y = p.r; p.vy = Math.abs(p.vy) * 0.3 }
+            else if (p.y > h - p.r) { p.y = h - p.r; p.vy = -Math.abs(p.vy) * 0.3 }
+          }
+        }
+
+        drawSim(canvas, sim, dpr) {
+          const ctx = canvas.getContext('2d')
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+          ctx.fillStyle = '#16140F'
+          ctx.fillRect(0, 0, sim.w, sim.h)
+          for (const pass of [0, 1]) {
+            ctx.beginPath()
+            for (const p of sim.P) {
+              if ((pass === 1) !== p.red) continue
+              const rx = p.r * 1.55, ry = p.r * 0.78
+              ctx.moveTo(p.x + Math.cos(p.a) * rx, p.y + Math.sin(p.a) * rx)
+              ctx.ellipse(p.x, p.y, rx, ry, p.a, 0, Math.PI * 2)
+            }
+            ctx.fillStyle = pass === 0 ? '#F2EFE9' : '#E30613'
+            ctx.fill()
+          }
+          ctx.beginPath()
+          for (const p of sim.P) {
+            const px = p.x + Math.cos(p.a) * p.r * 0.4
+            const py = p.y + Math.sin(p.a) * p.r * 0.4
+            ctx.moveTo(px + p.r * 0.3, py)
+            ctx.arc(px, py, p.r * 0.3, 0, Math.PI * 2)
+          }
+          ctx.fillStyle = '#16140F'
+          ctx.fill()
+        }
+
+        renderCrust(canvas, w, h, opts) {
+          if (!canvas) return
+          const sim = this.setupSim(w, h)
+          const holeSteps = opts.hole ? 70 : 0
+          for (let i = 0; i < opts.steps; i++) this.stepSim(sim, null)
+          for (let i = 0; i < holeSteps; i++) this.stepSim(sim, opts.hole)
+          this.drawSim(canvas, sim, 2)
+        }
+      }
+    </script>
+  </body>
+</html>

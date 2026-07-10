@@ -7,7 +7,15 @@ import Elastica, {
 } from '@darkroom.engineering/elastica'
 import type { ElementData } from '@darkroom.engineering/elastica'
 import { useFrame, useRect } from '@darkroom.engineering/hamo'
-import { type ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  type Ref,
+} from 'react'
 import { ElasticaContext, type CanvasElasticaContextValue } from '../context'
 import type {
   CanvasParticleData,
@@ -17,6 +25,12 @@ import type {
 } from '../types'
 export type { CanvasParticleData }
 import { renderBatched, renderHashGrid } from './renderer'
+import { createSettleDetector } from '../utils'
+
+export type CanvasElasticaRef = {
+  play: () => void
+  pause: () => void
+}
 
 export interface CanvasElasticaProps {
   children?: ReactNode
@@ -29,6 +43,19 @@ export interface CanvasElasticaProps {
   dpr?: number
   /** Show spatial hash grid for debugging */
   showHashGrid?: boolean
+  /** Ref handle exposing play() and pause() */
+  ref?: Ref<CanvasElasticaRef>
+  /**
+   * Called once when the simulation settles (max speed of non-static bodies stays
+   * below `settleThreshold` for 10 consecutive physics steps). Re-arms after speed
+   * later exceeds 2× threshold, allowing repeated settle→impulse cycles.
+   */
+  onSettle?: () => void
+  /**
+   * Velocity magnitude threshold for settle detection (default: 0.05).
+   * Based on typical initial velocity range of ~0.5 in presets.
+   */
+  settleThreshold?: number
 }
 
 /**
@@ -66,6 +93,9 @@ export function CanvasElastica({
   update,
   dpr = typeof window !== 'undefined' ? window.devicePixelRatio : 1,
   showHashGrid = false,
+  ref,
+  onSettle,
+  settleThreshold = 0.05,
 }: CanvasElasticaProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -74,17 +104,33 @@ export function CanvasElastica({
   const particlesRef = useRef<Map<number, CanvasParticleData>>(new Map())
   const nextIndexRef = useRef(0)
   const initializedRef = useRef(false)
+  const isPausedRef = useRef(false)
   const [setRectRef, containerRect] = useRect()
 
   // Store callbacks in refs to avoid stale closures
   const initialConditionRef = useRef(initialCondition)
   const updateRef = useRef(update)
+  const onSettleRef = useRef(onSettle)
   useEffect(() => {
     initialConditionRef.current = initialCondition
   }, [initialCondition])
   useEffect(() => {
     updateRef.current = update
   }, [update])
+  useEffect(() => {
+    onSettleRef.current = onSettle
+  }, [onSettle])
+
+  // Settle detector — recreated when threshold changes
+  const settleDetectorRef = useRef(
+    createSettleDetector(() => onSettleRef.current?.(), settleThreshold)
+  )
+  useEffect(() => {
+    settleDetectorRef.current = createSettleDetector(
+      () => onSettleRef.current?.(),
+      settleThreshold
+    )
+  }, [settleThreshold])
 
   // Stable config reference
   const stableConfig = useMemo(
@@ -112,7 +158,19 @@ export function CanvasElastica({
     elasticaRef.current = elastica
     accumulatorRef.current = createAccumulator(elastica.fixedDeltaTime)
     initializedRef.current = false
+    settleDetectorRef.current.reset()
   }, [stableConfig])
+
+  // play / pause imperative handle
+  const play = useCallback(() => {
+    isPausedRef.current = false
+  }, [])
+
+  const pause = useCallback(() => {
+    isPausedRef.current = true
+  }, [])
+
+  useImperativeHandle(ref, () => ({ play, pause }))
 
   // Combine refs for container
   const setContainerRef = useCallback(
@@ -150,6 +208,8 @@ export function CanvasElastica({
 
   // Animation loop
   useFrame((time: number, deltaTime: number) => {
+    if (isPausedRef.current) return
+
     const elastica = elasticaRef.current
     const accumulator = accumulatorRef.current
     const canvas = canvasRef.current
@@ -212,6 +272,7 @@ export function CanvasElastica({
         })
       })
       initializedRef.current = true
+      settleDetectorRef.current.reset()
     }
 
     // Accumulate time and run physics at fixed rate
@@ -238,6 +299,10 @@ export function CanvasElastica({
           bounced: elastica.bounced,
         })
       })
+      // E4: settle detection after each physics step
+      if (onSettleRef.current) {
+        settleDetectorRef.current.check(elastica.velocities, elastica.isStatic)
+      }
     }
 
     // Render to canvas (once per frame, not per physics step)
@@ -245,8 +310,8 @@ export function CanvasElastica({
     ctx.scale(dpr, dpr)
     ctx.clearRect(0, 0, containerRect.width, containerRect.height)
 
-    // Batched render - package handles all transforms
-    renderBatched(ctx, particles, elastica.positions, elastica.angles)
+    // Batched render - package handles all transforms; pass dpr as scale
+    renderBatched(ctx, particles, elastica.positions, elastica.angles, dpr)
 
     if (showHashGrid) {
       renderHashGrid(ctx, elastica.gridSize, containerRect)

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Fragment+Mono:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F2EFE9; }
+    body { font-family: 'Archivo', sans-serif; color: #16140F; -webkit-font-smoothing: antialiased; }
+    a { color: #E30613; text-decoration: none; }
+    a:hover { color: #16140F; text-decoration: underline; }
+    ::selection { background: #E30613; color: #F2EFE9; }
+    @keyframes bounceX { 0% { transform: translateX(0); } 50% { transform: translateX(140px); } 100% { transform: translateX(0); } }
+    @keyframes squash { 0%, 100% { transform: scale(1,1); } 45% { transform: scale(1,1); } 50% { transform: scale(1.25,0.75); } 55% { transform: scale(1,1); } }
+  </style>
+</helmet>
+
+<div style="max-width: 1060px; margin: 0 auto; padding: 48px 32px 120px">
+
+  <!-- ============ MASTHEAD ============ -->
+  <header style="display: flex; flex-direction: column; gap: 40px; padding-bottom: 40px; border-bottom: 2px solid #16140F">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #16140F">
+      <span>darkroom.engineering</span>
+      <span>Brainstorm — Round 01</span>
+      <span style="color: #E30613">July 2026</span>
+    </div>
+    <div>
+      <h1 style="margin: 0; font-size: 128px; line-height: 0.9; font-weight: 800; font-stretch: 115%; letter-spacing: -0.03em; text-transform: uppercase">Elastica</h1>
+      <p style="margin: 16px 0 0; max-width: 620px; font-size: 21px; line-height: 1.4; font-weight: 400">One continuous, scroll-driven physical world — not five clickable experiments. Branding, motion principles, storyboard, and a bench of new examples.</p>
+    </div>
+  </header>
+
+  <!-- ============ 01 THESIS ============ -->
+  <section style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 56px 0; border-bottom: 1px solid #C9C4BA">
+    <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em">
+      <span style="color: #E30613">01</span> — Thesis
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 24px">
+      <h2 style="margin: 0; font-size: 40px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">Physics as a design material, not a simulation.</h2>
+      <p style="margin: 0; font-size: 17px; line-height: 1.55; max-width: 640px">Matter.js wants to be correct. Elastica wants to be <em>expressive</em>. It's the same relationship Lenis has to native scroll: not more featureful — more <strong>felt</strong>. The pitch isn't "rigid body collisions", it's: <strong>anything on your page can become a body.</strong> Words, images, buttons, the footer. Collision as a layout tool.</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; max-width: 720px">
+        <div style="border: 1px solid #16140F; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #E30613">Lenis</span>
+          <span style="font-size: 14px; line-height: 1.4">made scroll a feeling</span>
+        </div>
+        <div style="border: 1px solid #16140F; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #E30613">Elastica</span>
+          <span style="font-size: 14px; line-height: 1.4">makes layout a feeling</span>
+        </div>
+        <div style="border: 1px solid #16140F; padding: 16px; display: flex; flex-direction: column; gap: 8px; background: #16140F; color: #F2EFE9">
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #E30613">Together</span>
+          <span style="font-size: 14px; line-height: 1.4">scroll becomes a force</span>
+        </div>
+      </div>
+      <p style="margin: 0; font-size: 15px; line-height: 1.55; max-width: 640px; color: #57534A">Tagline candidates: <strong style="color:#16140F">"The unserious physics engine."</strong> / "Physics for people who failed physics." / "Everything bounces." / "Wrong on purpose."</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 BRAND ============ -->
+  <section style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 56px 0; border-bottom: 1px solid #C9C4BA">
+    <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em">
+      <span style="color: #E30613">02</span> — Identity
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 32px">
+      <h2 style="margin: 0; font-size: 40px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">The rubber instrument.</h2>
+      <p style="margin: 0; font-size: 17px; line-height: 1.55; max-width: 640px">Darkroom's family voice is precise, mono-annotated, engineering-deadpan. Elastica is the sibling that misbehaves — same lab coat, but it's bouncing a ball against the wall. The identity system: <strong>a rigorous grid that things physically refuse to stay inside.</strong></p>
+
+      <!-- Type -->
+      <div style="border: 1px solid #16140F">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 16px; border-bottom: 1px solid #16140F; display: flex; justify-content: space-between"><span>Type: elasticity is literal</span><span style="color:#E30613">Archivo Variable (wdth 62–125) + Fragment Mono</span></div>
+        <div style="padding: 28px 16px; display: flex; flex-direction: column; gap: 6px; overflow: hidden">
+          <div style="font-size: 56px; font-weight: 800; text-transform: uppercase; line-height: 1; font-stretch: 62%; letter-spacing: -0.01em">Compressed on impact</div>
+          <div style="font-size: 56px; font-weight: 800; text-transform: uppercase; line-height: 1; font-stretch: 100%; letter-spacing: -0.02em">Neutral at rest</div>
+          <div style="font-size: 56px; font-weight: 800; text-transform: uppercase; line-height: 1; font-stretch: 125%; letter-spacing: -0.03em; color: #E30613">Stretched in flight</div>
+        </div>
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; line-height: 1.6; padding: 12px 16px; border-top: 1px solid #16140F; color: #57534A">The variable width axis maps to velocity: glyphs stretch while moving, squash on collision, relax at rest. Type IS the physics demo. Wordmark = "ELASTICA" set at 3 widths simultaneously.</div>
+      </div>
+
+      <!-- Color -->
+      <div style="border: 1px solid #16140F">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 16px; border-bottom: 1px solid #16140F">Color: keep the red, warm the field</div>
+        <div style="display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 1fr; height: 120px">
+          <div style="background: #F2EFE9; display: flex; align-items: flex-end; padding: 10px; font-family: 'Fragment Mono', monospace; font-size: 11px; border-right: 1px solid #16140F">#F2EFE9 field</div>
+          <div style="background: #E30613; color: #F2EFE9; display: flex; align-items: flex-end; padding: 10px; font-family: 'Fragment Mono', monospace; font-size: 11px; border-right: 1px solid #16140F">#E30613 body</div>
+          <div style="background: #16140F; color: #F2EFE9; display: flex; align-items: flex-end; padding: 10px; font-family: 'Fragment Mono', monospace; font-size: 11px; border-right: 1px solid #16140F">#16140F ink</div>
+          <div style="background: #C9C4BA; display: flex; align-items: flex-end; padding: 10px; font-family: 'Fragment Mono', monospace; font-size: 11px; border-right: 1px solid #16140F">#C9C4BA grid</div>
+          <div style="background: #FF8A75; display: flex; align-items: flex-end; padding: 10px; font-family: 'Fragment Mono', monospace; font-size: 11px">#FF8A75 heat</div>
+        </div>
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; line-height: 1.6; padding: 12px 16px; border-top: 1px solid #16140F; color: #57534A">Red is inherited but re-cast: it stops being an accent and becomes <span style="color:#16140F">the color of moving matter</span>. Bodies are red; the world is warm paper; annotations are ink. "Heat" tints bodies briefly after hard collisions, then cools.</div>
+      </div>
+
+      <!-- Motion principles -->
+      <div style="border: 1px solid #16140F">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 16px; border-bottom: 1px solid #16140F">Motion principles (brand = behavior)</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; ">
+          <div style="padding: 16px; border-right: 1px solid #C9C4BA; border-bottom: 1px solid #C9C4BA; display: flex; flex-direction: column; gap: 6px"><strong style="font-size:15px">1. Nothing teleports</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Every state change is a physical event. No fades, no cuts — things are pushed, dropped, or squeezed into place.</span></div>
+          <div style="padding: 16px; border-bottom: 1px solid #C9C4BA; display: flex; flex-direction: column; gap: 6px"><strong style="font-size:15px">2. Everything settles, nothing stops</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Resting bodies keep a faint breathing jitter. The page is never a screenshot of itself.</span></div>
+          <div style="padding: 16px; border-right: 1px solid #C9C4BA; display: flex; flex-direction: column; gap: 6px"><strong style="font-size:15px">3. The cursor has mass</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">The pointer is a body in the sim at all times — it displaces, attracts, shoves. On touch: your thumb flicks are impulses.</span></div>
+          <div style="padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size:15px">4. Deadpan chrome, unruly matter</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">UI labels stay Swiss-still (mono, hairlines) while content misbehaves. The contrast is the joke.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 SCROLL MODEL ============ -->
+  <section style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 56px 0; border-bottom: 1px solid #C9C4BA">
+    <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em">
+      <span style="color: #E30613">03</span> — Scroll model
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 24px">
+      <h2 style="margin: 0; font-size: 40px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">One sim. Scroll is two forces.</h2>
+      <p style="margin: 0; font-size: 17px; line-height: 1.55; max-width: 640px">There is exactly one Elastica instance for the whole page. Bodies never unmount — they are recycled, re-shaped, re-massed as you descend. The Lenis-smoothed scroll feeds the sim on two channels:</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+        <div style="border: 2px solid #16140F; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #E30613">Channel A — position → choreography</span>
+          <span style="font-size: 15px; line-height: 1.5">Scroll progress is the score. It morphs container walls, flips gravity, changes population count, swaps DOM↔canvas mode. Deterministic: same scroll depth = same world state. This is what makes it a <em>site</em> and not a toy.</span>
+        </div>
+        <div style="border: 2px solid #E30613; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #E30613">Channel B — velocity → impulse</span>
+          <span style="font-size: 15px; line-height: 1.5">Lenis velocity injects vertical force into every non-static body each frame. Scroll hard and matter gets shoved; stop and it sloshes back. Chaotic garnish on top of the deterministic score. This is what makes it feel <em>alive</em>.</span>
+        </div>
+      </div>
+      <div style="border: 1px solid #16140F; padding: 16px 20px; display: flex; gap: 16px; align-items: baseline; background: #EAE6DD">
+        <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #E30613; white-space: nowrap">Key trick</span>
+        <span style="font-size: 15px; line-height: 1.5">The <strong>viewport is the container</strong> and the page scrolls <em>through</em> it — but the walls of that container are animatable (via <span style="font-family:'Fragment Mono', monospace; font-size: 13px">containerOffsets</span>). Acts hand off by squeezing bodies out of one regime and releasing them into the next. Scroll feels seamless because matter is continuous even when the "section" changes completely.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 STORYBOARD ============ -->
+  <section style="padding: 56px 0; border-bottom: 1px solid #C9C4BA">
+    <div style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; margin-bottom: 40px">
+      <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em">
+        <span style="color: #E30613">04</span> — Storyboard
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 40px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">Seven acts, zero cuts.</h2>
+        <p style="margin: 0; font-size: 17px; line-height: 1.55; max-width: 640px">The five current demos survive as <em>moments</em>, not pages: Container becomes the transition language, Follow becomes Act III, Flocking becomes Act IV. Basics and Canvas dissolve into the whole (the DVD-bounce is the masthead; canvas mode is how Act IV scales).</p>
+      </div>
+    </div>
+
+    <!-- storyboard frames -->
+    <div style="display: flex; flex-direction: column; gap: 0; border-top: 2px solid #16140F">
+
+      <!-- ACT I -->
+      <div data-screen-label="Act I Drop" style="display: grid; grid-template-columns: 64px 460px 1fr; gap: 32px; padding: 32px 0; border-bottom: 1px solid #C9C4BA; align-items: start">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613; padding-top: 4px">I<br><span style="color:#57534A">0–10%</span></div>
+        <div style="aspect-ratio: 16/10; background: #FBF9F5; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+          <div style="position: absolute; top: 8px; left: 8px; right: 8px; display: flex; justify-content: space-between; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #C9C4BA"><span>elastica</span><span>github ↗</span></div>
+          <div style="position: absolute; left: 24px; bottom: 40px; display: flex; gap: 4px; align-items: flex-end">
+            <div style="width: 34px; height: 52px; background: #E30613"></div>
+            <div style="width: 30px; height: 52px; background: #E30613; transform: rotate(-8deg) translateY(-3px)"></div>
+            <div style="width: 34px; height: 52px; background: #E30613"></div>
+            <div style="width: 30px; height: 52px; background: #E30613; transform: translateY(-1px) rotate(4deg)"></div>
+            <div style="width: 34px; height: 52px; background: #E30613; transform: rotate(-3deg)"></div>
+            <div style="width: 30px; height: 52px; background: #E30613"></div>
+            <div style="width: 34px; height: 52px; background: #E30613; transform: rotate(6deg) translateY(-2px)"></div>
+            <div style="width: 30px; height: 52px; background: #E30613; transform: rotate(-5deg)"></div>
+          </div>
+          <div style="position: absolute; top: 30px; right: 60px; width: 30px; height: 48px; background: #E30613; transform: rotate(24deg); animation: squash 2.4s infinite"></div>
+          <div style="position: absolute; left: 24px; right: 24px; bottom: 38px; border-bottom: 1px dashed #57534A"></div>
+          <div style="position: absolute; bottom: 12px; left: 24px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">letters = OBB bodies · floor = static</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+          <strong style="font-size: 18px">The Drop</strong>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">The wordmark's eight letters fall from above the fold as rotational (OBB) bodies, collide, squash, and settle into a legible-enough "ELASTICA". No hero copy, no nav — just matter arranging itself. Cursor can shove letters; they always shuffle back toward home. First scroll tick tilts gravity so the pile leans downhill, pouring you into Act II.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">API: useOBB · restitution high · home-seeking spring in update()</span>
+        </div>
+      </div>
+
+      <!-- ACT II -->
+      <div data-screen-label="Act II Squeeze" style="display: grid; grid-template-columns: 64px 460px 1fr; gap: 32px; padding: 32px 0; border-bottom: 1px solid #C9C4BA; align-items: start">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613; padding-top: 4px">II<br><span style="color:#57534A">10–25%</span></div>
+        <div style="aspect-ratio: 16/10; background: #FBF9F5; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+          <div style="position: absolute; top: 20px; bottom: 20px; left: 110px; right: 110px; border: 1.5px solid #16140F"></div>
+          <div style="position: absolute; top: 20px; bottom: 20px; left: 60px; border-left: 1px dashed #E30613"></div>
+          <div style="position: absolute; top: 20px; bottom: 20px; right: 60px; border-right: 1px dashed #E30613"></div>
+          <div style="position: absolute; left: 130px; right: 130px; top: 50px; bottom: 40px; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-end">
+            <div style="width: 26px; height: 40px; background: #E30613"></div><div style="width: 22px; height: 40px; background: #E30613; transform: rotate(14deg)"></div><div style="width: 26px; height: 40px; background: #E30613; transform: rotate(-9deg)"></div><div style="width: 22px; height: 40px; background: #E30613"></div><div style="width: 26px; height: 40px; background: #E30613; transform: rotate(7deg)"></div><div style="width: 22px; height: 40px; background: #E30613; transform: rotate(-16deg)"></div><div style="width: 26px; height: 40px; background: #E30613; transform: rotate(3deg)"></div><div style="width: 22px; height: 40px; background: #E30613; transform: rotate(-4deg)"></div>
+          </div>
+          <div style="position: absolute; top: 48%; left: 70px; font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">→</div>
+          <div style="position: absolute; top: 48%; right: 70px; font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">←</div>
+          <div style="position: absolute; bottom: 12px; left: 24px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">containerOffsets driven by scroll progress</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+          <strong style="font-size: 18px">The Squeeze <span style="font-family:'Fragment Mono',monospace; font-size: 11px; color: #57534A; font-weight: 400">(Container, evolved)</span></strong>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">Walls become visible and start closing in as you scroll — the letters pile, climb, and compress. Type squashes (wdth → 62) as pressure rises. One manifesto line sits as a static body the letters stack against: <em>"the unserious physics engine."</em> At full squeeze the container's floor opens — everything drains through into Act III.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">API: containerOffsets · isStatic copy · wdth axis ← contact pressure</span>
+        </div>
+      </div>
+
+      <!-- ACT III -->
+      <div data-screen-label="Act III Follow" style="display: grid; grid-template-columns: 64px 460px 1fr; gap: 32px; padding: 32px 0; border-bottom: 1px solid #C9C4BA; align-items: start">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613; padding-top: 4px">III<br><span style="color:#57534A">25–40%</span></div>
+        <div style="aspect-ratio: 16/10; background: #16140F; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+          <div style="position: absolute; top: 40px; left: 50px; width: 14px; height: 14px; border-radius: 50%; background: #F2EFE9"></div>
+          <div style="position: absolute; top: 58px; left: 78px; width: 22px; height: 22px; border-radius: 50%; background: #E30613"></div>
+          <div style="position: absolute; top: 84px; left: 112px; width: 30px; height: 30px; border-radius: 50%; background: #E30613; opacity: 0.85"></div>
+          <div style="position: absolute; top: 118px; left: 156px; width: 38px; height: 38px; border-radius: 50%; background: #E30613; opacity: 0.7"></div>
+          <div style="position: absolute; top: 158px; left: 210px; width: 46px; height: 46px; border-radius: 50%; background: #E30613; opacity: 0.55"></div>
+          <div style="position: absolute; top: 40px; left: 46px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #F2EFE9; transform: translateY(-16px)">cursor (has mass)</div>
+          <div style="position: absolute; bottom: 34px; right: 28px; max-width: 150px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #C9C4BA; text-align: right; line-height: 1.6">copy line reveals as the chain sweeps over it</div>
+          <div style="position: absolute; bottom: 12px; left: 24px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">inverted field · chain follow · scroll = whip</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+          <strong style="font-size: 18px">The Tail <span style="font-family:'Fragment Mono',monospace; font-size: 11px; color: #57534A; font-weight: 400">(Follow, kept)</span></strong>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">Field inverts to ink. The drained letters re-form as a chain of circles tailing the cursor — your pointer is now visibly a body. Scrolling whips the tail vertically (velocity channel at full gain). The chain acts as a flashlight/brush: copy about the library is only readable where the tail has recently swept. On touch, the tail follows your last flick's momentum.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">API: shape circle · spring-follow update() · collisions off→on gag</span>
+        </div>
+      </div>
+
+      <!-- ACT IV -->
+      <div data-screen-label="Act IV Flock" style="display: grid; grid-template-columns: 64px 460px 1fr; gap: 32px; padding: 32px 0; border-bottom: 1px solid #C9C4BA; align-items: start">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613; padding-top: 4px">IV<br><span style="color:#57534A">40–60%</span></div>
+        <div style="aspect-ratio: 16/10; background: #16140F; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+          <div style="position: absolute; top: 30px; left: 30px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 44px; left: 52px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 38px; left: 76px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 58px; left: 96px; width: 4px; height: 4px; border-radius: 50%; background: #F2EFE9"></div><div style="position: absolute; top: 72px; left: 120px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 66px; left: 145px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 88px; left: 170px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 96px; left: 200px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 110px; left: 230px; width: 4px; height: 4px; border-radius: 50%; background: #F2EFE9"></div><div style="position: absolute; top: 104px; left: 260px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 126px; left: 290px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 134px; left: 318px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 120px; left: 344px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 150px; left: 368px; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div><div style="position: absolute; top: 160px; left: 390px; width: 4px; height: 4px; border-radius: 50%; background: #F2EFE9"></div>
+          <div style="position: absolute; top: 60px; right: 40px; width: 120px; text-align: right; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #C9C4BA; line-height: 1.6">murmuration spells a word for ~2s, disperses</div>
+          <div style="position: absolute; bottom: 12px; left: 24px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">canvas mode · n≈3000 · scroll dir = wind</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+          <strong style="font-size: 18px">The Murmuration <span style="font-family:'Fragment Mono',monospace; font-size: 11px; color: #57534A; font-weight: 400">(Flocking, scaled up)</span></strong>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">The tail's circles burst into thousands — the DOM→canvas swap happens mid-flight and nobody notices, which <em>is</em> the demo of canvas mode. The flock rides a wind vector set by scroll direction; pausing lets it coalesce briefly into words ("ELASTICA", "3,000 BODIES", "60FPS"). The cursor scatters it. Deceleration of scroll = flock settling — a direct Lenis handshake.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">API: CanvasElastica · flow-field update() · spatial hashing flex</span>
+        </div>
+      </div>
+
+      <!-- ACT V -->
+      <div data-screen-label="Act V Spill" style="display: grid; grid-template-columns: 64px 460px 1fr; gap: 32px; padding: 32px 0; border-bottom: 1px solid #C9C4BA; align-items: start">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613; padding-top: 4px">V<br><span style="color:#57534A">60–75%</span></div>
+        <div style="aspect-ratio: 16/10; background: #FBF9F5; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+          <div style="position: absolute; top: 24px; left: 24px; right: 120px; display: flex; flex-direction: column; gap: 7px">
+            <div style="height: 9px; background: #16140F; width: 88%"></div>
+            <div style="height: 9px; background: #16140F; width: 94%"></div>
+            <div style="height: 9px; background: #16140F; width: 60%"></div>
+            <div style="display: flex; gap: 6px"><div style="height: 9px; background: #16140F; width: 30%"></div><div style="height: 9px; background: #E30613; width: 14%; transform: rotate(9deg) translateY(4px)"></div></div>
+          </div>
+          <div style="position: absolute; bottom: 30px; left: 24px; right: 24px; display: flex; gap: 5px; align-items: flex-end; flex-wrap: wrap">
+            <div style="height: 9px; background: #E30613; width: 40px; transform: rotate(-12deg)"></div><div style="height: 9px; background: #E30613; width: 62px; transform: rotate(5deg)"></div><div style="height: 9px; background: #E30613; width: 30px"></div><div style="height: 9px; background: #E30613; width: 52px; transform: rotate(-6deg)"></div><div style="height: 9px; background: #E30613; width: 44px; transform: rotate(14deg)"></div><div style="height: 9px; background: #E30613; width: 70px; transform: rotate(-3deg)"></div>
+          </div>
+          <div style="position: absolute; left: 24px; right: 24px; bottom: 26px; border-bottom: 1px dashed #57534A"></div>
+          <div style="position: absolute; bottom: 10px; left: 24px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">words detach line by line as they cross viewport center</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+          <strong style="font-size: 18px">The Spill <span style="font-family:'Fragment Mono',monospace; font-size: 11px; color: #57534A; font-weight: 400">(new — typography physics)</span></strong>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">Back to paper. The flock condenses into a real, set paragraph — the only long-form copy on the site (what Elastica is, who made it). As you read down, each line you pass <em>loses its grip</em>: words detach, tumble, and pile at the fold. Scroll back up and they leap back into place. Reading destroys the text; un-reading repairs it. Reverse gravity on upward scroll is the joke that lands hardest here.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">API: per-word BoundaryBox · isStatic→false trigger · gravity sign ← scroll dir</span>
+        </div>
+      </div>
+
+      <!-- ACT VI -->
+      <div data-screen-label="Act VI Stack" style="display: grid; grid-template-columns: 64px 460px 1fr; gap: 32px; padding: 32px 0; border-bottom: 1px solid #C9C4BA; align-items: start">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613; padding-top: 4px">VI<br><span style="color:#57534A">75–90%</span></div>
+        <div style="aspect-ratio: 16/10; background: #FBF9F5; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+          <div style="position: absolute; bottom: 26px; left: 40px; width: 120px; height: 76px; background: repeating-linear-gradient(45deg, #EAE6DD, #EAE6DD 5px, #DDD8CC 5px, #DDD8CC 10px); border: 1px solid #16140F; transform: rotate(-4deg); display: flex; align-items: center; justify-content: center; font-family: 'Fragment Mono', monospace; font-size: 8px; color: #57534A">project shot</div>
+          <div style="position: absolute; bottom: 60px; left: 130px; width: 110px; height: 70px; background: repeating-linear-gradient(45deg, #EAE6DD, #EAE6DD 5px, #DDD8CC 5px, #DDD8CC 10px); border: 1px solid #16140F; transform: rotate(7deg); display: flex; align-items: center; justify-content: center; font-family: 'Fragment Mono', monospace; font-size: 8px; color: #57534A">project shot</div>
+          <div style="position: absolute; bottom: 26px; left: 235px; width: 90px; height: 110px; background: repeating-linear-gradient(45deg, #EAE6DD, #EAE6DD 5px, #DDD8CC 5px, #DDD8CC 10px); border: 1px solid #16140F; transform: rotate(-2deg); display: flex; align-items: center; justify-content: center; font-family: 'Fragment Mono', monospace; font-size: 8px; color: #57534A">project shot</div>
+          <div style="position: absolute; top: 26px; right: 46px; width: 104px; height: 66px; background: repeating-linear-gradient(45deg, #EAE6DD, #EAE6DD 5px, #DDD8CC 5px, #DDD8CC 10px); border: 1px solid #E30613; transform: rotate(15deg); animation: squash 3.2s infinite; display: flex; align-items: center; justify-content: center; font-family: 'Fragment Mono', monospace; font-size: 8px; color: #E30613">incoming</div>
+          <div style="position: absolute; left: 24px; right: 24px; bottom: 22px; border-bottom: 1px dashed #57534A"></div>
+          <div style="position: absolute; bottom: 8px; left: 24px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">drag to toss · hover lifts a card off the pile</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+          <strong style="font-size: 18px">The Pile <span style="font-family:'Fragment Mono',monospace; font-size: 11px; color: #57534A; font-weight: 400">(new — layout physics)</span></strong>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">Real content — screenshots of sites built with Elastica/Lenis, or the repo's own docs pages — tumbles in from above and stacks into a heap. It's a gallery you excavate: drag cards aside, toss them, hover to lift one straight and readable. The most honest demo of "your actual DOM as bodies", and the shareable moment for the Awwwards crowd.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">API: OBB + friction · displayScale on hover · pointer drag impulses</span>
+        </div>
+      </div>
+
+      <!-- ACT VII -->
+      <div data-screen-label="Act VII Rest" style="display: grid; grid-template-columns: 64px 460px 1fr; gap: 32px; padding: 32px 0; border-bottom: 2px solid #16140F; align-items: start">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613; padding-top: 4px">VII<br><span style="color:#57534A">90–100%</span></div>
+        <div style="aspect-ratio: 16/10; background: #FBF9F5; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+          <div style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); padding: 8px 14px; border: 1.5px solid #16140F; font-family: 'Fragment Mono', monospace; font-size: 10px; background: #FBF9F5; z-index: 2">npm i @darkroom.engineering/elastica</div>
+          <div style="position: absolute; bottom: 24px; left: 60px; width: 26px; height: 40px; background: #E30613; transform: rotate(-8deg)"></div>
+          <div style="position: absolute; bottom: 24px; left: 92px; width: 22px; height: 40px; background: #E30613; transform: rotate(5deg)"></div>
+          <div style="position: absolute; bottom: 24px; left: 150px; width: 30px; height: 30px; border-radius: 50%; background: #E30613"></div>
+          <div style="position: absolute; bottom: 24px; right: 150px; width: 26px; height: 40px; background: #E30613; transform: rotate(12deg)"></div>
+          <div style="position: absolute; bottom: 24px; right: 100px; width: 30px; height: 30px; border-radius: 50%; background: #E30613"></div>
+          <div style="position: absolute; bottom: 24px; right: 62px; width: 22px; height: 40px; background: #E30613; transform: rotate(-14deg)"></div>
+          <div style="position: absolute; bottom: 90px; left: 44%; width: 24px; height: 24px; border-radius: 50%; background: #E30613; animation: bounceX 3s ease-in-out infinite"></div>
+          <div style="position: absolute; left: 24px; right: 24px; bottom: 20px; border-bottom: 1px dashed #57534A"></div>
+          <div style="position: absolute; bottom: 6px; left: 24px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">install command = static body · everything leans on it</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+          <strong style="font-size: 18px">The Rest</strong>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">Every body from every act rains down one last time and settles around a single static element: the install command. Click to copy — the click emits a shockwave that scatters the pile. GitHub and darkroom.engineering links are heavy circles you can kick around but never off-screen. The page never ends with stillness; it ends with rest. Faint breathing forever.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">API: isStatic CTA · radial impulse on click · periodic borders off</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 05 BENCH ============ -->
+  <section style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 56px 0; border-bottom: 1px solid #C9C4BA">
+    <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em">
+      <span style="color: #E30613">05</span> — The bench
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 24px">
+      <h2 style="margin: 0; font-size: 40px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">Ideas that didn't make the cut (yet).</h2>
+      <p style="margin: 0; font-size: 16px; line-height: 1.5; max-width: 640px; color: #37342E">Strong concepts for a round two, standalone /playground pages, or swaps if an act underdelivers in prototyping:</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Ticker crash</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">An infinite marquee (periodic borders) whose glyphs are bodies — hovering a word derails it and it pinballs through the rest of the sentence.</span></div>
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Ball-pit 404</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Error page as a pit of 404 glyphs you wade through with the cursor. Cheap, hilarious, extremely shareable.</span></div>
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Wind-tunnel gallery</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Images stream past on a flow field (rightFlow preset); the cursor is an obstacle that makes the stream part around it.</span></div>
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Magnet nav</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Menu items are attracted to the cursor and to each other — the nav slowly clumps until you fling it apart.</span></div>
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Pressure loader</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Progress = container shrinking around a fixed population; 100% is the pop when the walls vanish.</span></div>
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Hourglass scrollbar</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Page progress rendered as particles draining between two chambers at the screen edge — the scrollbar is itself a sim.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 06 OPEN QUESTIONS ============ -->
+  <section style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 56px 0">
+    <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em">
+      <span style="color: #E30613">06</span> — Open questions
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 16px; max-width: 680px">
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">Q1</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55"><strong>Touch story.</strong> No cursor on mobile — proposal: thumb flicks as impulses + scroll velocity does most of the work, and Act III's tail follows the last touch's momentum. Worth prototyping first; it's the biggest risk.</p></div>
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">Q2</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55"><strong>Deep links.</strong> Old site had 5 URLs. Keep /follow etc. as scroll anchors that fast-travel the sim (bodies visibly rush to that act's state — never a cut)?</p></div>
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">Q3</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55"><strong>Scroll length.</strong> Seven acts wants ~10–12 viewport-heights. Too long for a library page, or exactly the flex? Could collapse Acts V+VI.</p></div>
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">Q4</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55"><strong>Reduced motion.</strong> prefers-reduced-motion gets the settled end-state of each act (a beautiful still site) — physics only on explicit interaction.</p></div>
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">Q5</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55"><strong>Savee refs.</strong> The board links are behind login — drop screenshots in here and I'll tune the identity (esp. Act III/IV art direction) against them.</p></div>
+    </div>
+  </section>
+
+  <footer style="border-top: 2px solid #16140F; padding-top: 20px; display: flex; justify-content: space-between; font-family: 'Fragment Mono', monospace; font-size: 12px; color: #57534A">
+    <span>Next: pick a direction → motion prototype of one act</span>
+    <span><a href="https://github.com/darkroomengineering/elastica">github/elastica ↗</a></span>
+  </footer>
+
+</div>
+
+</x-dc>
+</body>
+</html>

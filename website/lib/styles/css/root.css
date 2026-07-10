@@ -48,6 +48,13 @@
 	--color-green: #00ff88;
 	--color-purple: #7928ca;
 	--color-pink: #ff0080;
+	--color-field: #F2EFE9;
+	--color-band: #EAE6DD;
+	--color-ink: #16140F;
+	--color-hairline: #C9C4BA;
+	--color-hairline-light: #DDD8CC;
+	--color-muted: #57534A;
+	--color-border-mid: #A8A296;
 	
 	@variant dt {
     --device-width: 1440;

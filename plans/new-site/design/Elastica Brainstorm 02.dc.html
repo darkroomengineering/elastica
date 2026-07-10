@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Fragment+Mono:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F2EFE9; }
+    body { font-family: 'Archivo', sans-serif; color: #16140F; -webkit-font-smoothing: antialiased; }
+    a { color: #E30613; text-decoration: none; }
+    a:hover { color: #16140F; text-decoration: underline; }
+    ::selection { background: #E30613; color: #F2EFE9; }
+    @keyframes squash { 0%, 100% { transform: scale(1,1); } 45% { transform: scale(1,1); } 50% { transform: scale(1.25,0.75); } 55% { transform: scale(1,1); } }
+    @keyframes rollX { 0% { transform: translateX(0) rotate(0deg); } 50% { transform: translateX(180px) rotate(360deg); } 100% { transform: translateX(0) rotate(0deg); } }
+  </style>
+</helmet>
+
+<div style="max-width: 1060px; margin: 0 auto; padding: 48px 32px 120px">
+
+  <!-- ============ MASTHEAD ============ -->
+  <header style="display: flex; flex-direction: column; gap: 32px; padding-bottom: 36px; border-bottom: 2px solid #16140F">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em">
+      <span>darkroom.engineering</span>
+      <span>Brainstorm — Round 02</span>
+      <span style="color: #E30613">Structure locked-ish</span>
+    </div>
+    <div>
+      <h1 style="margin: 0; font-size: 96px; line-height: 0.9; font-weight: 800; font-stretch: 115%; letter-spacing: -0.03em; text-transform: uppercase">Elastica <span style="font-stretch: 62%; color: #E30613">/02</span></h1>
+      <p style="margin: 14px 0 0; max-width: 640px; font-size: 19px; line-height: 1.4">Your five sections, sequenced. Plus: the physical-patterns catalog (progress bar and friends) and a hard performance budget per section.</p>
+    </div>
+  </header>
+
+  <!-- ============ 00 BUDGET ============ -->
+  <section style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 48px 0; border-bottom: 1px solid #C9C4BA">
+    <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em"><span style="color: #E30613">00</span> — Budget first</div>
+    <div style="display: flex; flex-direction: column; gap: 20px">
+      <h2 style="margin: 0; font-size: 36px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">The 100-body law.</h2>
+      <p style="margin: 0; font-size: 16px; line-height: 1.55; max-width: 660px">Rule: <strong>DOM Elastica caps at ~100 bodies; anything denser is Canvas Elastica.</strong> Corollaries that shape the whole design:</p>
+      <div style="border: 1px solid #16140F">
+        <div style="display: grid; grid-template-columns: 1.1fr 0.6fr 0.6fr 1.6fr; font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #16140F; background: #16140F; color: #F2EFE9">
+          <span style="padding: 8px 14px">Section</span><span style="padding: 8px 14px">Mode</span><span style="padding: 8px 14px">Bodies</span><span style="padding: 8px 14px">Notes</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1.1fr 0.6fr 0.6fr 1.6fr; font-size: 13.5px; border-bottom: 1px solid #C9C4BA"><span style="padding: 10px 14px; font-weight: 600">1 · Hero letters</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">DOM·OBB</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">8</span><span style="padding: 10px 14px; color:#57534A">Trivial. Spend the budget on solver substeps for a fat, juicy bounce.</span></div>
+        <div style="display: grid; grid-template-columns: 1.1fr 0.6fr 0.6fr 1.6fr; font-size: 13.5px; border-bottom: 1px solid #C9C4BA"><span style="padding: 10px 14px; font-weight: 600">2 · Pills / follow</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">DOM</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">10–16</span><span style="padding: 10px 14px; color:#57534A">Real DOM (text must be selectable/readable). Follow springs are cheap.</span></div>
+        <div style="display: grid; grid-template-columns: 1.1fr 0.6fr 0.6fr 1.6fr; font-size: 13.5px; border-bottom: 1px solid #C9C4BA"><span style="padding: 10px 14px; font-weight: 600">3 · Flocking text</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">DOM→CVS</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">~60 → 1k+</span><span style="padding: 10px 14px; color:#57534A">Words stay DOM (≤100). If we explode into particles, that's the canvas handoff moment.</span></div>
+        <div style="display: grid; grid-template-columns: 1.1fr 0.6fr 0.6fr 1.6fr; font-size: 13.5px; border-bottom: 1px solid #C9C4BA"><span style="padding: 10px 14px; font-weight: 600">4 · Progress indicator</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">DOM</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">1–3</span><span style="padding: 10px 14px; color:#57534A">Persistent across page — lives in the global sim, never unmounts.</span></div>
+        <div style="display: grid; grid-template-columns: 1.1fr 0.6fr 0.6fr 1.6fr; font-size: 13.5px"><span style="padding: 10px 14px; font-weight: 600">5 · Footer</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">Canvas</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">2–5k</span><span style="padding: 10px 14px; color:#57534A">The showpiece. Full-viewport canvas, spatial hashing earns its keep.</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; max-width: 860px">
+        <div style="border: 1px solid #C9C4BA; padding: 14px; font-size: 13.5px; line-height: 1.5"><strong>Only one section simulates at a time.</strong> Off-screen sections pause (ref.pause()); bodies freeze in their settled pose. IntersectionObserver is the conductor.</div>
+        <div style="border: 1px solid #C9C4BA; padding: 14px; font-size: 13.5px; line-height: 1.5"><strong>DOM bodies move by transform only.</strong> No layout/paint properties in update loops. Text nodes pre-measured once; resize re-measures, never per frame.</div>
+        <div style="border: 1px solid #C9C4BA; padding: 14px; font-size: 13.5px; line-height: 1.5"><strong>Degrade by count, not by feature.</strong> Low-end devices get fewer footer particles (5k→800), never a static fallback. The behavior IS the brand.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 01 STRUCTURE V2 ============ -->
+  <section style="padding: 48px 0; border-bottom: 1px solid #C9C4BA">
+    <div style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; margin-bottom: 36px">
+      <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em"><span style="color: #E30613">01</span> — Structure v2</div>
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 36px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">Five beats: Drop → Escort → Murmur → (progress, always) → Clutch.</h2>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; border-top: 2px solid #16140F">
+
+      <!-- HERO -->
+      <div data-screen-label="S1 Hero" style="display: grid; grid-template-columns: 64px 460px 1fr; gap: 32px; padding: 30px 0; border-bottom: 1px solid #C9C4BA; align-items: start">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613; padding-top: 4px">S1</div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="aspect-ratio: 16/10; background: #FBF9F5; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+            <div style="position: absolute; top: 14px; left: 50%; transform: translateX(-50%) rotate(12deg); width: 26px; height: 42px; background: #E30613; animation: squash 2.2s infinite"></div>
+            <div style="position: absolute; top: 70px; left: 42%; transform: rotate(-20deg); width: 22px; height: 42px; background: #E30613; opacity: 0.5"></div>
+            <div style="position: absolute; bottom: 34px; left: 34px; display: flex; gap: 4px; align-items: flex-end">
+              <div style="width: 26px; height: 42px; background: #E30613"></div><div style="width: 22px; height: 42px; background: #E30613; transform: rotate(-6deg)"></div><div style="width: 26px; height: 42px; background: #E30613; transform: rotate(3deg)"></div><div style="width: 22px; height: 42px; background: #E30613"></div>
+            </div>
+            <div style="position: absolute; left: 24px; right: 24px; bottom: 32px; border-bottom: 1px dashed #57534A"></div>
+            <div style="position: absolute; top: 12px; right: 14px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A; text-align: right; line-height: 1.6">scroll LOCKED<br>until settle</div>
+            <div style="position: absolute; bottom: 10px; left: 24px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">phase 1 — the drop</div>
+          </div>
+          <div style="aspect-ratio: 16/10; background: #FBF9F5; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+            <div style="position: absolute; top: 44%; left: 44%; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #16140F"></div>
+            <div style="position: absolute; top: 30%; left: 30%; width: 26px; height: 42px; background: #E30613; transform: rotate(18deg)"></div>
+            <div style="position: absolute; top: 55%; left: 32%; width: 22px; height: 42px; background: #E30613; transform: rotate(-25deg)"></div>
+            <div style="position: absolute; top: 28%; left: 56%; width: 26px; height: 42px; background: #E30613; transform: rotate(-10deg)"></div>
+            <div style="position: absolute; top: 56%; left: 55%; width: 22px; height: 42px; background: #E30613; transform: rotate(30deg)"></div>
+            <div style="position: absolute; top: 42%; left: 20%; font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">⟋</div>
+            <div style="position: absolute; top: 40%; left: 70%; font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">⟍</div>
+            <div style="position: absolute; bottom: 10px; left: 24px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">phase 2 — scroll freed · letters orbit cursor magnetically</div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+          <strong style="font-size: 18px">The Drop &amp; The Magnet</strong>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">Fold opens <strong>empty</strong> — beat of silence — then the eight letters fall, small honest bounce (restitution ~0.4, one rebound, settle). The settle event unlocks scroll (Lenis stays frozen until then; ~1.2s worst case, skippable by any input). From then on letters are <strong>magnetic</strong>: the cursor attracts them softly within a radius; they drift toward it, clump, and spring home when you leave. First scroll shears the clump off-screen — the letters visibly resist leaving.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">8 bodies · OBB · attraction force in update() · settle = velocity epsilon check</span>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #E30613">Risk: scroll-lock must be interruptible. Any wheel/touch during the drop fast-forwards the settle — never fight the user.</span>
+        </div>
+      </div>
+
+      <!-- PILLS -->
+      <div data-screen-label="S2 Pills" style="display: grid; grid-template-columns: 64px 460px 1fr; gap: 32px; padding: 30px 0; border-bottom: 1px solid #C9C4BA; align-items: start">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613; padding-top: 4px">S2</div>
+        <div style="aspect-ratio: 16/10; background: #FBF9F5; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+          <div style="position: absolute; top: 30px; left: 30px; padding: 6px 14px; border: 1.5px solid #16140F; border-radius: 99px; font-family: 'Fragment Mono', monospace; font-size: 9px">2D collisions</div>
+          <div style="position: absolute; top: 30px; left: 140px; padding: 6px 14px; border: 1.5px solid #16140F; border-radius: 99px; font-family: 'Fragment Mono', monospace; font-size: 9px">DOM or canvas</div>
+          <div style="position: absolute; top: 66px; left: 60px; padding: 6px 14px; border: 1.5px solid #16140F; border-radius: 99px; font-family: 'Fragment Mono', monospace; font-size: 9px">frame-rate independent</div>
+          <div style="position: absolute; top: 58%; left: 52%; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #16140F"></div>
+          <div style="position: absolute; top: 64%; left: 40%; padding: 6px 14px; border-radius: 99px; background: #E30613; color: #F2EFE9; font-family: 'Fragment Mono', monospace; font-size: 9px; transform: rotate(-6deg)">AABB / OBB</div>
+          <div style="position: absolute; top: 74%; left: 55%; padding: 6px 14px; border-radius: 99px; background: #E30613; color: #F2EFE9; font-family: 'Fragment Mono', monospace; font-size: 9px; transform: rotate(4deg)">spatial hashing</div>
+          <div style="position: absolute; top: 48%; left: 20px; right: 20px; border-top: 1px dashed #E30613"></div>
+          <div style="position: absolute; top: 44%; right: 26px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #E30613">50% mark — pills unpin</div>
+          <div style="position: absolute; bottom: 10px; left: 24px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">pinned grid above · followers below</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+          <strong style="font-size: 18px">The Escort <span style="font-family:'Fragment Mono',monospace; font-size: 11px; color: #57534A; font-weight: 400">(Follow, kept)</span></strong>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">Feature pills enter as a tidy static grid — each one a claim (2D collisions, DOM or canvas, frame-rate independent…). At the half-fold mark they <strong>unpin one by one</strong> (staggered, heaviest first) and become followers: trailing the cursor as a loose swarm while you read. They collide with each other, so the swarm has body. At the section's bottom edge they hit an invisible ceiling and <strong>can't cross</strong> — you scroll on and they bunch up against the boundary, left behind like dogs at a fence.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">10–16 DOM bodies · spring-follow + inter-collisions · section-scoped containerOffsets</span>
+        </div>
+      </div>
+
+      <!-- FLOCK TEXT -->
+      <div data-screen-label="S3 Flocking text" style="display: grid; grid-template-columns: 64px 460px 1fr; gap: 32px; padding: 30px 0; border-bottom: 1px solid #C9C4BA; align-items: start">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613; padding-top: 4px">S3</div>
+        <div style="aspect-ratio: 16/10; background: #FBF9F5; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+          <div style="position: absolute; top: 26px; left: 26px; right: 120px; display: flex; flex-direction: column; gap: 7px">
+            <div style="height: 8px; background: #16140F; width: 90%"></div>
+            <div style="height: 8px; background: #16140F; width: 84%"></div>
+            <div style="display: flex; gap: 5px"><div style="height: 8px; background: #16140F; width: 24%"></div><div style="height: 8px; background: #E30613; width: 12%; transform: rotate(-8deg)"></div><div style="height: 8px; background: #E30613; width: 9%; transform: rotate(12deg) translateY(3px)"></div></div>
+          </div>
+          <div style="position: absolute; bottom: 40px; left: 40px; width: 44px; height: 8px; background: #E30613; transform: rotate(-14deg)"></div>
+          <div style="position: absolute; bottom: 58px; left: 100px; width: 36px; height: 8px; background: #E30613; transform: rotate(-10deg)"></div>
+          <div style="position: absolute; bottom: 70px; left: 160px; width: 40px; height: 8px; background: #E30613; transform: rotate(-8deg)"></div>
+          <div style="position: absolute; bottom: 78px; left: 220px; width: 32px; height: 8px; background: #E30613; transform: rotate(-12deg)"></div>
+          <div style="position: absolute; bottom: 92px; left: 274px; width: 38px; height: 8px; background: #E30613; transform: rotate(-9deg)"></div>
+          <div style="position: absolute; bottom: 30px; right: 26px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A; text-align: right; line-height: 1.6">words peel off in reading order<br>and school like fish</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+          <strong style="font-size: 18px">The Murmur <span style="font-family:'Fragment Mono',monospace; font-size: 11px; color: #57534A; font-weight: 400">(Flocking, kept)</span></strong>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">The one paragraph of real copy (what Elastica is, in ~60 words). Past the trigger mark, words peel off the text block <strong>in reading order</strong> — as if the paragraph is being read aloud and the spoken words fly away — and school together as a flock circling the remaining text. Flock target drifts with scroll; cursor is a predator that splits it. Scrolling back re-inserts words into their sentence, again in order. 60 words keeps it DOM-legal; every body is still selectable text.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">~60 DOM bodies · boids update() · staggered isStatic release · reversible</span>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div data-screen-label="S4 Footer" style="display: grid; grid-template-columns: 64px 460px 1fr; gap: 32px; padding: 30px 0; border-bottom: 2px solid #16140F; align-items: start">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613; padding-top: 4px">S4</div>
+        <div style="aspect-ratio: 16/10; background: #16140F; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+          <div style="position: absolute; inset: 0; background: radial-gradient(ellipse 46% 34% at 50% 52%, transparent 58%, rgba(227,6,19,0.55) 60%, rgba(227,6,19,0.28) 74%, rgba(227,6,19,0.12) 88%)"></div>
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 34px; font-weight: 800; font-stretch: 118%; letter-spacing: -0.02em; color: #F2EFE9; text-transform: uppercase">Elastica</div>
+          <div style="position: absolute; top: 24%; left: 24%; width: 5px; height: 5px; border-radius: 50%; background: #E30613"></div>
+          <div style="position: absolute; top: 70%; left: 20%; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div>
+          <div style="position: absolute; top: 20%; left: 74%; width: 5px; height: 5px; border-radius: 50%; background: #E30613"></div>
+          <div style="position: absolute; top: 76%; left: 78%; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div>
+          <div style="position: absolute; top: 12%; left: 50%; width: 4px; height: 4px; border-radius: 50%; background: #E30613"></div>
+          <div style="position: absolute; bottom: 12px; left: 14px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #C9C4BA">github ↗</div>
+          <div style="position: absolute; bottom: 12px; right: 14px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #C9C4BA">darkroom.engineering ↗</div>
+          <div style="position: absolute; top: 12px; left: 14px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">canvas · particles clutch around a static inner shape</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px">
+          <strong style="font-size: 18px">The Clutch <span style="font-family:'Fragment Mono',monospace; font-size: 11px; color: #57534A; font-weight: 400">(new — full-viewport canvas finale)</span></strong>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">Full viewport, ink field, thousands of canvas particles. A <strong>static inner boundary shaped like the wordmark</strong> (or a keyhole/arch — per your Savee ref) sits center: particles are attracted inward but can't enter, so they <strong>clutch around the negative space</strong>, packing its outline in a dense, breathing crust. The word is drawn entirely by what's excluded from it. Scroll velocity sloshes the crust; the cursor bores a temporary hole through it; clicking the shape emits a pulse that flings everything and lets it re-clutch — the goodbye moment. Links (github / darkroom) are small static bodies particles also crust around.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">CanvasElastica · 2–5k circles · static SDF boundary + inward attraction · pulse impulse</span>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #E30613">Prototype first: crust packing quality is the whole effect. If circles pack ugly, mix 2–3 radii.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 PHYSICAL PATTERNS ============ -->
+  <section style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 48px 0; border-bottom: 1px solid #C9C4BA">
+    <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em"><span style="color: #E30613">02</span> — Physical patterns</div>
+    <div style="display: flex; flex-direction: column; gap: 24px">
+      <h2 style="margin: 0; font-size: 36px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">Nothing teleports — so every web cliché gets re-derived.</h2>
+
+      <!-- progress bar concepts -->
+      <div style="border: 1px solid #16140F">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 16px; border-bottom: 1px solid #16140F; display: flex; justify-content: space-between"><span>Case study: the progress bar</span><span style="color: #E30613">3 concepts</span></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr">
+          <div style="padding: 18px; border-right: 1px solid #C9C4BA; display: flex; flex-direction: column; gap: 12px">
+            <div style="height: 54px; border: 1px solid #C9C4BA; position: relative; overflow: hidden">
+              <div style="position: absolute; left: 10px; right: 10px; top: 50%; border-top: 1px dashed #57534A"></div>
+              <div style="position: absolute; top: 50%; left: 12px; margin-top: -8px; width: 16px; height: 16px; border-radius: 50%; background: #E30613; animation: rollX 4s ease-in-out infinite"></div>
+            </div>
+            <strong style="font-size: 15px">A — The Roller <span style="font-family:'Fragment Mono',monospace; font-size: 10px; color: #E30613; font-weight: 400">← recommended</span></strong>
+            <span style="font-size: 13.5px; line-height: 1.5; color: #57534A">A red ball rolls along a top track. Position = scroll progress, but it has mass: hard scrolls make it overshoot and rebound off the track ends; stopping lets it roll back to true. Progress you can feel lying to you, then correcting. 1 body, near-free.</span>
+          </div>
+          <div style="padding: 18px; border-right: 1px solid #C9C4BA; display: flex; flex-direction: column; gap: 12px">
+            <div style="height: 54px; border: 1px solid #C9C4BA; position: relative; overflow: hidden">
+              <div style="position: absolute; right: 12px; top: 8px; bottom: 8px; width: 14px; border: 1px solid #57534A"></div>
+              <div style="position: absolute; right: 13px; bottom: 9px; width: 12px; height: 16px; background: #E30613"></div>
+              <div style="position: absolute; right: 15px; bottom: 28px; width: 3px; height: 3px; border-radius: 50%; background: #E30613"></div>
+              <div style="position: absolute; right: 19px; bottom: 34px; width: 3px; height: 3px; border-radius: 50%; background: #E30613"></div>
+            </div>
+            <strong style="font-size: 15px">B — The Hourglass</strong>
+            <span style="font-size: 13.5px; line-height: 1.5; color: #57534A">A slim edge column where grains drain top-chamber → bottom as you descend. Scroll up and they pour back. Beautiful but 100+ grains wants canvas — a second canvas layer running the whole page. Costlier.</span>
+          </div>
+          <div style="padding: 18px; display: flex; flex-direction: column; gap: 12px">
+            <div style="height: 54px; border: 1px solid #C9C4BA; position: relative; overflow: hidden">
+              <div style="position: absolute; left: 10px; right: 10px; top: 50%; border-top: 1px dashed #57534A"></div>
+              <div style="position: absolute; top: calc(50% - 5px); left: 25%; width: 2px; height: 10px; background: #16140F"></div>
+              <div style="position: absolute; top: calc(50% - 5px); left: 45%; width: 2px; height: 10px; background: #16140F"></div>
+              <div style="position: absolute; top: calc(50% - 5px); left: 65%; width: 2px; height: 10px; background: #16140F"></div>
+              <div style="position: absolute; top: calc(50% - 7px); left: 33%; width: 14px; height: 14px; border-radius: 50%; background: #E30613"></div>
+            </div>
+            <strong style="font-size: 15px">C — The Peg Run</strong>
+            <span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Roller variant: section boundaries are physical pegs on the track. The ball audibly clacks through each one — progress becomes a tactile map of the page's structure. Pegs double as click-to-navigate anchors (the ball rolls there, never jumps).</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- other patterns -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Buttons / CTA</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Press = physical compression (wdth 62 squash), release = spring overshoot. Copy-to-clipboard emits a radial shockwave that shoves nearby bodies.</span></div>
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Link hover</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Underline is a rope: hover makes it sag under the cursor's weight; leaving twangs it straight. One spring, zero bodies.</span></div>
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Section transitions</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">No fades. Content of the next section is visible early, held behind a static ceiling; crossing the threshold releases it to fall/settle into place.</span></div>
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Anchor navigation</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Deep links don't cut — Lenis scrolls there fast while the sim visibly rushes toward that section's state. Arrival always has momentum + settle.</span></div>
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Loading</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">The hero IS the loader: the empty-fold beat + letter drop absorbs asset loading time. No spinner exists anywhere.</span></div>
+        <div style="border: 1px solid #C9C4BA; padding: 16px; display: flex; flex-direction: column; gap: 6px"><strong style="font-size: 15px">Tooltips / labels</strong><span style="font-size: 13.5px; line-height: 1.5; color: #57534A">Hover labels are balloons on a short tether — they bob, get dragged by scroll wind, and snap back. (Use sparingly: 2–3 per page.)</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 NEXT ============ -->
+  <section style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 48px 0">
+    <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em"><span style="color: #E30613">03</span> — Next</div>
+    <div style="display: flex; flex-direction: column; gap: 16px; max-width: 680px">
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">→</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55"><strong>Prototype order by risk:</strong> 1) footer clutch (packing quality decides the finale), 2) hero drop→magnet handoff (first impression), 3) murmur reversibility. Escort + roller are low-risk, build last.</p></div>
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">→</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55"><strong>Pick a progress concept</strong> — I'd ship A now and grow it into C once section anchors exist.</p></div>
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">→</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55"><strong>Savee refs still locked</strong> (login wall) — a screenshot of the footer ref especially would let me nail the clutch's art direction: is the inner shape typographic, architectural, or organic?</p></div>
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">→</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55">I can build a <strong>motion sketch of any one section</strong> next — say the word.</p></div>
+    </div>
+  </section>
+
+  <footer style="border-top: 2px solid #16140F; padding-top: 20px; display: flex; justify-content: space-between; font-family: 'Fragment Mono', monospace; font-size: 12px; color: #57534A">
+    <span>Round 02 · structure + patterns + budget</span>
+    <span><a href="https://github.com/darkroomengineering/elastica">github/elastica ↗</a></span>
+  </footer>
+
+</div>
+
+</x-dc>
+</body>
+</html>

@@ -34,4 +34,18 @@ export interface CanvasParticleData {
     mass?: number;
     restitution?: number;
     isStatic?: boolean;
+    /**
+     * Custom per-particle draw function. When provided, this particle is rendered
+     * individually after the batched default pass (custom particles appear on top).
+     *
+     * The canvas transform has already been applied when this is called:
+     * - Origin (0, 0) = body center
+     * - Rotation already applied (body angle)
+     * - ctx.save() / ctx.restore() wrap each call
+     *
+     * @param ctx   The 2D rendering context (already translated + rotated)
+     * @param particle  The full particle data (width, height, radius, etc.)
+     * @param scale Device pixel ratio / DPR scale factor in effect
+     */
+    draw?: (ctx: CanvasRenderingContext2D, particle: CanvasParticleData, scale: number) => void;
 }

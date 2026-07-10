@@ -1,4 +1,4 @@
-import type { CanvasShape } from '../types';
+import type { CanvasParticleData, CanvasShape } from '../types';
 export interface CanvasBoxProps {
     /** Width in pixels (required for 'rect', ignored for 'circle' if radius is set) */
     width?: number;
@@ -20,6 +20,12 @@ export interface CanvasBoxProps {
     restitution?: number;
     /** Static elements don't move */
     static?: boolean;
+    /**
+     * Custom per-particle draw function. Overrides the default batched renderer for
+     * this particle. Called with origin (0,0) at body center, rotation already applied.
+     * Enables SVG/icon sprites via pre-rasterized offscreen canvas + drawImage.
+     */
+    draw?: CanvasParticleData['draw'];
 }
 /**
  * CanvasBox is a virtual component that registers a particle with CanvasElastica.
@@ -33,4 +39,4 @@ export interface CanvasBoxProps {
  * </CanvasElastica>
  * ```
  */
-export declare function CanvasBox({ width, height, radius, shape, fill, stroke, strokeWidth, mass, restitution, static: isStatic, }: CanvasBoxProps): null;
+export declare function CanvasBox({ width, height, radius, shape, fill, stroke, strokeWidth, mass, restitution, static: isStatic, draw, }: CanvasBoxProps): null;

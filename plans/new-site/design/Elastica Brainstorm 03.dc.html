@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Fragment+Mono:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F2EFE9; }
+    body { font-family: 'Archivo', sans-serif; color: #16140F; -webkit-font-smoothing: antialiased; }
+    a { color: #E30613; text-decoration: none; }
+    a:hover { color: #16140F; text-decoration: underline; }
+    ::selection { background: #E30613; color: #F2EFE9; }
+    @keyframes rollX { 0% { transform: translateX(0) rotate(0deg); } 100% { transform: translateX(320px) rotate(720deg); } }
+    @keyframes squash { 0%, 100% { transform: scale(1,1); } 45% { transform: scale(1,1); } 50% { transform: scale(1.25,0.75); } 55% { transform: scale(1,1); } }
+  </style>
+</helmet>
+
+<div style="max-width: 1060px; margin: 0 auto; padding: 48px 32px 120px">
+
+  <!-- ============ MASTHEAD ============ -->
+  <header style="display: flex; flex-direction: column; gap: 32px; padding-bottom: 36px; border-bottom: 2px solid #16140F">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em">
+      <span>darkroom.engineering</span>
+      <span>Brainstorm — Round 03</span>
+      <span style="color: #E30613">Refs in · AD lock</span>
+    </div>
+    <div>
+      <h1 style="margin: 0; font-size: 96px; line-height: 0.9; font-weight: 800; font-stretch: 115%; letter-spacing: -0.03em; text-transform: uppercase">Elastica <span style="font-stretch: 62%; color: #E30613">/03</span></h1>
+      <p style="margin: 14px 0 0; max-width: 640px; font-size: 19px; line-height: 1.4">The four references, decoded into mechanics. One new section (the Pop gallery). Final page sequence.</p>
+    </div>
+  </header>
+
+  <!-- ============ 01 REF BOARD ============ -->
+  <section style="padding: 48px 0; border-bottom: 1px solid #C9C4BA">
+    <div style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; margin-bottom: 32px">
+      <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em"><span style="color: #E30613">01</span> — Ref decode</div>
+      <h2 style="margin: 0; font-size: 36px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">What each reference is actually doing, mechanically.</h2>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
+
+      <!-- ref 1 footer -->
+      <div style="border: 1.5px solid #16140F; display: flex; flex-direction: column">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 14px; border-bottom: 1px solid #16140F; display: flex; justify-content: space-between"><span>Ref A — packed exclusion</span><span style="color:#E30613">→ Footer</span></div>
+        <div style="background: #16140F; display: flex; justify-content: center; padding: 16px"><img src="uploads/Screenshot 2026-07-08 at 10.03.37.png" alt="fritz-kola poster: eye shapes packed around a bottle silhouette" style="max-width: 100%; max-height: 320px; display: block"></div>
+        <div style="padding: 14px; font-size: 13.5px; line-height: 1.55; color: #37342E; display: flex; flex-direction: column; gap: 8px">
+          <span>The magic isn't just the negative space — it's that every element is <strong>oriented</strong>: the eyes point along the packing flow, like iron filings around a magnet. No SDF support (circles + rects only) — so the inner shape is a <strong>compound of static bodies</strong>: either the wordmark built from static rects (one per letter stem, ~30–40 rects) or a silhouette traced by a ring of small static circles. Particles are plain circle bodies for collision; the <em>rendered sprite</em> on each is an oriented lozenge whose angle we set in the draw pass (angle ← velocity or field tangent) — orientation is visual, collision stays circular. Cheap and honest.</span>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">mechanic: inward attraction + static rect/circle compound as the "shape" · circle collision + sprite rotation from velocity dir · 2–3 radii for tight packing</span>
+        </div>
+      </div>
+
+      <!-- ref 2 hero -->
+      <div style="border: 1.5px solid #16140F; display: flex; flex-direction: column">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 14px; border-bottom: 1px solid #16140F; display: flex; justify-content: space-between"><span>Ref B — magnetic type</span><span style="color:#E30613">→ Hero</span></div>
+        <div style="background: #16140F; display: flex; justify-content: center; padding: 16px"><img src="uploads/Screenshot 2026-07-08 at 10.04.14.png" alt="MAGNETIC letters clumped and rotated" style="max-width: 100%; max-height: 320px; display: block"></div>
+        <div style="padding: 14px; font-size: 13.5px; line-height: 1.55; color: #37342E; display: flex; flex-direction: column; gap: 8px">
+          <span>Key observation in the ref: letters <strong>overlap and interlock</strong>. Our collision boxes are fixed, so no interpenetration — and that's fine: with strong attraction + near-zero restitution the letters <strong>pack into a tight jostling knot</strong> instead of interlocking. Reads the same at speed; arguably better (the knot has visible tension). Two cheats if we want it closer: collision box slightly smaller than the glyph (boxes touch, glyphs kiss/overlap a few px), and free OBB rotation so the knot tumbles.</span>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">mechanic: cursor attraction + restitution ≈ 0 · hitbox at ~85% of glyph for visual overlap · free OBB rotation · home springs on release</span>
+        </div>
+      </div>
+
+      <!-- ref 3 rollers -->
+      <div style="border: 1.5px solid #16140F; display: flex; flex-direction: column">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 14px; border-bottom: 1px solid #16140F; display: flex; justify-content: space-between"><span>Ref C — big rolling glyphs</span><span style="color:#E30613">→ Interstitials</span></div>
+        <div style="background: #16140F; display: flex; justify-content: center; padding: 16px"><img src="uploads/Screenshot 2026-07-08 at 10.05.36.png" alt="large serif (n) glyph in a white rounded frame" style="max-width: 100%; max-height: 320px; display: block"></div>
+        <div style="padding: 14px; font-size: 13.5px; line-height: 1.55; color: #37342E; display: flex; flex-direction: column; gap: 8px">
+          <span>Big, few, characterful. A band where <strong>oversized parenthesized glyphs — (n), (2D), (60fps), (MIT) — roll in from the left</strong>, bounce off whatever's already there, and pile against the right wall. 4–6 bodies, giant hit-areas, nearly free to simulate — perfect filler between S2/S3. They roll <em>with real angular velocity</em>, so entry speed comes from scroll velocity: scroll fast and they cannonball in.</span>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">mechanic: circle bodies + OBB glyph render · spawn vx from Lenis velocity · right wall rigid, left periodic</span>
+        </div>
+      </div>
+
+      <!-- ref 4 cursor -->
+      <div style="border: 1.5px solid #16140F; display: flex; flex-direction: column">
+        <div style="font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 14px; border-bottom: 1px solid #16140F; display: flex; justify-content: space-between"><span>Ref D — word-swarm cursor</span><span style="color:#E30613">→ Text sections</span></div>
+        <div style="background: #F5F4F2; display: flex; justify-content: center; padding: 16px"><img src="uploads/Screenshot 2026-07-08 at 10.06.46.png" alt="cursor made of many small VIEW words" style="max-width: 100%; max-height: 320px; display: block"></div>
+        <div style="padding: 14px; font-size: 13.5px; line-height: 1.55; color: #37342E; display: flex; flex-direction: column; gap: 8px">
+          <span>The cursor isn't a dot — it's a <strong>cloud of small words stolen from the copy</strong>. As you move through the murmur section, the cursor picks up little words (the, of, and, is) which swarm around it; dwell and they drift back into their sentences. This merges beautifully with S3: the flock and the cursor-swarm are the same system at two scales — and it solves "cursor as body" with personality.</span>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">mechanic: proximity steal (small words only, ≤4 chars) · noisy orbit around pointer · return spring on dwell · cap ~25 words</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 NEW SECTION: THE POP ============ -->
+  <section style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 48px 0; border-bottom: 1px solid #C9C4BA">
+    <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em"><span style="color: #E30613">02</span> — New section</div>
+    <div style="display: flex; flex-direction: column; gap: 20px">
+      <h2 style="margin: 0; font-size: 36px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">The Pop — media that fights for space.</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+        <div style="flex: 1 1 380px; max-width: 460px; aspect-ratio: 16/10; background: #FBF9F5; border: 1.5px solid #16140F; position: relative; overflow: hidden">
+          <div style="position: absolute; bottom: 30px; left: 30px; width: 110px; height: 74px; background: repeating-linear-gradient(45deg, #EAE6DD, #EAE6DD 5px, #DDD8CC 5px, #DDD8CC 10px); border: 1px solid #16140F; transform: rotate(-3deg); display: flex; align-items: center; justify-content: center; font-family: 'Fragment Mono', monospace; font-size: 8px; color: #57534A">img 01</div>
+          <div style="position: absolute; bottom: 42px; left: 150px; width: 90px; height: 90px; background: repeating-linear-gradient(45deg, #EAE6DD, #EAE6DD 5px, #DDD8CC 5px, #DDD8CC 10px); border: 1px solid #16140F; transform: rotate(5deg); display: flex; align-items: center; justify-content: center; font-family: 'Fragment Mono', monospace; font-size: 8px; color: #57534A">icon</div>
+          <div style="position: absolute; bottom: 34px; left: 252px; width: 120px; height: 80px; background: repeating-linear-gradient(45deg, #EAE6DD, #EAE6DD 5px, #DDD8CC 5px, #DDD8CC 10px); border: 1px solid #16140F; transform: rotate(-6deg); display: flex; align-items: center; justify-content: center; font-family: 'Fragment Mono', monospace; font-size: 8px; color: #57534A">img 02</div>
+          <div style="position: absolute; bottom: 120px; left: 190px; width: 84px; height: 60px; background: #E30613; border: 1px solid #16140F; animation: squash 2.6s infinite; display: flex; align-items: center; justify-content: center; font-family: 'Fragment Mono', monospace; font-size: 8px; color: #F2EFE9">popping in</div>
+          <div style="position: absolute; top: 14px; left: 24px; font-family: 'Fragment Mono', monospace; font-size: 9px; color: #57534A">each arrival inflates 0→100% and shoves neighbors aside</div>
+          <div style="position: absolute; left: 24px; right: 24px; bottom: 26px; border-bottom: 1px dashed #57534A"></div>
+        </div>
+        <div style="flex: 1 1 300px; min-width: 280px; display: flex; flex-direction: column; gap: 10px">
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">The showcase moment — real images/icons (sites built with it, library glyphs, whatever we feature). Media <strong>pops in at scroll milestones: spawns at 0% scale and inflates as a live collision body</strong>, physically displacing everything already settled. The gallery never reflows on a grid — it <em>negotiates</em>. Later arrivals wedge in, early ones get shoved and tilted. End state is a jostled, packed shelf you can drag around.</p>
+          <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #37342E">This is the DOM-mode flex: each body is a real <span style="font-family:'Fragment Mono',monospace; font-size: 12.5px">&lt;img&gt;</span> — hoverable, clickable, draggable. Cap at ~20 items, well inside the 100-body law.</p>
+          <span style="font-family: 'Fragment Mono', monospace; font-size: 11px; color: #57534A">mechanic: scale-up = growing collision radius (displayScale + bounds sync) · spawn tied to scroll milestones · OBB, high friction, low restitution — it should feel like packing a suitcase, not a ball pit</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 SEQUENCE ============ -->
+  <section style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 48px 0; border-bottom: 1px solid #C9C4BA">
+    <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em"><span style="color: #E30613">03</span> — Sequence v3</div>
+    <div style="display: flex; flex-direction: column; gap: 20px">
+      <h2 style="margin: 0; font-size: 36px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">Final running order.</h2>
+      <div style="border: 1px solid #16140F">
+        <div style="display: grid; grid-template-columns: 0.5fr 1.2fr 0.8fr 1.8fr; font-family: 'Fragment Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #16140F; background: #16140F; color: #F2EFE9"><span style="padding: 8px 14px">#</span><span style="padding: 8px 14px">Section</span><span style="padding: 8px 14px">Mode / bodies</span><span style="padding: 8px 14px">Beat</span></div>
+        <div style="display: grid; grid-template-columns: 0.5fr 1.2fr 0.8fr 1.8fr; font-size: 13.5px; border-bottom: 1px solid #C9C4BA"><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; color:#E30613">S1</span><span style="padding: 10px 14px; font-weight: 600">Hero — Drop &amp; Magnet</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">DOM·OBB · 8</span><span style="padding: 10px 14px; color:#57534A">Empty fold → drop, one bounce → scroll frees → clumping magnet (Ref B)</span></div>
+        <div style="display: grid; grid-template-columns: 0.5fr 1.2fr 0.8fr 1.8fr; font-size: 13.5px; border-bottom: 1px solid #C9C4BA"><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; color:#E30613">S2</span><span style="padding: 10px 14px; font-weight: 600">Pills — the Escort</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">DOM · 10–16</span><span style="padding: 10px 14px; color:#57534A">Static claims grid → unpin at half-fold → follow swarm → fenced at exit</span></div>
+        <div style="display: grid; grid-template-columns: 0.5fr 1.2fr 0.8fr 1.8fr; font-size: 13.5px; border-bottom: 1px solid #C9C4BA; background: #EAE6DD"><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; color:#E30613">INT</span><span style="padding: 10px 14px; font-weight: 600">Rollers band</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">DOM · 4–6</span><span style="padding: 10px 14px; color:#57534A">Giant (n)-style glyphs cannonball in from the left, pile on the right (Ref C)</span></div>
+        <div style="display: grid; grid-template-columns: 0.5fr 1.2fr 0.8fr 1.8fr; font-size: 13.5px; border-bottom: 1px solid #C9C4BA"><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; color:#E30613">S3</span><span style="padding: 10px 14px; font-weight: 600">Murmur + word-swarm cursor</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">DOM · ~60+25</span><span style="padding: 10px 14px; color:#57534A">Words flock off the paragraph; cursor steals small words as its own swarm (Ref D)</span></div>
+        <div style="display: grid; grid-template-columns: 0.5fr 1.2fr 0.8fr 1.8fr; font-size: 13.5px; border-bottom: 1px solid #C9C4BA"><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; color:#E30613">S4</span><span style="padding: 10px 14px; font-weight: 600">The Pop — media shelf</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">DOM·OBB · ≤20</span><span style="padding: 10px 14px; color:#57534A">Images/icons inflate in and fight for space; draggable end-state</span></div>
+        <div style="display: grid; grid-template-columns: 0.5fr 1.2fr 0.8fr 1.8fr; font-size: 13.5px; border-bottom: 1px solid #C9C4BA"><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; color:#E30613">S5</span><span style="padding: 10px 14px; font-weight: 600">Footer — the Clutch</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">Canvas · 2–5k</span><span style="padding: 10px 14px; color:#57534A">Full viewport; circle bodies + oriented sprites crust around a static rect/circle compound wordmark (Ref A)</span></div>
+        <div style="display: grid; grid-template-columns: 0.5fr 1.2fr 0.8fr 1.8fr; font-size: 13.5px"><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; color:#E30613">∞</span><span style="padding: 10px 14px; font-weight: 600">Roller progress ball</span><span style="padding: 10px 14px; font-family:'Fragment Mono',monospace; font-size: 12px">DOM · 1</span><span style="padding: 10px 14px; color:#57534A">Persistent top track; overshoots on hard scrolls; grows pegs per section later</span></div>
+      </div>
+      <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #57534A; max-width: 680px">Rhythm check: paper → paper → <strong>band</strong> → paper → paper → <strong>ink</strong>. One true field inversion (footer). The rollers band stays neutral — a slightly deeper paper (#EAE6DD) so the red glyphs carry all the contrast; red is reserved for bodies, never for fields. Density arc: 8 → 16 → 6 → 85 → 20 → 5,000 — the page continuously escalates count while staying under budget until the canvas finale blows the doors off.</p>
+    </div>
+  </section>
+
+  <!-- ============ 04 NEXT ============ -->
+  <section style="display: grid; grid-template-columns: 220px 1fr; gap: 40px; padding: 48px 0">
+    <div style="font-family: 'Fragment Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em"><span style="color: #E30613">04</span> — Next</div>
+    <div style="display: flex; flex-direction: column; gap: 16px; max-width: 680px">
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">→</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55"><strong>Motion sketches, in risk order:</strong> footer clutch (does a rect-compound wordmark read cleanly through crusted circles?), then hero drop→magnet clump. Both are self-contained enough to prototype as standalone sketches I can build here.</p></div>
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">✓</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55"><strong>S4 content decided:</strong> darkroom team picks — things the studio likes, lab material. Content delivered later; build the mechanic with striped placeholders sized to a realistic mix (landscape shots, square icons, a portrait or two).</p></div>
+      <div style="display: flex; gap: 14px; align-items: baseline"><span style="font-family: 'Fragment Mono', monospace; font-size: 12px; color: #E30613">✓</span><p style="margin: 0; font-size: 15.5px; line-height: 1.55"><strong>Rollers band decided:</strong> neutral field (#EAE6DD deep paper), red glyphs. Red belongs to bodies only — no red backgrounds anywhere on the site.</p></div>
+    </div>
+  </section>
+
+  <footer style="border-top: 2px solid #16140F; padding-top: 20px; display: flex; justify-content: space-between; font-family: 'Fragment Mono', monospace; font-size: 12px; color: #57534A">
+    <span>Round 03 · refs decoded · sequence locked</span>
+    <span><a href="https://github.com/darkroomengineering/elastica">github/elastica ↗</a></span>
+  </footer>
+
+</div>
+
+</x-dc>
+</body>
+</html>

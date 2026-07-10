@@ -5,7 +5,6 @@ import { useRect, useWindowSize } from 'hamo'
 import {
   createContext,
   type HTMLAttributes,
-  type ReactNode,
   useContext,
   useRef,
 } from 'react'
@@ -19,8 +18,6 @@ export function useFold() {
 }
 
 type FoldProps = HTMLAttributes<HTMLDivElement> & {
-  children?: ReactNode
-  className?: string
   type?: 'bottom' | 'top'
   disabled?: boolean
   overlay?: boolean
@@ -36,54 +33,32 @@ export function Fold({
   parallax = true,
   ...props
 }: FoldProps) {
-  const foldRef = useRef<HTMLDivElement | null>(null)
-  const { height: windowHeight = 0 } = useWindowSize()
-  const [setRectRef, rect] = useRect({
-    // ignoreTransform: true,
-    // ignoreSticky: true,
-  })
-
   const overlayRef = useRef<HTMLDivElement>(null!)
   const stickyRef = useRef<HTMLDivElement>(null!)
 
+  // hamo measures the fold once (and again on resize); the scroll trigger
+  // maps scroll through that cached rect — no per-frame layout reads
+  const [setRectRef, rect] = useRect()
+  const { height: windowHeight = 0 } = useWindowSize()
+
+  // top: reveal runs while the fold's top edge travels one viewport past the
+  // viewport top. bottom: while its bottom edge closes the last viewport.
   useScrollTrigger({
-    start: `${rect.top ?? 0} top`,
-    end: `${(rect.top ?? 0) + windowHeight} top`,
-    disabled: disabled || type === 'bottom',
+    rect,
+    start: type === 'top' ? 'top top' : `bottom ${windowHeight * 2}`,
+    end: type === 'top' ? `top ${-windowHeight}` : 'bottom bottom',
+    disabled,
     onProgress: ({ progress }) => {
-      if (overlayRef.current) {
-        overlayRef.current.style.setProperty('--progress', String(1 - progress))
-      }
-
-      if (stickyRef.current) {
-        stickyRef.current.style.setProperty('--progress', String(1 - progress))
-      }
-    },
-  })
-
-  useScrollTrigger({
-    start: `${(rect.bottom ?? 0) - windowHeight} bottom`,
-    end: `${rect.bottom ?? 0} bottom`,
-    disabled: disabled || type === 'top',
-    onProgress: ({ progress }) => {
-      if (overlayRef.current) {
-        overlayRef.current.style.setProperty('--progress', String(progress))
-      }
-
-      if (stickyRef.current) {
-        stickyRef.current.style.setProperty('--progress', String(progress))
-      }
+      const value = String(type === 'top' ? 1 - progress : progress)
+      overlayRef.current?.style.setProperty('--progress', value)
+      stickyRef.current?.style.setProperty('--progress', value)
     },
   })
 
   return (
-    // <TransformProvider ref={transformProviderRef}>
     <FoldContext.Provider value={true}>
       <div
-        ref={(node) => {
-          foldRef.current = node
-          setRectRef(node)
-        }}
+        ref={setRectRef}
         className={cn(
           s.fold,
           disabled && s.isDisabled,
@@ -101,6 +76,5 @@ export function Fold({
         <div className={s.overlay} ref={overlayRef} />
       </div>
     </FoldContext.Provider>
-    // </TransformProvider>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useCanvasElastica } from '../context'
-import type { CanvasShape } from '../types'
+import type { CanvasParticleData, CanvasShape } from '../types'
 
 export interface CanvasBoxProps {
   /** Width in pixels (required for 'rect', ignored for 'circle' if radius is set) */
@@ -25,6 +25,12 @@ export interface CanvasBoxProps {
   restitution?: number
   /** Static elements don't move */
   static?: boolean
+  /**
+   * Custom per-particle draw function. Overrides the default batched renderer for
+   * this particle. Called with origin (0,0) at body center, rotation already applied.
+   * Enables SVG/icon sprites via pre-rasterized offscreen canvas + drawImage.
+   */
+  draw?: CanvasParticleData['draw']
 }
 
 /**
@@ -50,6 +56,7 @@ export function CanvasBox({
   mass,
   restitution,
   static: isStatic = false,
+  draw,
 }: CanvasBoxProps) {
   const { registerParticle, unregisterParticle, updateParticle } = useCanvasElastica()
   const indexRef = useRef<number>(-1)
@@ -74,6 +81,7 @@ export function CanvasBox({
       mass,
       restitution,
       isStatic,
+      draw,
     })
     registeredRef.current = true
 
@@ -99,9 +107,10 @@ export function CanvasBox({
         mass,
         restitution,
         isStatic,
+        draw,
       })
     }
-  }, [effectiveWidth, effectiveHeight, radius, shape, fill, stroke, strokeWidth, mass, restitution, isStatic, updateParticle])
+  }, [effectiveWidth, effectiveHeight, radius, shape, fill, stroke, strokeWidth, mass, restitution, isStatic, draw, updateParticle])
 
   // Virtual component - renders nothing
   return null

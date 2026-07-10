@@ -250,6 +250,16 @@ export function useScrollTrigger(
   // rect is not defined in the initial render, just wait for it to be defined
   const isReady = rect?.top !== undefined
 
+  // hamo resolves rect coordinates through a shared ResizeObserver on
+  // document.body with a single callback slot — only one useRect instance
+  // ever receives body entries, so a rect created after first paint (e.g. a
+  // component swapped in once fonts load) never gets its `top` and the
+  // trigger would stay disarmed forever. Nudge the instance to measure
+  // itself; no-op once coordinates exist.
+  useEffect(() => {
+    if (rect && rect.top === undefined) rect.resize?.()
+  }, [rect])
+
   const [elementStartKeyword, viewportStartKeyword] =
     typeof start === 'string' ? start.split(' ') : [start]
   const [elementEndKeyword, viewportEndKeyword] =

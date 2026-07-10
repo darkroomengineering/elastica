@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from 'next'
 
 import Script from 'next/script'
-import { type PropsWithChildren } from 'react'
+import type { PropsWithChildren } from 'react'
 import { ReactTempus } from 'tempus/react'
 import { RealViewport } from '~/components/ui/real-viewport'
+import { RectSync } from '~/components/ui/rect-sync'
 import { OptionalFeatures } from '~/lib/features'
 import { TransformProvider } from '~/hooks/use-transform'
 import AppData from '~/package.json'
@@ -13,7 +14,8 @@ import '~/styles/css/index.css'
 const APP_NAME = '@darkroom.engineering/elastica'
 const APP_DEFAULT_TITLE = 'Elastica'
 const APP_TITLE_TEMPLATE = '%s - Elastica'
-const APP_DESCRIPTION = 'Physics engine for elastic collision simulations'
+const APP_DESCRIPTION =
+  'Elastica turns real DOM elements into rigid bodies — words, images, buttons, the footer — and simulates them at a fixed 60 Hz timestep, tuned for feel and guaranteed never to explode.'
 const APP_BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ?? 'https://localhost:3000'
 
@@ -84,6 +86,7 @@ export default function Layout({ children }: PropsWithChildren) {
         <RealViewport>
           <TransformProvider>{children}</TransformProvider>
         </RealViewport>
+        <RectSync />
         <ReactTempus patch />
         <OptionalFeatures />
       </body>

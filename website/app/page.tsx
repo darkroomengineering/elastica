@@ -1,82 +1,56 @@
-'use client'
-
-import cn from 'clsx'
-import { useState } from 'react'
-import { Example1 } from '~/components/examples/example-1'
-import { Example3 } from '~/components/examples/example-3'
-import { Example4 } from '~/components/examples/example-4'
-import { Example6 } from '~/components/examples/example-6'
-import { Example7 } from '~/components/examples/example-7'
+import { HeroDrop } from '~/components/hero-drop'
+import { IntRollers } from '~/components/int-rollers'
+import { MurmurThief } from '~/components/murmur-thief'
+import { FlockSection } from '~/components/murmur-thief/flock-section'
+import { PillsEscort } from '~/components/pills-escort'
+import { RollerProgress } from '~/components/roller-progress'
+import { Link } from '~/components/ui/link'
+import { Fold } from '~/components/ui/fold'
 import { Wrapper } from '~/components/layout/wrapper'
+import { FooterSection } from '~/components/footer-clutch/footer-section'
 import s from './page.module.css'
 
-const examples = [
-  { name: 'Basics', component: 'Example1' },
-  // { name: 'Gravity', component: 'Example2' },
-  { name: 'Follow', component: 'Example3' },
-  { name: 'Flocking', component: 'Example4' },
-  // { name: 'Text', component: 'Example5' },
-  { name: 'Canvas', component: 'Example6' },
-  { name: 'Container', component: 'Example7' },
-] as const
-
-const data = [
-  { name: 'Elastica' },
-  { name: 'Elastica' },
-  { name: 'Elastica' },
-  { name: 'Elastica' },
-  { name: 'Elastica' },
-  { name: 'Elastica' },
-]
-
-type Example = (typeof examples)[number]
-
 export default function Home() {
-  const [example, setExample] = useState<Example>(examples[0])
-
-  const renderExample = () => {
-    switch (example.component) {
-      case 'Example1':
-        return <Example1 data={data} />
-      // case 'Example2':
-      //   return <Example2 data={data} />
-      case 'Example3':
-        return <Example3 data={data} />
-      case 'Example4':
-        return <Example4 data={data} />
-      // case 'Example5':
-      //   return <Example5 data={data} />
-      case 'Example6':
-        return <Example6 />
-      case 'Example7':
-        return <Example7 />
-      default:
-        return null
-    }
-  }
-
   return (
-    <Wrapper theme="red" lenis={false} className={s.page}>
-      {renderExample()}
-
-      <ul className={s.list}>
-        {examples.map(({ name, component }, index) => (
-          <li
-            key={component}
-            className={cn(s.item, component === example.component && s.active)}
+    <Wrapper theme="light" lenis footer={false} className={s.page}>
+      {/* everything above the footer paints over the fold (z-index) so the
+          light page slides up to reveal the footer pinned beneath it */}
+      <div className={s.aboveFold}>
+        {/* ── Header chrome (fixed across all sections) ── */}
+        <header className={s.headerChrome}>
+          <span>elastica</span>
+          <span className={s.headerCenter}>@darkroom.engineering/elastica</span>
+          <Link
+            href="https://github.com/darkroomengineering/elastica"
+            className={s.headerLink}
           >
-            <button
-              type="button"
-              onClick={() => {
-                const ex = examples[index]
-                if (ex) setExample(ex)
-              }}
-            >
-              {name}
-            </button>
-          </li>
-        ))}
-      </ul>
+            github ↗
+          </Link>
+        </header>
+
+        {/* ── Roller progress track ── */}
+        <RollerProgress />
+
+        {/* ── S1 Hero ── */}
+        <HeroDrop />
+
+        {/* ── S2 Pills ── */}
+        <PillsEscort />
+
+        {/* ── INT Rollers band ── */}
+        <IntRollers />
+
+        {/* ── S3 Murmur ── */}
+        <MurmurThief />
+
+        {/* ── S4 Flock — the DOM story in its own room ── */}
+        <FlockSection />
+      </div>
+
+      {/* ── S5 Footer — hidden fold revealed as the page scrolls past ── */}
+      <Fold type="top" className={s.footerFold}>
+        <FooterSection />
+      </Fold>
     </Wrapper>
   )
 }

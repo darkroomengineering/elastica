@@ -1,6 +1,10 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, type Ref } from 'react';
 import type { CanvasParticleData, ElasticaConfigOBB, InitialConditionParams, UpdateParams } from '../types';
 export type { CanvasParticleData };
+export type CanvasElasticaRef = {
+    play: () => void;
+    pause: () => void;
+};
 export interface CanvasElasticaProps {
     children?: ReactNode;
     className?: string;
@@ -12,6 +16,19 @@ export interface CanvasElasticaProps {
     dpr?: number;
     /** Show spatial hash grid for debugging */
     showHashGrid?: boolean;
+    /** Ref handle exposing play() and pause() */
+    ref?: Ref<CanvasElasticaRef>;
+    /**
+     * Called once when the simulation settles (max speed of non-static bodies stays
+     * below `settleThreshold` for 10 consecutive physics steps). Re-arms after speed
+     * later exceeds 2× threshold, allowing repeated settle→impulse cycles.
+     */
+    onSettle?: () => void;
+    /**
+     * Velocity magnitude threshold for settle detection (default: 0.05).
+     * Based on typical initial velocity range of ~0.5 in presets.
+     */
+    settleThreshold?: number;
 }
 /**
  * CanvasElastica provides a canvas-based physics simulation for many particles.
@@ -39,4 +56,4 @@ export interface CanvasElasticaProps {
  * </CanvasElastica>
  * ```
  */
-export declare function CanvasElastica({ children, className, style, config, initialCondition, update, dpr, showHashGrid, }: CanvasElasticaProps): import("react/jsx-runtime").JSX.Element;
+export declare function CanvasElastica({ children, className, style, config, initialCondition, update, dpr, showHashGrid, ref, onSettle, settleThreshold, }: CanvasElasticaProps): import("react/jsx-runtime").JSX.Element;

@@ -32,7 +32,7 @@ export { DomElastica, type DomElasticaProps, type DomElasticaRef } from './dom/d
 export { BoundaryBox, type BoundaryBoxProps } from './dom/boundary-box'
 
 // Canvas components
-export { CanvasElastica, type CanvasElasticaProps } from './canvas/canvas-elastica'
+export { CanvasElastica, type CanvasElasticaProps, type CanvasElasticaRef } from './canvas/canvas-elastica'
 export { CanvasBox, type CanvasBoxProps } from './canvas/canvas-box'
 
 // Presets
@@ -43,7 +43,7 @@ export {
 } from './presets'
 
 // Utilities
-export { HashGrid, isEmptyArray, useJavascriptEnable } from './utils'
+export { HashGrid, isEmptyArray, useJavascriptEnable, createSettleDetector } from './utils'
 
 // Deprecated aliases for backwards compatibility
 export { DomElastica as ReactElastica } from './dom/dom-elastica'

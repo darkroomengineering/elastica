@@ -8,27 +8,42 @@ function getBatchKey(p: CanvasParticleData): BatchKey {
 }
 
 /**
- * Renders particles to canvas using batched draw calls.
+ * Renders particles to canvas using batched draw calls, with optional per-particle
+ * custom draw callbacks.
  *
- * Particles are grouped by visual properties (shape + fill + stroke + strokeWidth)
- * to minimize context state changes and maximize batching efficiency.
+ * Draw order:
+ *   1. Batched default pass — particles without a `draw` prop, grouped by visual
+ *      properties (shape + fill + stroke + strokeWidth) to minimize state changes.
+ *   2. Custom pass — particles with a `draw` prop, rendered individually on top.
  *
  * Performance:
- * - 200 white rects = 1 draw call
+ * - 200 white rects (no custom draw) = 1 draw call
  * - 100 white + 100 red = 2 draw calls
+ * - Custom-draw particles each get their own save/restore + callback; no new arrays
+ *   allocated per frame (inline check).
+ *
+ * Custom draw contract:
+ *   Origin (0, 0) inside the callback = body center, rotation already applied.
+ *   `scale` is the DPR factor in effect at the call site.
  */
 export function renderBatched(
   ctx: CanvasRenderingContext2D,
   particles: CanvasParticleData[],
   positions: Vector2D[],
-  angles: number[]
+  angles: number[],
+  scale: number = 1
 ): void {
   if (particles.length === 0) return
 
-  // Group particles by visual properties
+  // Build index mapping: particle -> array position
+  const indexMap = new Map<CanvasParticleData, number>()
+  particles.forEach((p, i) => indexMap.set(p, i))
+
+  // --- Pass 1: batched default particles ---
   const batches = new Map<BatchKey, CanvasParticleData[]>()
 
   for (const particle of particles) {
+    if (particle.draw) continue // skip custom-draw particles in this pass
     const key = getBatchKey(particle)
     const batch = batches.get(key)
     if (batch) {
@@ -38,11 +53,6 @@ export function renderBatched(
     }
   }
 
-  // Build index mapping: particle -> array position
-  const indexMap = new Map<CanvasParticleData, number>()
-  particles.forEach((p, i) => indexMap.set(p, i))
-
-  // Render each batch with minimal state changes
   for (const [, batch] of batches) {
     const sample = batch[0]!
     const hasFill = sample.fill !== 'transparent' && sample.fill !== 'none'
@@ -98,6 +108,25 @@ export function renderBatched(
     if (hasStroke) {
       ctx.stroke()
     }
+  }
+
+  // --- Pass 2: custom draw particles (rendered on top of batched) ---
+  for (const particle of particles) {
+    if (!particle.draw) continue
+
+    const arrayIndex = indexMap.get(particle)!
+    const pos = positions[arrayIndex]
+    const angle = angles[arrayIndex]
+
+    if (!pos) continue
+
+    ctx.save()
+    ctx.translate(pos[0], pos[1])
+    if (angle && angle !== 0) {
+      ctx.rotate(angle)
+    }
+    particle.draw(ctx, particle, scale)
+    ctx.restore()
   }
 }
 

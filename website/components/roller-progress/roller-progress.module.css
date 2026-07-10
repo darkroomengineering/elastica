@@ -1,0 +1,48 @@
+.track {
+  position: fixed;
+  top: desktop-vw(72);
+  left: desktop-vw(32);
+  right: desktop-vw(32);
+  height: 1px;
+  border-top: 1px solid var(--color-hairline);
+  pointer-events: none;
+  z-index: 20;
+
+  @media (--mobile) {
+    top: mobile-vw(60);
+    left: mobile-vw(16);
+    right: mobile-vw(16);
+  }
+}
+
+/* the honest indicator: a tick standing on the line at exact scroll progress */
+.wall {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 2px;
+  height: desktop-vw(19);
+  background: var(--color-ink);
+  transform: translate(var(--x, 0px), -50%);
+
+  @media (--mobile) {
+    height: mobile-vw(15);
+  }
+}
+
+/* the ball: physics-positioned, bounces against the wall */
+.dot {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: desktop-vw(15);
+  height: desktop-vw(15);
+  border-radius: 50%;
+  background: var(--color-red);
+  transform: translate(var(--x, 0px), -50%);
+
+  @media (--mobile) {
+    width: mobile-vw(12);
+    height: mobile-vw(12);
+  }
+}

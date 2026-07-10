@@ -1,23 +1,510 @@
+/* ================================================================
+   Elastica marketing page — CSS Modules
+   All px values are desktop @1440; use desktop-vw() for fluid scaling
+   ================================================================ */
+
+/* ---- Shared / chrome ---- */
 .page {
-  text-transform: uppercase;
-  font-family: var(--font-mono);
+  background: var(--color-field);
+  color: var(--color-ink);
+  font-family: var(--font-archivo);
 }
 
-.list {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  row-gap: calc(8 / 375 * 100vw);
-  padding: calc(8 / 375 * 100vw);
-}
+/* Must paint over the footer Fold (later sibling, pulled up by -100svh),
+   and stay opaque so the pinned footer never shows between sections */
+.aboveFold {
+  position: relative;
+  z-index: 1;
+  background: var(--color-field);
+  /* rounded seam where the page lifts off the footer; clip so child
+     section backgrounds don't square the corners out */
+  border-radius: 0 0 desktop-vw(24) desktop-vw(24);
+  overflow: clip;
 
-@media (min-width: 800px) {
-  .list {
-    row-gap: calc(8 / 1440 * 100vw);
-    padding: calc(8 / 1440 * 100vw);
+  @media (--mobile) {
+    border-radius: 0 0 mobile-vw(24) mobile-vw(24);
   }
 }
 
-.item.active button {
-  text-decoration: underline;
+.footerFold {
+  /* Fold's overlay uses --color-primary (white in the light theme);
+     re-map to ink so the hidden footer sits in shadow, not white fog */
+  --color-primary: var(--color-ink);
+}
+
+.headerChrome {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: desktop-vw(24) desktop-vw(32);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(13);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  z-index: 20;
+
+  @media (--mobile) {
+    padding: mobile-vw(16) mobile-vw(16);
+    font-size: mobile-vw(11);
+  }
+}
+
+.headerCenter {
+  color: var(--color-muted);
+
+  @media (--mobile) {
+    display: none;
+  }
+}
+
+.headerLink {
+  color: var(--color-red);
+  text-decoration: none;
+
+  @media (--hover) {
+    &:hover {
+      color: var(--color-ink);
+      text-decoration: underline;
+    }
+  }
+}
+
+/* ---- S1 Hero ---- */
+.hero {
+  position: relative;
+  height: desktop-vh(880);
+
+  @media (--mobile) {
+    height: 100svh;
+  }
+}
+
+.wordmarkWrapper {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: desktop-vw(176);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: desktop-vw(4);
+  font-family: var(--font-archivo);
+  font-weight: 800;
+  font-stretch: 115%;
+  font-size: desktop-vw(176);
+  line-height: 0.82;
+  letter-spacing: -0.03em;
+  color: var(--color-red);
+
+  @media (--mobile) {
+    font-size: mobile-vw(52);
+    bottom: mobile-vw(120);
+    gap: mobile-vw(2);
+  }
+}
+
+.wordmarkBaseline {
+  position: absolute;
+  left: desktop-vw(120);
+  right: desktop-vw(120);
+  bottom: desktop-vw(172);
+  border-bottom: 1px dashed var(--color-hairline);
+
+  @media (--mobile) {
+    left: mobile-vw(24);
+    right: mobile-vw(24);
+    bottom: mobile-vw(118);
+  }
+}
+
+.heroTagline {
+  position: absolute;
+  bottom: desktop-vw(96);
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(13);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+
+  @media (--mobile) {
+    font-size: mobile-vw(11);
+    bottom: mobile-vw(72);
+  }
+}
+
+.heroMeta {
+  position: absolute;
+  bottom: desktop-vw(28);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding-inline: desktop-vw(32);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(12);
+
+  @media (--mobile) {
+    padding-inline: mobile-vw(16);
+    font-size: mobile-vw(10);
+    bottom: mobile-vw(20);
+  }
+}
+
+.heroMetaMuted {
+  color: var(--color-muted);
+}
+
+.heroMetaCenter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--color-ink);
+  font-size: desktop-vw(12);
+
+  @media (--mobile) {
+    font-size: mobile-vw(10);
+  }
+}
+
+/* ---- S2 Pills ---- */
+.pills {
+  position: relative;
+  border-top: 1px solid var(--color-hairline-light);
+  padding: desktop-vw(96) desktop-vw(96) 0;
+  min-height: desktop-vh(820);
+
+  @media (--mobile) {
+    padding: mobile-vw(48) mobile-vw(16) 0;
+    min-height: unset;
+  }
+}
+
+.sectionLabel {
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(13);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-red);
+
+  @media (--mobile) {
+    font-size: mobile-vw(11);
+  }
+}
+
+.sectionHeading {
+  font-family: var(--font-archivo);
+  font-size: desktop-vw(68);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  max-width: desktop-vw(760);
+  margin-top: desktop-vw(20);
+
+  @media (--mobile) {
+    font-size: mobile-vw(36);
+    max-width: 100%;
+    margin-top: mobile-vw(12);
+  }
+}
+
+.pillGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: desktop-vw(14);
+  max-width: desktop-vw(1100);
+  margin-top: desktop-vw(56);
+  padding-bottom: desktop-vw(96);
+
+  @media (--mobile) {
+    gap: mobile-vw(10);
+    margin-top: mobile-vw(32);
+    padding-bottom: mobile-vw(56);
+    max-width: 100%;
+  }
+}
+
+.pill {
+  border: 1.5px solid var(--color-ink);
+  border-radius: 999px;
+  padding: desktop-vw(16) desktop-vw(28);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(15);
+
+  @media (--mobile) {
+    padding: mobile-vw(10) mobile-vw(18);
+    font-size: mobile-vw(12);
+  }
+}
+
+.pillAccent {
+  composes: pill;
+  background: var(--color-red);
+  color: var(--color-field);
+  border-color: var(--color-red);
+}
+
+.pillsCaption {
+  position: absolute;
+  bottom: desktop-vw(32);
+  right: desktop-vw(96);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(12);
+  color: var(--color-muted);
+
+  @media (--mobile) {
+    position: static;
+    font-size: mobile-vw(10);
+    padding: mobile-vw(16) mobile-vw(16) mobile-vw(32);
+    text-align: right;
+  }
+}
+
+/* ---- INT Rollers ---- */
+.rollersBand {
+  position: relative;
+  background: var(--color-band);
+  border-top: 1px solid var(--color-hairline-light);
+  border-bottom: 1px solid var(--color-hairline-light);
+  height: desktop-vh(384);
+  overflow: hidden;
+
+  @media (--mobile) {
+    height: mobile-vw(240);
+  }
+}
+
+.rollersLabel {
+  position: absolute;
+  top: desktop-vw(24);
+  left: desktop-vw(32);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(12);
+  color: var(--color-muted);
+
+  @media (--mobile) {
+    top: mobile-vw(16);
+    left: mobile-vw(16);
+    font-size: mobile-vw(10);
+  }
+}
+
+.rollersGlyphs {
+  position: absolute;
+  bottom: desktop-vw(-10);
+  right: desktop-vw(40);
+  display: flex;
+  align-items: flex-end;
+  font-family: var(--font-archivo);
+  font-weight: 700;
+  color: var(--color-red);
+  letter-spacing: -0.04em;
+
+  @media (--mobile) {
+    right: mobile-vw(8);
+    bottom: mobile-vw(-6);
+  }
+}
+
+.rollersGlyph1 {
+  font-size: desktop-vw(130);
+  transform: rotate(-8deg) translateY(-14px);
+
+  @media (--mobile) {
+    font-size: mobile-vw(54);
+  }
+}
+
+.rollersGlyph2 {
+  font-size: desktop-vw(170);
+  transform: rotate(4deg);
+  margin-left: desktop-vw(-30);
+
+  @media (--mobile) {
+    font-size: mobile-vw(70);
+    margin-left: mobile-vw(-12);
+  }
+}
+
+.rollersGlyph3 {
+  font-size: desktop-vw(110);
+  transform: rotate(-14deg) translateY(-8px);
+  margin-left: desktop-vw(-24);
+
+  @media (--mobile) {
+    font-size: mobile-vw(46);
+    margin-left: mobile-vw(-10);
+  }
+}
+
+.rollersGlyph4 {
+  font-size: desktop-vw(148);
+  transform: rotate(6deg);
+  margin-left: desktop-vw(-28);
+
+  @media (--mobile) {
+    font-size: mobile-vw(62);
+    margin-left: mobile-vw(-12);
+  }
+}
+
+.rollersFloor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-bottom: 1.5px solid var(--color-ink);
+}
+
+/* ---- S5 Footer ---- */
+.footer {
+  position: relative;
+  background: var(--color-ink);
+  color: var(--color-field);
+  /* exactly one viewport — the Fold's reveal travel and sticky
+     min-height are both 100svh, so anything else leaves a gap or
+     an unpinned scroll tail */
+  height: 100svh;
+  overflow: hidden;
+
+  @media (--mobile) {
+    /* corner items go static on mobile; flex-end keeps the links at
+       the bottom now that the footer fills the viewport */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: mobile-vw(32);
+  }
+}
+
+/* Footer chrome elements sit above the canvas layer */
+.footerTopLeft,
+.footerTopRight,
+.footerCenter,
+.footerBottomLeft,
+.footerBottomRight {
+  z-index: 1;
+}
+
+.footerTopLeft {
+  position: absolute;
+  top: desktop-vw(24);
+  left: desktop-vw(32);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(12);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+
+  @media (--mobile) {
+    top: mobile-vw(16);
+    left: mobile-vw(16);
+    font-size: mobile-vw(10);
+  }
+}
+
+.footerTopRight {
+  position: absolute;
+  top: desktop-vw(24);
+  right: desktop-vw(32);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(12);
+  color: var(--color-muted);
+
+  @media (--mobile) {
+    top: mobile-vw(16);
+    right: mobile-vw(16);
+    font-size: mobile-vw(10);
+  }
+}
+
+.footerCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footerRect {
+  /* no border — the void is carved by the eye field's absence; it hugs
+     the wordmark so the negative space stays snug (bottle, not billboard) */
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: desktop-vw(14) desktop-vw(28);
+
+  @media (--mobile) {
+    width: fit-content;
+    padding: mobile-vw(8) mobile-vw(14);
+  }
+}
+
+.footerWordmark {
+  font-family: var(--font-archivo);
+  font-weight: 800;
+  font-stretch: 115%;
+  font-size: desktop-vw(96);
+  line-height: 0.82;
+  letter-spacing: -0.03em;
+  color: var(--color-field);
+
+  @media (--mobile) {
+    font-size: mobile-vw(40);
+  }
+}
+
+.footerBottomLeft {
+  position: absolute;
+  bottom: desktop-vw(28);
+  left: desktop-vw(32);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(13);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+
+  @media (--mobile) {
+    position: static;
+    display: block;
+    text-align: center;
+    margin-top: mobile-vw(16);
+    font-size: mobile-vw(11);
+  }
+}
+
+.footerBottomRight {
+  position: absolute;
+  bottom: desktop-vw(28);
+  right: desktop-vw(32);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(13);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+
+  @media (--mobile) {
+    position: static;
+    display: block;
+    text-align: center;
+    font-size: mobile-vw(11);
+  }
+}
+
+
+.footerLink {
+  color: var(--color-field);
+  text-decoration: none;
+
+  @media (--hover) {
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }

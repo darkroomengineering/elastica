@@ -6,6 +6,14 @@ const colors = {
   green: '#00ff88',
   purple: '#7928ca',
   pink: '#ff0080',
+  // Elastica design system
+  field: '#F2EFE9',
+  band: '#EAE6DD',
+  ink: '#16140F',
+  hairline: '#C9C4BA',
+  'hairline-light': '#DDD8CC',
+  muted: '#57534A',
+  'border-mid': '#A8A296',
 } as const
 
 const themeNames = ['light', 'dark', 'red', 'evil'] as const

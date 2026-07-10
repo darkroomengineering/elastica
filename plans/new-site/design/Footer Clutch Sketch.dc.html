@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #16140F; overflow: hidden; }
+    body { font-family: 'Fragment Mono', monospace; }
+    a { color: #F2EFE9; text-decoration: none; }
+    a:hover { color: #E30613; text-decoration: underline; }
+    ::selection { background: #E30613; color: #F2EFE9; }
+  </style>
+</helmet>
+
+<div data-screen-label="Footer Clutch" style="position: fixed; inset: 0; background: #16140F; overflow: hidden; cursor: crosshair">
+  <canvas ref="{{ canvasRef }}" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none"></canvas>
+
+  <div style="position: absolute; top: 16px; left: 20px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #57534A; pointer-events: none">Elastica — footer clutch · motion sketch 01</div>
+  <div style="position: absolute; top: 16px; right: 20px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #57534A; pointer-events: none">Ref A · circles + static rects only</div>
+
+  <div style="position: absolute; bottom: 16px; left: 20px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase"><a href="https://github.com/darkroomengineering/elastica">github ↗</a></div>
+  <div style="position: absolute; bottom: 16px; right: 20px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase"><a href="https://darkroom.engineering">darkroom.engineering ↗</a></div>
+
+  <div style="position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 24px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #57534A; pointer-events: none">
+    <span>cursor bores</span>
+    <span>click pulses</span>
+    <span>wheel sloshes</span>
+    <span>window shakes</span>
+    <span ref="{{ statsRef }}" style="color: #E30613"></span>
+  </div>
+
+  <div ref="{{ hintRef }}" style="position: absolute; top: 0; left: 0; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #E30613; pointer-events: none; white-space: nowrap; will-change: transform; opacity: 0">shake the window ↯</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;particles&quot;: { &quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 1300, &quot;min&quot;: 150, &quot;max&quot;: 2000, &quot;step&quot;: 50, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Simulation&quot; },
+  &quot;attraction&quot;: { &quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 1, &quot;min&quot;: 0.2, &quot;max&quot;: 3, &quot;step&quot;: 0.1, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Simulation&quot; },
+  &quot;debugCompound&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Debug&quot; }
+}">
+class Component extends DCLogic {
+  canvasRef = React.createRef()
+  statsRef = React.createRef()
+  hintRef = React.createRef()
+
+  renderVals() {
+    return { canvasRef: this.canvasRef, statsRef: this.statsRef, hintRef: this.hintRef }
+  }
+
+  componentDidMount() {
+    this.particles = []
+    this.statics = []
+    this.pointer = { x: -9999, y: -9999 }
+    this.fps = 60
+    this.lastT = performance.now()
+
+    this.onResize = () => this.resize()
+    window.addEventListener('resize', this.onResize)
+
+    this.onMove = (e) => { this.pointer.x = e.clientX; this.pointer.y = e.clientY }
+    this.onLeave = () => { this.pointer.x = -9999; this.pointer.y = -9999 }
+    this.onDown = (e) => this.pulse(e.clientX, e.clientY)
+    this.onWheel = (e) => {
+      const dv = Math.max(-100, Math.min(100, e.deltaY)) * 0.02
+      for (const p of this.particles) p.vy -= dv * (0.6 + Math.random() * 0.8)
+    }
+    window.addEventListener('pointermove', this.onMove)
+    window.addEventListener('pointerdown', this.onDown)
+    window.addEventListener('wheel', this.onWheel, { passive: true })
+    document.addEventListener('pointerleave', this.onLeave)
+
+    this.resize()
+    this.seed()
+    this.loop = this.loop.bind(this)
+    this.raf = requestAnimationFrame(this.loop)
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf)
+    window.removeEventListener('resize', this.onResize)
+    window.removeEventListener('pointermove', this.onMove)
+    window.removeEventListener('pointerdown', this.onDown)
+    window.removeEventListener('wheel', this.onWheel)
+    document.removeEventListener('pointerleave', this.onLeave)
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.particles !== this.props.particles) this.seed()
+  }
+
+  // ---------- world ----------
+
+  resize() {
+    const canvas = this.canvasRef.current
+    if (!canvas) return
+    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    this.w = window.innerWidth
+    this.h = window.innerHeight
+    canvas.width = this.w * dpr
+    canvas.height = this.h * dpr
+    this.ctx = canvas.getContext('2d')
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    this.buildStatics()
+    for (const p of this.particles) {
+      p.x = Math.max(p.r, Math.min(this.w - p.r, p.x))
+      p.y = Math.max(p.r, Math.min(this.h - p.r, p.y))
+    }
+  }
+
+  // Wordmark "ELASTICA" as a compound of static rects — engine-legal.
+  buildStatics() {
+    const T = 0.26, W = 0.72
+    const LETTERS = {
+      E: [[0,0,T,1],[0,0,W,T],[0,0.42,W*0.82,T],[0,1-T,W,T]],
+      L: [[0,0,T,1],[0,1-T,W,T]],
+      // A's upper counter is fully enclosed — particles can never reach it, so it
+      // stays field-dark and reads as noise. Fill it with a blocker rect: the A
+      // becomes a solid silhouette (same move as the ref's solid bottle).
+      A: [[0,0,T,1],[W-T,0,T,1],[0,0,W,T],[0,0.48,W,T],[T,T,W-2*T,0.48-T]],
+      S: [[0,0,W,T],[0,0,T,0.52],[0,0.42,W,T],[W-T,0.42,T,0.58],[0,1-T,W,T]],
+      T: [[0,0,W,T],[(W-T)/2,0,T,1]],
+      I: [[0,0,W,T],[(W-T)/2,0,T,1],[0,1-T,W,T]],
+      C: [[0,0,T,1],[0,0,W,T],[0,1-T,W,T]],
+    }
+    const word = 'ELASTICA'
+    const advance = 1.0
+    const units = (word.length - 1) * advance + W
+    const s = Math.min(this.w * 0.72, 1100) / units
+    const letterH = s * 1.35
+    const x0 = (this.w - units * s) / 2
+    const y0 = this.h / 2 - letterH / 2
+
+    this.statics = []
+    let cx = x0
+    for (const ch of word) {
+      for (const [rx, ry, rw, rh] of LETTERS[ch]) {
+        this.statics.push({ x: cx + rx * s, y: y0 + ry * letterH, w: rw * s, h: rh * letterH })
+      }
+      cx += advance * s
+    }
+    this.bb = { x0, y0, x1: x0 + units * s, y1: y0 + letterH, cx: this.w / 2, cy: this.h / 2 }
+  }
+
+  seed() {
+    const n = this.props.particles ?? 850
+    const radii = [5.5, 7.5, 10]
+    this.particles = []
+    const insideStatic = (x, y, r) => {
+      for (const s of this.statics) {
+        if (x > s.x - r && x < s.x + s.w + r && y > s.y - r && y < s.y + s.h + r) return true
+      }
+      return false
+    }
+    for (let i = 0; i < n; i++) {
+      const r = radii[(Math.random() * 3) | 0]
+      let x = Math.random() * this.w
+      let y = Math.random() * this.h
+      for (let tries = 0; tries < 12 && insideStatic(x, y, r); tries++) {
+        x = Math.random() * this.w
+        y = Math.random() * this.h
+      }
+      this.particles.push({
+        x,
+        y,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        r,
+        a: Math.random() * Math.PI * 2,
+        red: Math.random() < 0.15,
+      })
+    }
+  }
+
+  pulse(px, py) {
+    for (const p of this.particles) {
+      const dx = p.x - px, dy = p.y - py
+      const d = Math.hypot(dx, dy) || 1
+      const f = 22 * Math.exp(-d / 260)
+      p.vx += (dx / d) * f
+      p.vy += (dy / d) * f
+    }
+  }
+
+  // ---------- sim ----------
+
+  step() {
+    const A = 0.055 * (this.props.attraction ?? 1)
+    const bb = this.bb
+    const P = this.particles
+
+    for (const p of P) {
+      // attract toward the wordmark block (clamped point on bbox; center if inside)
+      let tx = Math.max(bb.x0, Math.min(bb.x1, p.x))
+      let ty = Math.max(bb.y0, Math.min(bb.y1, p.y))
+      if (tx === p.x && ty === p.y) { tx = bb.cx; ty = bb.cy }
+      let dx = tx - p.x, dy = ty - p.y
+      const d = Math.hypot(dx, dy)
+      if (d > 1) { p.vx += (dx / d) * A; p.vy += (dy / d) * A }
+
+      // cursor bores a hole
+      const cdx = p.x - this.pointer.x, cdy = p.y - this.pointer.y
+      const cd = Math.hypot(cdx, cdy)
+      if (cd < 90 && cd > 0.01) {
+        const f = 1.4 * (1 - cd / 90)
+        p.vx += (cdx / cd) * f
+        p.vy += (cdy / cd) * f
+      }
+
+      // breath
+      p.vx += (Math.random() - 0.5) * 0.06
+      p.vy += (Math.random() - 0.5) * 0.06
+
+      // drag + clamp + integrate
+      p.vx *= 0.985; p.vy *= 0.985
+      const sp = Math.hypot(p.vx, p.vy)
+      if (sp > 10) { p.vx = (p.vx / sp) * 10; p.vy = (p.vy / sp) * 10 }
+      p.x += p.vx; p.y += p.vy
+    }
+
+    for (let iter = 0; iter < 2; iter++) this.resolve()
+
+    // orientation: velocity dir when moving, field tangent when crusted
+    for (const p of P) {
+      const sp = Math.hypot(p.vx, p.vy)
+      let desired
+      if (sp > 1.1) desired = Math.atan2(p.vy, p.vx)
+      else {
+        let tx = Math.max(bb.x0, Math.min(bb.x1, p.x))
+        let ty = Math.max(bb.y0, Math.min(bb.y1, p.y))
+        if (tx === p.x && ty === p.y) { tx = bb.cx; ty = bb.cy }
+        desired = Math.atan2(tx - p.x, -(ty - p.y)) // tangent (perp of inward dir)
+      }
+      let delta = desired - p.a
+      delta = ((delta + Math.PI * 3) % (Math.PI * 2)) - Math.PI
+      p.a += delta * 0.12
+    }
+  }
+
+  resolve() {
+    const P = this.particles
+    const cell = 21
+    const cols = Math.ceil(this.w / cell) + 2
+    const hash = new Map()
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i]
+      const k = (((p.x / cell) | 0) + 1) + (((p.y / cell) | 0) + 1) * cols
+      const b = hash.get(k)
+      if (b) b.push(i); else hash.set(k, [i])
+    }
+    // pairs
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i]
+      const gx = ((p.x / cell) | 0) + 1
+      const gy = ((p.y / cell) | 0) + 1
+      for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
+        const bucket = hash.get(gx + ox + (gy + oy) * cols)
+        if (!bucket) continue
+        for (const j of bucket) {
+          if (j <= i) continue
+          const q = P[j]
+          const dx = q.x - p.x, dy = q.y - p.y
+          const rr = p.r + q.r
+          if (Math.abs(dx) > rr || Math.abs(dy) > rr) continue
+          const d2 = dx * dx + dy * dy
+          if (d2 >= rr * rr || d2 === 0) continue
+          const d = Math.sqrt(d2)
+          const nx = dx / d, ny = dy / d
+          const push = (rr - d) * 0.5
+          p.x -= nx * push; p.y -= ny * push
+          q.x += nx * push; q.y += ny * push
+          const rvn = (q.vx - p.vx) * nx + (q.vy - p.vy) * ny
+          if (rvn < 0) {
+            const imp = rvn * 0.55 // restitution ~0.1 + damping
+            p.vx += nx * imp; p.vy += ny * imp
+            q.vx -= nx * imp; q.vy -= ny * imp
+          }
+        }
+      }
+    }
+    // static rects (the wordmark) — particles may not enter
+    const bb = this.bb
+    for (const p of P) {
+      if (p.x < bb.x0 - 8 || p.x > bb.x1 + 8 || p.y < bb.y0 - 8 || p.y > bb.y1 + 8) continue
+      for (const s of this.statics) {
+        if (p.x < s.x - p.r || p.x > s.x + s.w + p.r || p.y < s.y - p.r || p.y > s.y + s.h + p.r) continue
+        const cx = Math.max(s.x, Math.min(s.x + s.w, p.x))
+        const cy = Math.max(s.y, Math.min(s.y + s.h, p.y))
+        let dx = p.x - cx, dy = p.y - cy
+        const d = Math.hypot(dx, dy)
+        if (d === 0) {
+          // center inside the rect: eject along axis of least penetration
+          const pl = p.x - s.x, pr = s.x + s.w - p.x, pt = p.y - s.y, pb = s.y + s.h - p.y
+          const m = Math.min(pl, pr, pt, pb)
+          if (m === pl) { p.x = s.x - p.r; p.vx = -Math.abs(p.vx) * 0.2 }
+          else if (m === pr) { p.x = s.x + s.w + p.r; p.vx = Math.abs(p.vx) * 0.2 }
+          else if (m === pt) { p.y = s.y - p.r; p.vy = -Math.abs(p.vy) * 0.2 }
+          else { p.y = s.y + s.h + p.r; p.vy = Math.abs(p.vy) * 0.2 }
+        } else if (d < p.r) {
+          const nx = dx / d, ny = dy / d
+          p.x += nx * (p.r - d); p.y += ny * (p.r - d)
+          const vn = p.vx * nx + p.vy * ny
+          if (vn < 0) { p.vx -= nx * vn * 1.1; p.vy -= ny * vn * 1.1 }
+        }
+      }
+    }
+    // rigid viewport walls
+    for (const p of P) {
+      if (p.x < p.r) { p.x = p.r; p.vx = Math.abs(p.vx) * 0.3 }
+      else if (p.x > this.w - p.r) { p.x = this.w - p.r; p.vx = -Math.abs(p.vx) * 0.3 }
+      if (p.y < p.r) { p.y = p.r; p.vy = Math.abs(p.vy) * 0.3 }
+      else if (p.y > this.h - p.r) { p.y = this.h - p.r; p.vy = -Math.abs(p.vy) * 0.3 }
+    }
+  }
+
+  // ---------- draw ----------
+
+  draw() {
+    const ctx = this.ctx
+    ctx.fillStyle = '#16140F'
+    ctx.fillRect(0, 0, this.w, this.h)
+
+    if (this.props.debugCompound) {
+      ctx.strokeStyle = 'rgba(227,6,19,0.5)'
+      ctx.lineWidth = 1
+      for (const s of this.statics) ctx.strokeRect(s.x, s.y, s.w, s.h)
+    }
+
+    // lozenge bodies, two color groups
+    for (const pass of [0, 1]) {
+      ctx.beginPath()
+      for (const p of this.particles) {
+        if ((pass === 1) !== p.red) continue
+        const rx = p.r * 1.55, ry = p.r * 0.78
+        ctx.moveTo(p.x + Math.cos(p.a) * rx, p.y + Math.sin(p.a) * rx)
+        ctx.ellipse(p.x, p.y, rx, ry, p.a, 0, Math.PI * 2)
+      }
+      ctx.fillStyle = pass === 0 ? '#F2EFE9' : '#E30613'
+      ctx.fill()
+    }
+    // pupils
+    ctx.beginPath()
+    for (const p of this.particles) {
+      const px = p.x + Math.cos(p.a) * p.r * 0.4
+      const py = p.y + Math.sin(p.a) * p.r * 0.4
+      ctx.moveTo(px + p.r * 0.3, py)
+      ctx.arc(px, py, p.r * 0.3, 0, Math.PI * 2)
+    }
+    ctx.fillStyle = '#16140F'
+    ctx.fill()
+  }
+
+  loop(t) {
+    const dt = t - this.lastT
+    this.lastT = t
+    this.fps += (1000 / Math.max(1, dt) - this.fps) * 0.05
+
+    // window shake: moving the browser window sloshes the particles (inertia)
+    const sx = window.screenX, sy = window.screenY
+    if (this.lastSX !== undefined) {
+      const wdx = Math.max(-60, Math.min(60, sx - this.lastSX))
+      const wdy = Math.max(-60, Math.min(60, sy - this.lastSY))
+      if (wdx !== 0 || wdy !== 0) {
+        for (const p of this.particles) {
+          p.vx -= wdx * 0.22 * (0.7 + Math.random() * 0.6)
+          p.vy -= wdy * 0.22 * (0.7 + Math.random() * 0.6)
+        }
+        this.shookAt = t
+      }
+    }
+    this.lastSX = sx; this.lastSY = sy
+
+    // cursor hint
+    const hint = this.hintRef.current
+    if (hint) {
+      const on = this.pointer.x > -100
+      const recentlyShook = this.shookAt && t - this.shookAt < 2000
+      hint.style.opacity = on && !recentlyShook ? '1' : '0'
+      hint.style.transition = 'opacity 0.4s'
+      if (on) hint.style.transform = 'translate(' + (this.pointer.x + 18) + 'px,' + (this.pointer.y + 22) + 'px)'
+    }
+
+    this.step()
+    this.draw()
+    if (this.statsRef.current) {
+      this.statsRef.current.textContent = this.particles.length + ' bodies · ' + Math.round(this.fps) + ' fps'
+    }
+    this.raf = requestAnimationFrame(this.loop)
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+/* ================================================================
+   IntRollers — interlude band (glyphs roll in with scroll)
+   ================================================================ */
+
+.band {
+  position: relative;
+  height: desktop-vh(384);
+
+  @media (--mobile) {
+    height: mobile-vw(240);
+  }
+}
+
+.simArea {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Physics glyphs (engine-positioned circle bodies) ────────────── */
+.glyphField {
+  position: absolute;
+  inset: 0;
+  font-family: var(--font-archivo);
+  font-weight: 700;
+  color: var(--color-red);
+  letter-spacing: -0.04em;
+}
+
+.glyphBody {
+  /* library convention: bodies sit at the container origin; the engine
+     positions them via translate/rotate CSS vars. Each glyph is a square
+     "wheel" with the label centered inside, so the circle collision body
+     matches the visual footprint (a rotating wide text box would sweep
+     its corners through the floor). */
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* All glyphs share one box (collision circle) size; font sizes are tuned per
+   label length so the six read as one family at the same visual scale */
+.glyphDom {
+  width: desktop-vw(180);
+  height: desktop-vw(180);
+  font-size: desktop-vw(84);
+
+  @media (--mobile) {
+    width: mobile-vw(72);
+    height: mobile-vw(72);
+    font-size: mobile-vw(33);
+  }
+}
+
+.glyph2d {
+  width: desktop-vw(180);
+  height: desktop-vw(180);
+  font-size: desktop-vw(100);
+
+  @media (--mobile) {
+    width: mobile-vw(72);
+    height: mobile-vw(72);
+    font-size: mobile-vw(40);
+  }
+}
+
+.glyphFps {
+  width: desktop-vw(180);
+  height: desktop-vw(180);
+  font-size: desktop-vw(100);
+
+  @media (--mobile) {
+    width: mobile-vw(72);
+    height: mobile-vw(72);
+    font-size: mobile-vw(40);
+  }
+}
+
+.glyph08 {
+  width: desktop-vw(180);
+  height: desktop-vw(180);
+  font-size: desktop-vw(88);
+
+  @media (--mobile) {
+    width: mobile-vw(72);
+    height: mobile-vw(72);
+    font-size: mobile-vw(35);
+  }
+}
+
+.glyphDeps {
+  width: desktop-vw(180);
+  height: desktop-vw(180);
+  font-size: desktop-vw(108);
+
+  @media (--mobile) {
+    width: mobile-vw(72);
+    height: mobile-vw(72);
+    font-size: mobile-vw(43);
+  }
+}
+
+.glyphHash {
+  width: desktop-vw(180);
+  height: desktop-vw(180);
+  font-size: desktop-vw(80);
+
+  @media (--mobile) {
+    width: mobile-vw(72);
+    height: mobile-vw(72);
+    font-size: mobile-vw(32);
+  }
+}
+
+/* caption ticker — swaps as each glyph crosses the band's center line.
+   Top-left, clear of the floor zone where the glyphs bounce */
+.bandLabel {
+  position: absolute;
+  top: desktop-vw(24);
+  left: desktop-vw(32);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(20);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+  white-space: nowrap;
+
+  @media (--mobile) {
+    top: mobile-vw(12);
+    left: mobile-vw(16);
+    font-size: mobile-vw(12);
+    white-space: normal;
+    max-width: 80%;
+  }
+}
+
+/* ── Static settled glyphs (reduced motion / fonts loading) ──────── */
+.staticGlyphs {
+  position: absolute;
+  bottom: desktop-vw(-10);
+  right: desktop-vw(40);
+  display: flex;
+  align-items: flex-end;
+  font-family: var(--font-archivo);
+  font-weight: 700;
+  color: var(--color-red);
+  letter-spacing: -0.04em;
+
+  @media (--mobile) {
+    right: mobile-vw(8);
+    bottom: mobile-vw(-6);
+  }
+}
+
+.staticGlyph1 {
+  font-size: desktop-vw(130);
+  transform: rotate(-8deg) translateY(-14px);
+
+  @media (--mobile) {
+    font-size: mobile-vw(54);
+  }
+}
+
+.staticGlyph2 {
+  font-size: desktop-vw(170);
+  transform: rotate(4deg);
+  margin-left: desktop-vw(-30);
+
+  @media (--mobile) {
+    font-size: mobile-vw(66);
+    margin-left: mobile-vw(-12);
+  }
+}
+
+.staticGlyph3 {
+  font-size: desktop-vw(150);
+  transform: rotate(-3deg) translateY(-8px);
+  margin-left: desktop-vw(-20);
+
+  @media (--mobile) {
+    font-size: mobile-vw(58);
+    margin-left: mobile-vw(-8);
+  }
+}
+
+.staticGlyph4 {
+  font-size: desktop-vw(140);
+  transform: rotate(6deg);
+  margin-left: desktop-vw(-24);
+
+  @media (--mobile) {
+    font-size: mobile-vw(56);
+    margin-left: mobile-vw(-10);
+  }
+}
+
+.floor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-bottom: 1.5px solid var(--color-ink);
+}

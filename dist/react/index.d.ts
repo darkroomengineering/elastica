@@ -3,10 +3,10 @@ export type { CanvasParticleData, CanvasShape, InitialConditionParams, UpdatePar
 export { ElasticaContext, useElastica, useDomElastica, useCanvasElastica, type AnyElasticaContextValue, type CanvasElasticaContextValue, type DomElasticaContextValue, type ElasticaContextValue, } from './context';
 export { DomElastica, type DomElasticaProps, type DomElasticaRef } from './dom/dom-elastica';
 export { BoundaryBox, type BoundaryBoxProps } from './dom/boundary-box';
-export { CanvasElastica, type CanvasElasticaProps } from './canvas/canvas-elastica';
+export { CanvasElastica, type CanvasElasticaProps, type CanvasElasticaRef } from './canvas/canvas-elastica';
 export { CanvasBox, type CanvasBoxProps } from './canvas/canvas-box';
 export { dragForcePresetsLib, initalConditionsPresets, updatePresets, } from './presets';
-export { HashGrid, isEmptyArray, useJavascriptEnable } from './utils';
+export { HashGrid, isEmptyArray, useJavascriptEnable, createSettleDetector } from './utils';
 export { DomElastica as ReactElastica } from './dom/dom-elastica';
 export { BoundaryBox as AxisAlignedBoundaryBox } from './dom/boundary-box';
 /** @deprecated Use DomElasticaRef instead */

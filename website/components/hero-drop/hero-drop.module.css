@@ -1,0 +1,227 @@
+/* ================================================================
+   HeroDrop — physics hero section
+   ================================================================ */
+
+/* ── Section shell ──────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  /* the fold IS the hero: the physics floor sits exactly at the visual
+     bottom of the viewport */
+  height: 100svh;
+  overflow: hidden;
+
+  @media (--mobile) {
+    height: 100svh;
+  }
+}
+
+/* ── Sim area: the physics box, ending above the hero footer ─────── */
+/*
+ * The rigid floor of the sim is the bottom edge of this area — the top
+ * of the hero footer strip, i.e. the dashed baseline the letters rest on.
+ */
+.simArea {
+  position: absolute;
+  inset: 0;
+  bottom: desktop-vw(176);
+
+  @media (--mobile) {
+    bottom: mobile-vw(120);
+  }
+}
+
+/*
+ * DomElastica renders its container with `position: relative; width: 100%; height: 100%`
+ * as inline styles (see dom-elastica.tsx). The .simContainer class doesn't override
+ * position (inline wins) — it just exists as a hook for future overrides if needed.
+ */
+.simContainer {
+  /* position: relative and size are set by DomElastica inline style */
+}
+
+/* ── Attractor circle (not an engine body; positioned from the update loop) ── */
+.attractor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* size = 2 × CIRCLE_RADIUS in index.tsx — keep in sync */
+  width: 60px;
+  height: 60px;
+  opacity: 0;
+  transition: opacity 600ms ease;
+  pointer-events: none;
+  /* paint above the letters: rotated glyph corners overhang the circular
+     collision approximation, so without this the cluster hides the magnet */
+  z-index: 1;
+}
+
+.attractorIcon {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Hero footer: bottom strip with baseline, tagline, meta ──────── */
+/*
+ * Bottom-anchored and full-width; the chrome children keep their
+ * design bottom offsets (baseline 172, tagline 96, meta 28).
+ */
+.heroFooter {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: desktop-vw(176);
+
+  @media (--mobile) {
+    height: mobile-vw(120);
+  }
+}
+
+/* ── Heading div (inside DomElastica, lays out letter hitboxes) ─── */
+/*
+ * Rendered as a div[role=heading aria-level=1] to allow BoundaryBox divs
+ * as children (h1 can only contain phrasing content).
+ * Stretched across the full container width.
+ * BoundaryBox elements are absolutely positioned by the engine via
+ * CSS variable transforms — they exist in flow only for the initial
+ * rect measurement, then the engine takes over.
+ *
+ * We render them in a flex row matching the settled wordmark layout
+ * so the engine measures the correct home rects.
+ */
+.wordmarkPhysicsH1 {
+  position: absolute;
+  inset: 0;
+  font-family: var(--font-archivo);
+  font-weight: 800;
+  font-stretch: 115%;
+  font-size: desktop-vw(176);
+  line-height: 0.82;
+  letter-spacing: -0.03em;
+  color: var(--color-red);
+
+  @media (--mobile) {
+    font-size: mobile-vw(52);
+  }
+}
+
+/* ── Letter hitbox: the BoundaryBox the engine registers ────────── */
+/*
+ * One element per letter; its border box IS the collision rect.
+ * `text-box` trims the line box to cap-height/baseline so the rect the
+ * engine measures hugs the glyph ink — a rectangle that fits the letter.
+ * No transforms here: the engine owns the element's transform.
+ */
+.letterHitbox {
+  /* library convention: registered bodies sit at the container origin;
+     the engine positions them via translate/rotate CSS vars */
+  position: absolute;
+  inset: 0;
+  width: fit-content;
+  height: fit-content;
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
+  user-select: none;
+}
+
+@supports not (text-box: trim-both cap alphabetic) {
+  .letterHitbox {
+    /* approximate cap-height box when text-box isn't supported */
+    line-height: 0.73;
+  }
+}
+
+/* ── Static non-physics overlays ────────────────────────────────── */
+/* These mirror page.module.css but live here for the component */
+
+.wordmarkWrapper {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: desktop-vw(176);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: desktop-vw(4);
+  font-family: var(--font-archivo);
+  font-weight: 800;
+  font-stretch: 115%;
+  font-size: desktop-vw(176);
+  line-height: 0.82;
+  letter-spacing: -0.03em;
+  color: var(--color-red);
+
+  @media (--mobile) {
+    font-size: mobile-vw(52);
+    bottom: mobile-vw(120);
+    gap: mobile-vw(2);
+  }
+}
+
+.wordmarkBaseline {
+  position: absolute;
+  left: desktop-vw(120);
+  right: desktop-vw(120);
+  bottom: desktop-vw(172);
+  border-bottom: 1px dashed var(--color-hairline);
+
+  @media (--mobile) {
+    left: mobile-vw(24);
+    right: mobile-vw(24);
+    bottom: mobile-vw(118);
+  }
+}
+
+.heroTagline {
+  position: absolute;
+  bottom: desktop-vw(96);
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(13);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+
+  @media (--mobile) {
+    font-size: mobile-vw(11);
+    bottom: mobile-vw(72);
+  }
+}
+
+.heroMeta {
+  position: absolute;
+  bottom: desktop-vw(28);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding-inline: desktop-vw(32);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(12);
+
+  @media (--mobile) {
+    padding-inline: mobile-vw(16);
+    font-size: mobile-vw(10);
+    bottom: mobile-vw(20);
+  }
+}
+
+.heroMetaMuted {
+  color: var(--color-muted);
+}
+
+.heroMetaCenter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--color-ink);
+  font-size: desktop-vw(12);
+
+  @media (--mobile) {
+    font-size: mobile-vw(10);
+  }
+}

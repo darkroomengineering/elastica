@@ -20,7 +20,7 @@ import {
 } from 'react'
 import { ElasticaContext, type DomElasticaContextValue } from '../context'
 import type { InitialConditionParams, UpdateParams } from '../types'
-import { HashGrid, isEmptyArray, useJavascriptEnable } from '../utils'
+import { HashGrid, isEmptyArray, useJavascriptEnable, createSettleDetector } from '../utils'
 import { injectElasticaStyles, renderElement } from './renderer'
 
 export type DomElasticaRef = {
@@ -36,6 +36,17 @@ export type DomElasticaProps = {
   update?: (params: UpdateParams) => void
   showHashGrid?: boolean
   ref?: Ref<DomElasticaRef>
+  /**
+   * Called once when the simulation settles (max speed of non-static bodies stays
+   * below `settleThreshold` for 10 consecutive physics steps). Re-arms after speed
+   * later exceeds 2× threshold, allowing repeated settle→impulse cycles.
+   */
+  onSettle?: () => void
+  /**
+   * Velocity magnitude threshold for settle detection (default: 0.05).
+   * Based on typical initial velocity range of ~0.5 in presets.
+   */
+  settleThreshold?: number
 }
 
 // Default config values
@@ -88,6 +99,8 @@ export function DomElastica({
   update = () => {},
   showHashGrid = false,
   ref,
+  onSettle,
+  settleThreshold = 0.05,
 }: DomElasticaProps) {
     const timeRef = useRef(0)
     const isPausedRef = useRef(false)
@@ -139,6 +152,7 @@ export function DomElastica({
     // Store callbacks in refs to avoid effect re-runs
     const initialConditionRef = useRef(initialCondition)
     const updateRef = useRef(update)
+    const onSettleRef = useRef(onSettle)
 
     useEffect(() => {
       initialConditionRef.current = initialCondition
@@ -149,11 +163,27 @@ export function DomElastica({
     }, [update])
 
     useEffect(() => {
+      onSettleRef.current = onSettle
+    }, [onSettle])
+
+    // Settle detector — recreated when threshold changes
+    const settleDetectorRef = useRef(
+      createSettleDetector(() => onSettleRef.current?.(), settleThreshold)
+    )
+    useEffect(() => {
+      settleDetectorRef.current = createSettleDetector(
+        () => onSettleRef.current?.(),
+        settleThreshold
+      )
+    }, [settleThreshold])
+
+    useEffect(() => {
       const newElastica = new Elastica(stableConfig)
       setElastica(newElastica)
       accumulatorRef.current = createAccumulator(newElastica.fixedDeltaTime)
       // Inject CSS styles for DOM rendering
       injectElasticaStyles()
+      settleDetectorRef.current.reset()
     }, [stableConfig])
 
     const addBox = useCallback((element: HTMLElement, data: ElementData) => {
@@ -181,6 +211,7 @@ export function DomElastica({
       elastica.initialCondition(boxes, sectionRect, (instances) =>
         initialConditionRef.current({ boxes, ...instances })
       )
+      settleDetectorRef.current.reset()
     }, [elastica, sectionRect])
 
     // Update simulation
@@ -225,6 +256,10 @@ export function DomElastica({
               }
             : undefined
         )
+        // E4: settle detection after each physics step
+        if (onSettleRef.current) {
+          settleDetectorRef.current.check(elastica.velocities, elastica.isStatic)
+        }
       }
     })
 

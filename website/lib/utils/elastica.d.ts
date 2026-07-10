@@ -82,17 +82,30 @@ declare module '@elastica' {
 
   export interface DomElasticaProps {
     children?: ReactNode
-    className?: string
+    className?: string | undefined
     config?: ElasticaConfigOBB
     initialCondition?: (params: InitialConditionParams) => void
     update?: (params: UpdateParams) => void
     showHashGrid?: boolean
     ref?: React.Ref<DomElasticaRef>
+    /**
+     * Called once when the simulation settles (max speed stays below
+     * `settleThreshold` for 10 consecutive physics steps).
+     */
+    onSettle?: () => void
+    /** Velocity magnitude threshold for settle detection (default: 0.05). */
+    settleThreshold?: number
   }
 
   export function DomElastica(props: DomElasticaProps): JSX.Element
 
-  export type BoundaryBoxProps = HTMLAttributes<HTMLDivElement>
+  export type BoundaryBoxProps = HTMLAttributes<HTMLDivElement> & {
+    /**
+     * Collision shape for the body. Circles use `min(width, height) / 2`
+     * as the radius. Defaults to 'rectangle'.
+     */
+    shape?: 'rectangle' | 'circle' | undefined
+  }
 
   export function BoundaryBox(props: BoundaryBoxProps): JSX.Element
 
@@ -102,18 +115,45 @@ declare module '@elastica' {
 
   export type CanvasShape = 'rect' | 'circle'
 
+  export interface CanvasElasticaRef {
+    play: () => void
+    pause: () => void
+  }
+
+  export interface CanvasParticleData {
+    index: number
+    width: number
+    height: number
+    radius?: number
+    shape: CanvasShape
+    fill: string
+    stroke?: string
+    strokeWidth?: number
+    mass?: number
+    restitution?: number
+    isStatic?: boolean
+    draw?: (
+      ctx: CanvasRenderingContext2D,
+      particle: CanvasParticleData,
+      scale: number
+    ) => void
+  }
+
   export interface CanvasElasticaProps {
     children?: ReactNode
-    className?: string
+    className?: string | undefined
     style?: React.CSSProperties
     config?: ElasticaConfigOBB
     initialCondition?: (params: InitialConditionParams) => void
     update?: (params: UpdateParams) => void
     dpr?: number
     showHashGrid?: boolean
+    ref?: React.Ref<CanvasElasticaRef>
+    onSettle?: () => void
+    settleThreshold?: number
   }
 
-  export function CanvasElastica(props: CanvasElasticaProps): JSX.Element
+  export function CanvasElastica(props: CanvasElasticaProps & RefAttributes<CanvasElasticaRef>): JSX.Element
 
   export interface CanvasBoxProps {
     /** Width in pixels (required for 'rect', ignored for 'circle' if radius is set) */
@@ -129,6 +169,11 @@ declare module '@elastica' {
     mass?: number
     restitution?: number
     static?: boolean
+    draw?: (
+      ctx: CanvasRenderingContext2D,
+      particle: CanvasParticleData,
+      scale: number
+    ) => void
   }
 
   export function CanvasBox(props: CanvasBoxProps): null

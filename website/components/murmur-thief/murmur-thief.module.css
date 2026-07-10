@@ -1,0 +1,207 @@
+/* ================================================================
+   MurmurThief — S3 murmur (sleeping words, a thieving cursor)
+   ================================================================ */
+
+.murmur {
+  position: relative;
+  min-height: desktop-vh(520);
+  padding: desktop-vw(96) desktop-vw(96) desktop-vw(96);
+
+  @media (--mobile) {
+    padding: mobile-vw(48) mobile-vw(16);
+    min-height: unset;
+  }
+}
+
+.sectionLabel {
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(13);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-red);
+
+  @media (--mobile) {
+    font-size: mobile-vw(11);
+  }
+}
+
+.murmurBody {
+  position: relative;
+  max-width: desktop-vw(900);
+  margin-top: desktop-vw(32);
+  font-family: var(--font-archivo);
+  font-size: desktop-vw(34);
+  line-height: 1.5;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  /* the paragraph sits above the sim layer so text stays selectable */
+  z-index: 1;
+
+  @media (--mobile) {
+    font-size: mobile-vw(20);
+    margin-top: mobile-vw(20);
+    max-width: 100%;
+  }
+}
+
+/* a stealable word in the flow — swaps to a dashed gap while it's out */
+.ghost {
+  transition: color 150ms ease;
+  border-bottom: 2px dashed transparent;
+}
+
+.ghostStolen {
+  color: transparent;
+  border-bottom-color: var(--color-hairline);
+  user-select: none;
+}
+
+/* ── Sim layer: the flock flies over the whole section ───────────── */
+.simArea {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wordField {
+  position: absolute;
+  inset: 0;
+  /* physics twins share the paragraph's exact metrics so the swap at
+     steal/dock moments is pixel-seamless */
+  font-family: var(--font-archivo);
+  font-size: desktop-vw(34);
+  line-height: 1.5;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+
+  @media (--mobile) {
+    font-size: mobile-vw(20);
+  }
+}
+
+.wordBody {
+  /* library convention: bodies sit at the container origin; the engine
+     positions them via translate/rotate/scale CSS vars */
+  position: absolute;
+  inset: 0;
+  width: fit-content;
+  height: fit-content;
+  white-space: nowrap;
+  user-select: none;
+  /* hidden while docked — the flowing ghost is the visible word */
+  opacity: 0;
+  color: var(--color-red);
+  transition: opacity 150ms ease;
+}
+
+.wordBody[data-state] {
+  opacity: 1;
+}
+
+/* the thief's mark — a small ring at the cursor while it holds words */
+.thiefRing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  will-change: transform;
+}
+
+/* ── Flock demo (03 — still your dom): the flock's own section ──────────────── */
+/*
+ * The words sit as a readable paragraph, bottom-right. Once the section is
+ * mostly in view they lift off into a Vicsek flock that roams the whole
+ * section — its bounds are the section, not a boxed-in corner.
+ */
+.flockSection {
+  position: relative;
+  min-height: desktop-vh(520);
+  padding: desktop-vw(96);
+
+  @media (--mobile) {
+    padding: mobile-vw(48) mobile-vw(16);
+    min-height: mobile-vh(400);
+  }
+}
+
+/* the flock section's label mirrors its bottom-right copy: right-aligned */
+.flockLabel {
+  composes: sectionLabel;
+  text-align: right;
+}
+
+.flockPanel {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  /* decorative twins only — never intercept the thief paragraph's selection */
+  pointer-events: none;
+  /* no overflow clip: the engine wraps a word only after its trailing edge
+     fully exits, so unclipped wrap never pops */
+}
+
+/* readable home block + reduced-motion copy: bottom-right, same type as the
+   section's main paragraph so the two read as one voice */
+.flockMeasure,
+.flockStatic {
+  position: absolute;
+  right: desktop-vw(96);
+  bottom: desktop-vw(96);
+  width: desktop-vw(620);
+  margin: 0;
+  text-align: right;
+  font-family: var(--font-archivo);
+  font-size: desktop-vw(28);
+  line-height: 1.5;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+
+  @media (--mobile) {
+    position: static;
+    width: 100%;
+    right: auto;
+    bottom: auto;
+    margin-top: mobile-vw(32);
+    text-align: left;
+    font-size: mobile-vw(16);
+  }
+}
+
+/* hidden metrics twin — the readable words are the physics bodies below */
+.flockMeasure {
+  visibility: hidden;
+}
+
+.flockSim,
+.flockField {
+  position: absolute;
+  inset: 0;
+}
+
+.flockWord {
+  /* library convention: bodies sit at the container origin; the engine
+     positions them via translate/rotate CSS vars */
+  position: absolute;
+  inset: 0;
+  width: fit-content;
+  height: fit-content;
+  white-space: nowrap;
+  user-select: none;
+  font-family: var(--font-archivo);
+  font-size: desktop-vw(28);
+  line-height: 1.5;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+
+  @media (--mobile) {
+    font-size: mobile-vw(16);
+  }
+}
+

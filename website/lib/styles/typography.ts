@@ -2,6 +2,8 @@ import type { CSSProperties } from 'react'
 
 const fonts = {
   mono: '--next-font-mono', // this should be the variable name defined in fonts.ts
+  archivo: '--next-font-archivo',
+  'fragment-mono': '--next-font-fragment-mono',
 } as const
 
 const typography: TypeStyles = {

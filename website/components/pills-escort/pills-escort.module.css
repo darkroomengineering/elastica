@@ -1,0 +1,166 @@
+/* ================================================================
+   PillsEscort — S2 pills section (pinned grid → drop to fence)
+   ================================================================ */
+
+.pills {
+  position: relative;
+  padding: desktop-vw(96) desktop-vw(96) 0;
+  min-height: desktop-vh(820);
+
+  @media (--mobile) {
+    padding: mobile-vw(48) mobile-vw(16) 0;
+    min-height: mobile-vh(560);
+  }
+}
+
+.sectionLabel {
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(13);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-red);
+
+  @media (--mobile) {
+    font-size: mobile-vw(11);
+  }
+}
+
+.sectionHeading {
+  font-family: var(--font-archivo);
+  font-size: desktop-vw(68);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  max-width: desktop-vw(760);
+  margin-top: desktop-vw(20);
+  /* above the sim area so falling pills pass under the heading */
+  position: relative;
+  z-index: 1;
+
+  @media (--mobile) {
+    font-size: mobile-vw(36);
+    max-width: 100%;
+    margin-top: mobile-vw(12);
+  }
+}
+
+.sectionStandfirst {
+  font-family: var(--font-archivo);
+  font-size: desktop-vw(20);
+  line-height: 1.4;
+  max-width: desktop-vw(520);
+  margin-top: desktop-vw(20);
+  color: var(--color-muted);
+  text-wrap: pretty;
+  /* above the sim area, same as the heading */
+  position: relative;
+  z-index: 1;
+
+  @media (--mobile) {
+    font-size: mobile-vw(14);
+    max-width: 100%;
+    margin-top: mobile-vw(10);
+  }
+}
+
+/* ── Sim area: full section; the fence is the section's bottom edge ── */
+.simArea {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Physics pills (engine-positioned bodies) ────────────────────── */
+.pillField {
+  position: absolute;
+  inset: 0;
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(15);
+
+  @media (--mobile) {
+    font-size: mobile-vw(12);
+  }
+}
+
+.pillBody {
+  /* library convention: bodies sit at the container origin; the engine
+     positions them via translate/rotate CSS vars */
+  position: absolute;
+  inset: 0;
+  width: fit-content;
+  height: fit-content;
+  white-space: nowrap;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 999px;
+  padding: desktop-vw(16) desktop-vw(28);
+  background: var(--color-field);
+  user-select: none;
+
+  @media (--mobile) {
+    padding: mobile-vw(10) mobile-vw(18);
+  }
+}
+
+.pillBodyAccent {
+  composes: pillBody;
+  background: var(--color-red);
+  color: var(--color-field);
+  border-color: var(--color-red);
+}
+
+/* Static collision body over the heading block. Invisible — only its size (the
+   collision box the pills bounce off) matters; the engine skips rendering
+   static bodies, so it stays where the sim pins it. Size ≈ the label + heading
+   footprint at the 1440 design width, scaling with the viewport. */
+.headingGuard {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: desktop-vw(760);
+  /* covers label + heading + standfirst — must track the copy block height */
+  height: desktop-vw(310);
+  pointer-events: none;
+  visibility: hidden;
+
+  @media (--mobile) {
+    width: mobile-vw(320);
+    height: mobile-vw(210);
+  }
+}
+
+/* ── Static grid (reduced motion / fonts loading) ────────────────── */
+.pillGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: desktop-vw(14);
+  max-width: desktop-vw(1100);
+  margin-top: desktop-vw(56);
+  padding-bottom: desktop-vw(96);
+
+  @media (--mobile) {
+    gap: mobile-vw(10);
+    margin-top: mobile-vw(32);
+    padding-bottom: mobile-vw(56);
+    max-width: 100%;
+  }
+}
+
+.pillStatic {
+  border: 1.5px solid var(--color-ink);
+  border-radius: 999px;
+  padding: desktop-vw(16) desktop-vw(28);
+  font-family: var(--font-fragment-mono);
+  font-size: desktop-vw(15);
+  white-space: nowrap;
+
+  @media (--mobile) {
+    padding: mobile-vw(10) mobile-vw(18);
+    font-size: mobile-vw(12);
+  }
+}
+
+.pillStaticAccent {
+  composes: pillStatic;
+  background: var(--color-red);
+  color: var(--color-field);
+  border-color: var(--color-red);
+}

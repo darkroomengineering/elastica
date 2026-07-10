@@ -13,6 +13,17 @@ export type DomElasticaProps = {
     update?: (params: UpdateParams) => void;
     showHashGrid?: boolean;
     ref?: Ref<DomElasticaRef>;
+    /**
+     * Called once when the simulation settles (max speed of non-static bodies stays
+     * below `settleThreshold` for 10 consecutive physics steps). Re-arms after speed
+     * later exceeds 2× threshold, allowing repeated settle→impulse cycles.
+     */
+    onSettle?: () => void;
+    /**
+     * Velocity magnitude threshold for settle detection (default: 0.05).
+     * Based on typical initial velocity range of ~0.5 in presets.
+     */
+    settleThreshold?: number;
 };
 /**
  * DomElastica provides DOM-based physics simulation using CSS variable transforms.
@@ -36,4 +47,4 @@ export type DomElasticaProps = {
  * </DomElastica>
  * ```
  */
-export declare function DomElastica({ children, className, config, initialCondition, update, showHashGrid, ref, }: DomElasticaProps): import("react/jsx-runtime").JSX.Element;
+export declare function DomElastica({ children, className, config, initialCondition, update, showHashGrid, ref, onSettle, settleThreshold, }: DomElasticaProps): import("react/jsx-runtime").JSX.Element;

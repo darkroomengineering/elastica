@@ -22,6 +22,8 @@ interface WrapperProps extends React.HTMLAttributes<HTMLDivElement> {
    * The GlobalCanvas must be mounted in your root layout for this to work.
    */
   webgl?: boolean
+  /** Render the generic site footer. Disable for pages with their own footer. Defaults to true. */
+  footer?: boolean
 }
 
 /**
@@ -93,6 +95,7 @@ export function Wrapper({
   className,
   lenis = true,
   webgl = false,
+  footer = true,
   ...props
 }: WrapperProps) {
   return (
@@ -106,7 +109,7 @@ export function Wrapper({
           {children}
         </main>
       </Canvas>
-      <Footer />
+      {footer && <Footer />}
       {lenis && <Lenis root options={typeof lenis === 'object' ? lenis : {}} />}
     </Theme>
   )
