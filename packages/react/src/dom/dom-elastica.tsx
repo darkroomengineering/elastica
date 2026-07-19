@@ -8,6 +8,7 @@ import Elastica, {
 } from '@darkroom.engineering/elastica'
 import { useFrame, useRect } from '@darkroom.engineering/hamo'
 import {
+  forwardRef,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -15,7 +16,6 @@ import {
   useRef,
   useState,
   type ReactNode,
-  type Ref,
   type RefObject,
 } from 'react'
 import { ElasticaContext, type DomElasticaContextValue } from '../context'
@@ -35,7 +35,6 @@ export type DomElasticaProps = {
   initialCondition?: (params: InitialConditionParams) => void
   update?: (params: UpdateParams) => void
   showHashGrid?: boolean
-  ref?: Ref<DomElasticaRef>
 }
 
 // Default config values
@@ -80,15 +79,18 @@ const DEFAULT_CONFIG: ElasticaConfigOBB = {
  * ```
  */
 
-export function DomElastica({
-  children,
-  className,
-  config,
-  initialCondition = () => {},
-  update = () => {},
-  showHashGrid = false,
-  ref,
-}: DomElasticaProps) {
+export const DomElastica = forwardRef<DomElasticaRef, DomElasticaProps>(
+  function DomElastica(
+    {
+      children,
+      className,
+      config,
+      initialCondition = () => {},
+      update = () => {},
+      showHashGrid = false,
+    },
+    ref
+  ) {
     const timeRef = useRef(0)
     const isPausedRef = useRef(false)
     const boxesRefs = useRef(new Map<HTMLElement, ElementData>())
@@ -256,4 +258,5 @@ export function DomElastica({
         </ElasticaContext.Provider>
       </div>
   )
-}
+  }
+)
