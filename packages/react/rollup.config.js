@@ -19,6 +19,7 @@ export default [
           terser({
             keep_classnames: true,
             keep_fnames: true,
+            format: { preamble: "'use client';" },
           }),
         ],
       },
