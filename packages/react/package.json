@@ -3,6 +3,7 @@
   "scripts": {
     "dev": "vite",
     "build": "rollup --bundleConfigAsCjs -c",
+    "test:bundle": "node --test test/bundle.test.mjs",
     "watch": "rollup --bundleConfigAsCjs -c -w"
   },
   "devDependencies": {
